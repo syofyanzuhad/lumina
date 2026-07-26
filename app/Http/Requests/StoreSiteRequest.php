@@ -25,10 +25,10 @@ class StoreSiteRequest extends FormRequest
             $domain = $this->domain;
 
             // Remove protocol
-            $domain = (string) preg_replace('#^https?://#', '', $domain);
+            $domain = (string) preg_replace('#^https?://#i', '', $domain);
 
             // Remove www.
-            $domain = (string) preg_replace('#^www\.#', '', $domain);
+            $domain = (string) preg_replace('#^www\.#i', '', $domain);
 
             // Remove path and trailing slash (keep only domain/host)
             $domain = explode('/', $domain)[0];
@@ -52,7 +52,7 @@ class StoreSiteRequest extends FormRequest
                 'string',
                 'max:255',
                 'regex:/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/',
-                Rule::unique('sites', 'domain'),
+                Rule::unique('sites', 'domain')->where('owner_id', $this->user()->id),
             ],
         ];
     }
