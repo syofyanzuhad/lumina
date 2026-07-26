@@ -11,7 +11,7 @@ enum DeviceType: string
 
     public static function fromScreenWidth(?int $width): self
     {
-        if ($width === null || $width === 0) {
+        if ($width === null || $width <= 0) {
             return self::Unknown;
         }
 
