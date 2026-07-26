@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3';
 import { store } from '@/actions/App/Http/Controllers/SiteController';
@@ -7,6 +6,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/InputError.vue';
+import Heading from '@/components/Heading.vue';
+
+defineOptions({
+    layout: {
+        breadcrumbs: [
+            {
+                title: 'Sites',
+                href: '/sites',
+            },
+            {
+                title: 'Add Site',
+                href: '/sites/create',
+            },
+        ],
+    },
+});
 
 const form = useForm({
     domain: '',
@@ -18,16 +33,13 @@ const submit = () => {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="[{ title: 'Sites', href: '/sites' }, { title: 'Add Site', href: '/sites/create' }]">
-        <Head title="Add Site" />
+    <Head title="Add Site" />
 
-        <div class="px-4 py-6 md:px-8 max-w-2xl mx-auto space-y-6 w-full">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight">Add a new site</h2>
-                <p class="text-muted-foreground">Enter the domain of the site you want to track.</p>
-            </div>
+    <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+        <Heading title="Add a new site" description="Enter the domain of the site you want to track." />
 
-            <form @submit.prevent="submit" class="space-y-4 bg-card border rounded-lg p-6">
+        <div class="max-w-2xl">
+            <form @submit.prevent="submit" class="space-y-4 bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-xl p-6">
                 <div class="space-y-2">
                     <Label for="domain">Domain Name</Label>
                     <Input 
@@ -48,5 +60,5 @@ const submit = () => {
                 </div>
             </form>
         </div>
-    </AppLayout>
+    </div>
 </template>

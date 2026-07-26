@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Copy, Check } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import Heading from '@/components/Heading.vue';
 
 const props = defineProps<{
     site: {
@@ -11,6 +11,21 @@ const props = defineProps<{
         domain: string;
     };
 }>();
+
+defineOptions({
+    layout: {
+        breadcrumbs: [
+            {
+                title: 'Sites',
+                href: '/sites',
+            },
+            {
+                title: 'Site Details', // Or could use domain, but defineOptions is statically analyzed usually.
+                href: '',
+            },
+        ],
+    },
+});
 
 const snippet = computed(() => {
     // We will assume the tracker will be available at /js/script.js on this dashboard's domain.
@@ -34,16 +49,13 @@ const copyToClipboard = async () => {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="[{ title: 'Sites', href: '/sites' }, { title: site.domain, href: `/sites/${site.id}` }]">
-        <Head :title="site.domain" />
+    <Head :title="site.domain" />
 
-        <div class="px-4 py-6 md:px-8 max-w-3xl mx-auto space-y-6 w-full">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight">{{ site.domain }}</h2>
-                <p class="text-muted-foreground">Install the tracking snippet to start collecting data.</p>
-            </div>
+    <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+        <Heading :title="site.domain" description="Install the tracking snippet to start collecting data." />
 
-            <div class="bg-card border rounded-lg overflow-hidden">
+        <div class="max-w-3xl">
+            <div class="bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-xl overflow-hidden">
                 <div class="p-6 space-y-4">
                     <h3 class="text-lg font-medium">Tracking Snippet</h3>
                     <p class="text-sm text-muted-foreground">
@@ -66,5 +78,5 @@ const copyToClipboard = async () => {
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </div>
 </template>
