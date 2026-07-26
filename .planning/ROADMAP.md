@@ -12,6 +12,7 @@
 **Goal:** Establish the data model for sites and events; confirm both Postgres and MySQL compatibility.
 
 **Delivers:**
+
 - `sites` migration: `id, domain, owner_id, created_at`
 - `events` migration: `id, site_id, path, referrer, visitor_hash, device_type, country, created_at`
 - `Site` and `Event` Eloquent models with relationships, fillable guards, casts
@@ -28,6 +29,7 @@
 **Goal:** Users can register, view, and manage their sites; each site generates a unique tracking token.
 
 **Delivers:**
+
 - `SiteController` with index, create, store, show, destroy
 - Site registration form (Vue/Inertia page) — domain input + validation
 - Tracking snippet display (copy-to-clipboard UI component)
@@ -44,6 +46,7 @@
 **Goal:** Produce a production-ready < 2KB vanilla JS tracking script.
 
 **Delivers:**
+
 - `script.js` (vanilla JS, no dependencies): sends `path`, `referrer`, `screen_width`, `timestamp` as JSON to `POST /api/collect`
 - Async, non-blocking load (`defer` attribute safe)
 - Custom events API: `window.lumina('event_name', {props})`
@@ -60,6 +63,7 @@
 **Goal:** `POST /api/collect` ingests events safely, quickly, and without storing raw IPs.
 
 **Delivers:**
+
 - `CollectController@store` — public, unauthenticated route
 - Payload validation: required fields, registered domain check (rejects unknown sites)
 - Rate limiter: per IP (`60/min`) + per site (`300/min`) via Laravel `RateLimiter`
@@ -78,6 +82,7 @@
 **Goal:** Queue worker runs as a persistent process on Laravel Cloud; verified end-to-end.
 
 **Delivers:**
+
 - `config/queue.php` confirmed on database driver
 - `horizon.php` or plain worker process config for Laravel Cloud persistent worker
 - Laravel Cloud deployment manifest / environment docs
@@ -94,6 +99,7 @@
 **Goal:** Efficient, cached SQL aggregations for all dashboard metrics.
 
 **Delivers:**
+
 - `AnalyticsService` (or query class per metric): pageviews total, unique visitors, top pages, top referrers, daily chart (last 30 days)
 - All queries use standard Eloquent / query builder (no Postgres-specific functions)
 - Laravel cache wrapping each metric (60-second TTL, keyed by `site_id + date_range`)
@@ -109,6 +115,7 @@
 **Goal:** Vue/Inertia dashboard that displays all analytics metrics with date filtering.
 
 **Delivers:**
+
 - Dashboard page (`/dashboard` or `/{site}/dashboard`) with:
   - KPI cards: total pageviews, unique visitors
   - Top pages table
@@ -129,6 +136,7 @@
 **Goal:** Every MVP requirement has concrete proof as defined in §5 of project-en.md.
 
 **Delivers:**
+
 - Script installed on a real non-localhost site; screenshot of `SELECT count(*) FROM events WHERE site_id = X` > 0
 - Dashboard numbers match manual SQL calculations for the same date range (documented evidence)
 - Load test results: p95 of `/api/collect` at 50 req/s × 1 min recorded as baseline
