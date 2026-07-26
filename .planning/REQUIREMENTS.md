@@ -1,0 +1,119 @@
+# Requirements: Lumina
+
+**Defined:** 2026-07-26
+**Core Value:** Developers on Laravel stacks get Plausible-class analytics without leaving the Laravel ecosystem or adding new runtimes.
+
+## v1 Requirements
+
+### Site Management
+
+- [ ] **SITE-01**: User can register a new site with a domain name
+- [ ] **SITE-02**: User receives a unique tracking snippet (script tag) after registering a site
+- [ ] **SITE-03**: User can view a list of all their registered sites
+- [ ] **SITE-04**: User can switch between sites in the dashboard
+- [ ] **SITE-05**: Ingest endpoint rejects events for domains not registered in the `sites` table
+
+### Tracking Script
+
+- [ ] **SCRIPT-01**: Tracking script is vanilla JS with no external dependencies
+- [ ] **SCRIPT-02**: Script bundle is < 2KB minified and gzipped
+- [ ] **SCRIPT-03**: Script sends: page URL, referrer, screen width, timestamp — no cookies, no fingerprint
+- [ ] **SCRIPT-04**: Script is async and non-blocking (does not impact host site performance)
+- [ ] **SCRIPT-05**: Optional custom events API: `window.lumina('event_name', {props})`
+
+### Event Ingest
+
+- [ ] **INGEST-01**: `POST /api/collect` is a public endpoint (no auth required)
+- [ ] **INGEST-02**: Endpoint validates payload and rejects invalid or unregistered-site requests
+- [ ] **INGEST-03**: Validated events are dispatched to an `InsertEvent` queue job (not inserted synchronously)
+- [ ] **INGEST-04**: Endpoint responds fast regardless of DB write latency (queue decouples response from insert)
+- [ ] **INGEST-05**: Rate limiting applied per IP and per site
+
+### Privacy & Visitor Uniqueness
+
+- [ ] **PRIV-01**: No raw IP addresses are stored in the database
+- [ ] **PRIV-02**: Visitor uniqueness uses a daily hash: `hash(IP + UserAgent + daily_salt)`
+- [ ] **PRIV-03**: Daily salt rotates every 24 hours (stored in cache/config, not per-visitor)
+- [ ] **PRIV-04**: Visitor hash is not reversible to an individual
+
+### Dashboard
+
+- [ ] **DASH-01**: Dashboard shows total pageviews for selected date range
+- [ ] **DASH-02**: Dashboard shows unique visitor count for selected date range
+- [ ] **DASH-03**: Dashboard shows top pages ranked by pageview count
+- [ ] **DASH-04**: Dashboard shows top referrers ranked by visit count
+- [ ] **DASH-05**: Dashboard shows a daily pageview chart for the last 30 days
+- [ ] **DASH-06**: Dashboard data is accurate — matches manual SQL counts for the same date range
+- [ ] **DASH-07**: Aggregation queries use Laravel cache with a short TTL (≤ 60 seconds) to reduce DB load
+
+### Date Filtering
+
+- [ ] **DATE-01**: User can filter dashboard to last 7 days
+- [ ] **DATE-02**: User can filter dashboard to last 30 days
+- [ ] **DATE-03**: User can select a custom date range
+
+### Data Model & Compatibility
+
+- [ ] **DATA-01**: `sites` table: `id, domain, owner_id, created_at`
+- [ ] **DATA-02**: `events` table: `id, site_id, path, referrer, visitor_hash, device_type, country, created_at`
+- [ ] **DATA-03**: All migrations and Eloquent queries are compatible with both PostgreSQL and MySQL (no DB-specific raw SQL)
+- [ ] **DATA-04**: Device type is derived from screen width bucket (mobile / tablet / desktop), not stored raw
+
+### Queue & Workers
+
+- [ ] **QUEUE-01**: Queue uses the database driver in v1 (no Redis dependency)
+- [ ] **QUEUE-02**: Queue worker runs as a persistent process on Laravel Cloud (not serverless invocation)
+
+## v2 Requirements
+
+### Analytics Depth
+
+- **V2-01**: Custom event tracking dashboard UI (currently tracked but not surfaced in the dashboard)
+- **V2-02**: Data export (CSV or JSON) for a selected date range
+- **V2-03**: Public / shareable dashboard link (read-only, no auth required)
+- **V2-04**: Goal / conversion tracking
+
+### Scale & Performance
+
+- **V2-05**: Postgres table partitioning per month (if events table becomes a bottleneck)
+- **V2-06**: Consider ClickHouse/Timescale migration if Postgres aggregate queries degrade at real scale
+
+### Collaboration
+
+- **V2-07**: Team support — migrate `owner_id` → `team_id`, add per-team routing `/{team}/...`
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Real-time live dashboard (WebSocket/Reverb) | v1 polling/manual refresh sufficient; websockets add complexity before scale is proven |
+| Multi-tenant SaaS billing | v1 is single-owner self-hosted |
+| Teams in v1 | No validated need; `owner_id` model; refactor to `team_id` later if proven necessary |
+| Mobile SDK | Outside basic analytics scope |
+| Session replay | Outside basic analytics scope |
+| Feature flags / A/B testing | Outside basic analytics scope |
+| ClickHouse in v1 | Only if Postgres is a proven bottleneck under real load |
+| MySQL-only optimizations | Postgres-first; MySQL via standard Eloquent only |
+| OAuth / social login | Fortify email/password auth is sufficient for v1 |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SITE-01 – SITE-05 | Phase 2 | Pending |
+| SCRIPT-01 – SCRIPT-05 | Phase 3 | Pending |
+| INGEST-01 – INGEST-05 | Phase 4 | Pending |
+| PRIV-01 – PRIV-04 | Phase 4 | Pending |
+| QUEUE-01 – QUEUE-02 | Phase 4 | Pending |
+| DATA-01 – DATA-04 | Phase 2 | Pending |
+| DASH-01 – DASH-07 | Phase 5 | Pending |
+| DATE-01 – DATE-03 | Phase 5 | Pending |
+
+**Coverage:**
+- v1 requirements: 34 total
+- Mapped to phases: 34
+- Unmapped: 0 ✓
+
+---
+*Requirements defined: 2026-07-26*
+*Last updated: 2026-07-26 after initialization*
