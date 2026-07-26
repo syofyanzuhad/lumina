@@ -4,12 +4,15 @@ namespace App\Models;
 
 use App\Enums\DeviceType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['site_id', 'path', 'referrer', 'visitor_hash', 'device_type', 'country'])]
 class Event extends Model
 {
+    use HasFactory;
+
     /**
      * Indicates if the model should be timestamped.
      *
