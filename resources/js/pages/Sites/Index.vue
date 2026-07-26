@@ -4,7 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Globe } from '@lucide/vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { destroy } from '@/actions/App/Http/Controllers/SiteController';
+import { destroy, show } from '@/actions/App/Http/Controllers/SiteController';
 
 const props = defineProps<{
     sites: {
@@ -54,7 +54,7 @@ const deleteSite = (site: { id: number; domain: string }) => {
                 <Card v-for="site in sites" :key="site.id" class="flex flex-col">
                     <CardHeader class="pb-2">
                         <CardTitle class="text-lg flex items-center justify-between">
-                            <Link :href="`/sites/${site.id}`" class="hover:underline">
+                            <Link :href="show.url({ site: site.id })" class="hover:underline">
                                 {{ site.domain }}
                             </Link>
                         </CardTitle>
@@ -64,7 +64,7 @@ const deleteSite = (site: { id: number; domain: string }) => {
                     </CardHeader>
                     <CardFooter class="mt-auto pt-4 flex justify-between">
                         <Button variant="outline" size="sm" as-child>
-                            <Link :href="`/sites/${site.id}`">View Details</Link>
+                            <Link :href="show.url({ site: site.id })">View Details</Link>
                         </Button>
                         <Button variant="ghost" size="sm" class="text-destructive hover:bg-destructive/10 hover:text-destructive" @click="deleteSite(site)">
                             <Trash2 class="h-4 w-4" />
