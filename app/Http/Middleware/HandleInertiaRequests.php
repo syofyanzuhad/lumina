@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
 
             if (! $activeSiteId || ! $sites->contains('id', $activeSiteId)) {
                 $activeSiteId = $sites->first()->id;
+                session()->put('active_site_id', $activeSiteId);
             }
         }
 
