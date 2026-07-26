@@ -1,7 +1,7 @@
-# Rancangan: Web Analytics Tool (Laravel + Vue + Inertia)
+# Rancangan: Lumina — Web Analytics Tool (Laravel + Vue + Inertia)
 
 **Status:** Draft v1 — locked decisions ditandai 🔒, masih terbuka ditandai ❓
-**Project Name:** `lumina`
+**Nama proyek:** Lumina
 
 ---
 
@@ -30,6 +30,9 @@ Tidak ada tools analytics kelas Umami/Plausible/Matomo yang dibangun di atas Lar
 | Tracking script | Vanilla JS, no dependency, target <2KB | Ini fitur jual utama tools sejenis (Plausible <1KB, Umami ringan) |
 | Auth dashboard | Fortify (bawaan starter kit resmi) | Jangan reinvent, ikut default resmi |
 | Teams (starter kit) | **Tidak diaktifkan** — model data tetap `owner_id` per user, bukan `team_id` | Belum ada validasi kebutuhan multi-user per akun. Biaya migrasi ke teams nanti kalau tervalidasi = refactor yang jelas bentuknya (`owner_id` → `team_id`); biaya mengaktifkan sekarang tanpa bukti = pajak kompleksitas permanen (routing `/{team}/...`, scoping di semua query) untuk fitur yang mungkin tidak pernah dipakai |
+| Visitor uniqueness | **Daily hash** (IP + UserAgent + daily salt, ganti tiap hari) — bukan localStorage ID | Konsisten dengan klaim "no cookie/no persistent client storage" (§1); localStorage adalah persistent identifier secara fungsional meski bukan cookie teknis, dan rentan diblok browser privasi. **Trade-off diterima sadar:** metrik "unique visitor 7/30 hari" jadi penjumlahan unique-per-hari, bukan true distinct human across period — sama seperti keterbatasan Plausible/Umami. Dashboard copy wajib jujur soal ini, bukan diam-diam disamarkan |
+| Rate limiting | **Per-IP + per-site** di `/api/collect` | Per-IP saja tidak menahan distributed flood ke satu site atau noisy-neighbor (satu site menghabiskan kapasitas queue/DB bersama). Ini bukan premature abstraction — endpoint publik tanpa auth butuh proteksi dasar sejak awal. **Catatan jujur:** threshold awal masih tebakan (perlu dikalibrasi ulang pakai hasil load test §5.3); event yang kena limit = data hilang diam-diam (script fire-and-forget, tidak ada retry dari visitor) — ini trade-off yang harus didokumentasikan, bukan disembunyikan |
+| Database scope | **PostgreSQL (production, Laravel Cloud) + MySQL (local dev)** — dual-engine, bukan lagi Postgres-only | Kebutuhan langsung: dev lokal pakai MySQL, prod pakai Postgres. **Risiko dev/prod parity nyata** (bukan sekadar teoretis): case-sensitivity string comparison beda default antar engine (relevan untuk lookup `domain` di `sites` — normalisasi ke lowercase eksplisit sebelum query, jangan andalkan collation default), boolean/JSON representation beda. **Wajib, bukan opsional:** (1) migration & query harus murni Eloquent, hindari raw SQL/fitur spesifik satu engine; (2) sebelum setiap deploy ke prod, jalankan migration + smoke test minimal sekali terhadap Postgres (via Docker container lokal atau CI), jangan andalkan "sudah jalan di MySQL lokal" sebagai bukti cukup |
 | Queue | Laravel queue, **database driver dulu** di v1, worker jalan sebagai persistent process di Laravel Cloud | Laravel Cloud bikin Redis/Valkey managed satu-klik, jadi upgrade ke Redis nanti murah — tapi belum ada alasan konkret v1 butuh Redis, jadi jangan tambah dependency di awal |
 
 **Yang sengaja DIABAIKAN dulu (defer sampai ada validasi user nyata):**
@@ -107,10 +110,7 @@ Setiap item MVP di atas baru dianggap selesai kalau ada bukti berikut:
 
 ## 6. Pertanyaan terbuka ❓
 
-- Nama final proyek — belum ditentukan
-- Skema hashing visitor: hash harian (IP+UserAgent+salt, ganti tiap hari ala Plausible) atau simpan cookie-less session ID di localStorage? Pilih salah satu sebelum mulai coding — dua-duanya defensible, tapi campur keduanya nambah kompleksitas tanpa manfaat jelas
-- Apakah perlu dukung MySQL juga (banyak shared hosting Indonesia default MySQL) atau cukup Postgres saja? Ini mempengaruhi kompatibilitas Eloquent tapi nambah testing burden — rekomendasi: Postgres-only dulu, generalisasi nanti kalau ada demand nyata
-- Rate limiting endpoint `/api/collect`: per IP saja, atau per site juga? Perlu diputuskan sebelum endpoint publik dibuka
+Semua open question dari draft sebelumnya sudah diputuskan (nama: **Lumina**, visitor uniqueness, rate limiting, database scope — lihat §2). Tidak ada open question tersisa saat ini; tambahkan di sini kalau muncul pertanyaan baru selama implementasi.
 
 ---
 
