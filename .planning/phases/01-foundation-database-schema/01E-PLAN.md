@@ -6,6 +6,7 @@ depends_on:
 files_modified:
   - tests/Feature/SiteTest.php
   - tests/Feature/EventTest.php
+  - tests/Unit/DeviceTypeTest.php
 autonomous: true
 ---
 
@@ -37,7 +38,8 @@ Note: Do not add `uses(RefreshDatabase::class);` as it is already global in `tes
 </read_first>
 <acceptance_criteria>
 - `php artisan test --compact --filter=SiteTest` exits 0
-- Test suite verifies domain lowercase functionality
+- Tests verify domain lowercase storage: create site with `ExAmPlE.cOm`, assert `sites` table has `example.com`
+- Tests verify cascade delete: delete site, confirm events count is 0
 </acceptance_criteria>
 </task>
 
@@ -58,16 +60,47 @@ Write the following tests:
 </read_first>
 <acceptance_criteria>
 - `php artisan test --compact --filter=EventTest` exits 0
-- Test suite verifies `device_type` casting
-- Test suite verifies immutable nature of the `Event` model (no `updated_at`)
+- Test verifies `$event->device_type` is an instance of `App\Enums\DeviceType`
+- Test verifies `$event->updated_at` is null (immutable log)
+- Test verifies `$event->site` relationship returns correct `Site` instance
+</acceptance_criteria>
+</task>
+
+<task id="01E-3">
+<title>Write DeviceType unit tests</title>
+<action>
+Create `tests/Unit/DeviceTypeTest.php` using Pest syntax.
+Test `DeviceType::fromScreenWidth()` across all boundary values:
+- `fromScreenWidth(767)` returns `DeviceType::Mobile`
+- `fromScreenWidth(768)` returns `DeviceType::Tablet`
+- `fromScreenWidth(1024)` returns `DeviceType::Tablet`
+- `fromScreenWidth(1025)` returns `DeviceType::Desktop`
+- `fromScreenWidth(null)` returns `DeviceType::Unknown`
+- `fromScreenWidth(0)` returns `DeviceType::Unknown`
+- `fromScreenWidth(-1)` returns `DeviceType::Unknown`
+Do NOT use `RefreshDatabase` (no DB access needed — pure logic test).
+</action>
+<read_first>
+- /Users/macbookpro/Herd/lumina/app/Enums/DeviceType.php (reason: verify exact enum case names and fromScreenWidth signature)
+- /Users/macbookpro/Herd/lumina/tests/Pest.php (reason: understand global test configuration)
+</read_first>
+<acceptance_criteria>
+- `tests/Unit/DeviceTypeTest.php` exists
+- `php artisan test --compact --filter=DeviceTypeTest` exits 0
+- All 7 boundary conditions above have explicit test assertions
 </acceptance_criteria>
 </task>
 
 ## must_haves
 
 ### truths
-- The test suite executes against SQLite in-memory without errors
-- Pest tests successfully validate relationships, casts, and immutability
+- `php artisan test --compact --filter=SiteTest` exits 0
+- `php artisan test --compact --filter=EventTest` exits 0
+- `php artisan test --compact --filter=DeviceTypeTest` exits 0
+- All DeviceType::fromScreenWidth() boundary conditions (767/768/1024/1025/null/0/-1) have explicit test assertions
+- Site cascade delete verified: deleting a site removes all its events
+- Event device_type cast to DeviceType enum verified
+- Event updated_at verified as null
 
 ### prohibitions
 - statement: Tests explicitly import or declare `RefreshDatabase`
@@ -75,14 +108,6 @@ Write the following tests:
   verification: Code review confirms `RefreshDatabase` is omitted from `tests/Feature/SiteTest.php` and `tests/Feature/EventTest.php`
 
 ## Artifacts this phase produces
-- `app/Enums/DeviceType.php` — `DeviceType` enum
-- `database/migrations/*_create_sites_table.php` — `sites` migration
-- `database/migrations/*_create_events_table.php` — `events` migration
-- `app/Models/Site.php` — `Site` model
-- `app/Models/Event.php` — `Event` model
-- `database/factories/SiteFactory.php` — `Site` factory
-- `database/factories/EventFactory.php` — `Event` factory
-- `database/seeders/SiteSeeder.php` — `Site` seeder
-- `database/seeders/EventSeeder.php` — `Event` seeder
-- `tests/Feature/SiteTest.php` — `Site` Pest tests
-- `tests/Feature/EventTest.php` — `Event` Pest tests
+- `tests/Feature/SiteTest.php` — Site model feature tests
+- `tests/Feature/EventTest.php` — Event model feature tests
+- `tests/Unit/DeviceTypeTest.php` — DeviceType enum unit tests

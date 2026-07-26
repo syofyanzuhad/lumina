@@ -47,8 +47,8 @@ In the `up` method, use `Schema::create('events', ...)` with:
 - `$table->foreignId('site_id')->constrained('sites')->cascadeOnDelete()`
 - `$table->string('path')`
 - `$table->string('referrer')->nullable()`
-- `$table->string('visitor_hash')`
-- `$table->string('device_type')->nullable()`
+- `$table->string('visitor_hash', 64)` — SHA-256 hex output is exactly 64 chars
+- `$table->string('device_type', 20)` — NOT nullable (always derived from screen width, defaults to 'unknown')
 - `$table->string('country')->nullable()`
 - `$table->timestamp('created_at')->useCurrent()` (no `updated_at` column, DO NOT use `$table->timestamps()`)
 
@@ -64,6 +64,8 @@ Do NOT index `path` or `referrer`.
 - A new file ending in `_create_events_table.php` exists in `database/migrations/`
 - Running `php artisan migrate:fresh` exits 0 on the configured test database
 - `events` table has no `updated_at` column
+- `visitor_hash` column is `string(64)` — confirmed by reviewing migration source
+- `vendor/bin/pint --dirty --format agent` exits 0 after migration files are written
 </acceptance_criteria>
 </task>
 
