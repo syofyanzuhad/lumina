@@ -43,8 +43,10 @@ protected function domain(): \Illuminate\Database\Eloquent\Casts\Attribute
 - /Users/macbookpro/Herd/lumina/.planning/phases/01-foundation-database-schema/01-RESEARCH.md (reason: domain lowercase requirement)
 </read_first>
 <acceptance_criteria>
-- `app/Models/Site.php` exists and uses PHP 8 attributes for fillable properties
-- `Site` model has `owner()` and `events()` relationships
+- `app/Models/Site.php` exists and uses PHP 8 `#[Fillable]` attribute (not `$fillable` array)
+- `Site` model has `owner(): BelongsTo` and `events(): HasMany` relationship methods
+- `Site` model has a `domain` mutator (Attribute cast or booted observer) that lowercases values on set
+- `vendor/bin/pint --dirty --format agent` exits 0 after `app/Models/Site.php` is written
 </acceptance_criteria>
 </task>
 
@@ -73,9 +75,11 @@ Add a `site()` method returning `BelongsTo` relation to `Site::class`.
 - /Users/macbookpro/Herd/lumina/.planning/phases/01-foundation-database-schema/01-RESEARCH.md (reason: immutable model requirements)
 </read_first>
 <acceptance_criteria>
-- `app/Models/Event.php` exists and uses PHP 8 attributes for fillable properties
-- `Event::UPDATED_AT` is null
-- The `casts()` method returns an array mapping `device_type` to `App\Enums\DeviceType::class`
+- `app/Models/Event.php` exists and uses PHP 8 `#[Fillable]` attribute (not `$fillable` array)
+- `Event::UPDATED_AT` constant is null
+- The `casts()` method returns `['device_type' => \App\Enums\DeviceType::class]`
+- `Event` model has `site(): BelongsTo` relationship method
+- `vendor/bin/pint --dirty --format agent` exits 0 after `app/Models/Event.php` is written
 </acceptance_criteria>
 </task>
 
@@ -92,14 +96,5 @@ Add a `site()` method returning `BelongsTo` relation to `Site::class`.
   verification: Code review confirms `#[Fillable]` attribute is used instead of `$fillable` array property
 
 ## Artifacts this phase produces
-- `app/Enums/DeviceType.php` — `DeviceType` enum
-- `database/migrations/*_create_sites_table.php` — `sites` migration
-- `database/migrations/*_create_events_table.php` — `events` migration
-- `app/Models/Site.php` — `Site` model
-- `app/Models/Event.php` — `Event` model
-- `database/factories/SiteFactory.php` — `Site` factory
-- `database/factories/EventFactory.php` — `Event` factory
-- `database/seeders/SiteSeeder.php` — `Site` seeder
-- `database/seeders/EventSeeder.php` — `Event` seeder
-- `tests/Feature/SiteTest.php` — `Site` Pest tests
-- `tests/Feature/EventTest.php` — `Event` Pest tests
+- `app/Models/Site.php` — `Site` Eloquent model with `owner()`, `events()` relationships and domain lowercase mutator
+- `app/Models/Event.php` — `Event` Eloquent model with `const UPDATED_AT = null`, `DeviceType` cast, `site()` relationship

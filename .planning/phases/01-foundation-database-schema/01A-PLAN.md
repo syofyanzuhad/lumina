@@ -43,6 +43,7 @@ Implementation logic inside `fromScreenWidth`:
 - `DeviceType::fromScreenWidth(768)` returns `DeviceType::Tablet`
 - `DeviceType::fromScreenWidth(1025)` returns `DeviceType::Desktop`
 - `DeviceType::fromScreenWidth(null)` returns `DeviceType::Unknown`
+- `vendor/bin/pint --dirty --format agent` exits 0 after `app/Enums/DeviceType.php` is written
 </acceptance_criteria>
 </task>
 
@@ -58,14 +59,4 @@ Implementation logic inside `fromScreenWidth`:
   verification: Code review of `app/Enums/DeviceType.php` shows `enum DeviceType: string`
 
 ## Artifacts this phase produces
-- `app/Enums/DeviceType.php` — `DeviceType` enum
-- `database/migrations/*_create_sites_table.php` — `sites` migration
-- `database/migrations/*_create_events_table.php` — `events` migration
-- `app/Models/Site.php` — `Site` model
-- `app/Models/Event.php` — `Event` model
-- `database/factories/SiteFactory.php` — `Site` factory
-- `database/factories/EventFactory.php` — `Event` factory
-- `database/seeders/SiteSeeder.php` — `Site` seeder
-- `database/seeders/EventSeeder.php` — `Event` seeder
-- `tests/Feature/SiteTest.php` — `Site` Pest tests
-- `tests/Feature/EventTest.php` — `Event` Pest tests
+- `app/Enums/DeviceType.php` — `DeviceType` backed enum with `fromScreenWidth()` helper
