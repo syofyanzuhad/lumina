@@ -48,7 +48,7 @@ Exceptions: none
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 16px | 400 | 1.5 |
-| Label | 14px | 500 | 1.2 |
+| Label | 14px | 600 | 1.2 |
 | Heading | 20px | 600 | 1.2 |
 | Display | 28px | 600 | 1.2 |
 
@@ -87,11 +87,24 @@ Accent reserved for: Primary buttons, active site highlight in dropdown
 > Empty-state and error-state COPY live in `## Copywriting Contract` above — this section covers
 > state coverage and REFERENCES those rows rather than restating the copy (de-dup).
 
-Applicable state considerations resolved: none applicable
-
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
-| empty | Site List | ✅ covered | Empty results render the documented "No sites found" copy |
+| empty | E1: Site registration form | backstop | What is shown when there is no data — zero items, an unfilled form, or absent media? |
+| loading | E1: Site registration form | backstop | What is shown while data or content is still loading (skeleton, spinner, progressive reveal)? |
+| error | E1: Site registration form | backstop | What is shown when the load or submit fails (message, retry affordance, partial fallback)? |
+| partial | E1: Site registration form | backstop | What is shown for partial or incomplete data — some fields or rows present, others missing? |
+| long-text | E1: Site registration form | backstop | What happens with unusually long text — truncation, wrapping, ellipsis, or reflow? |
+| overflow | E2: Tracking snippet display | backstop | What happens when content exceeds its container — scroll, clip, wrap, or truncate? |
+| long-text | E2: Tracking snippet display | backstop | What happens with unusually long text — truncation, wrapping, ellipsis, or reflow? |
+| empty | E3: Site list page with switcher | ✅ covered | Empty results render the documented "No sites found" copy |
+| loading | E3: Site list page with switcher | backstop | What is shown while data or content is still loading (skeleton, spinner, progressive reveal)? |
+| error | E3: Site list page with switcher | backstop | What is shown when the load or submit fails (message, retry affordance, partial fallback)? |
+| populated | E3: Site list page with switcher | backstop | What does the normal populated (happy-path) state look like at a typical volume of content? |
+| partial | E3: Site list page with switcher | backstop | What is shown for partial or incomplete data — some fields or rows present, others missing? |
+| overflow | E3: Site list page with switcher | backstop | What happens when content exceeds its container — scroll, clip, wrap, or truncate? |
+| zero-one-many | E3: Site list page with switcher | backstop | How does the layout read at zero, one, and many items (singular vs plural copy, spacing)? |
+| long-text | E4: Primary CTA button | backstop | What happens with unusually long text — truncation, wrapping, ellipsis, or reflow? |
+| unclassified | E5: Delete site confirmation dialog | ⚠ unresolved | planner must treat as assumption |
 
 ---
 
