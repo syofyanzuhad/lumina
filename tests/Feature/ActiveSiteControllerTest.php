@@ -26,7 +26,7 @@ test('user cannot set active site to another users site', function () {
         'site_id' => $otherSite->id,
     ]);
 
-    $response->assertNotFound();
+    $response->assertInvalid(['site_id']);
 });
 
 test('inertia share exposes sites and active_site_id', function () {
