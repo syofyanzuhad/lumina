@@ -1,8 +1,8 @@
 <?php
 
-use App\Enums\DeviceType;
-use App\Models\Event;
-use App\Models\Site;
+use Lumina\Core\Enums\DeviceType;
+use Lumina\Core\Models\Event;
+use Lumina\Core\Models\Site;
 
 test('it can create an event using the factory', function () {
     $event = Event::factory()->create();

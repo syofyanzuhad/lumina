@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Site;
+use Lumina\Core\Models\Site;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia;
 

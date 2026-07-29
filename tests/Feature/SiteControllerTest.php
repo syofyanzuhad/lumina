@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Site;
+use Lumina\Core\Models\Site;
 use App\Models\User;
 
 test('it can create a site with normalized domain', function () {

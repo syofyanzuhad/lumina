@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Event;
-use App\Models\Site;
+use Lumina\Core\Models\Event;
+use Lumina\Core\Models\Site;
 use App\Models\User;
 
 test('it can create a site using the factory', function () {
