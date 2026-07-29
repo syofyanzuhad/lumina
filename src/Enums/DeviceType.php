@@ -25,4 +25,21 @@ enum DeviceType: string
 
         return self::Desktop;
     }
+
+    public static function fromUserAgent(string $userAgent): self
+    {
+        if (trim($userAgent) === '') {
+            return self::Unknown;
+        }
+
+        if (preg_match('/(tablet|ipad|playbook|silk)|(android(?!.*mobile))/i', $userAgent)) {
+            return self::Tablet;
+        }
+
+        if (preg_match('/(mobile|iphone|ipod|android|blackberry|opera mini|opera mobi|windows phone|iemobile)/i', $userAgent)) {
+            return self::Mobile;
+        }
+
+        return self::Desktop;
+    }
 }
