@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\DeviceType;
+use Lumina\Core\Enums\DeviceType;
 
 test('fromScreenWidth returns correct device types for boundaries', function () {
     expect(DeviceType::fromScreenWidth(767))->toBe(DeviceType::Mobile)
