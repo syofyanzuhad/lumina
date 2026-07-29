@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace Lumina\Core\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -15,14 +15,24 @@ class Site extends Model
 {
     use HasFactory;
 
+    protected $table = 'sites';
+
+    protected static function newFactory()
+    {
+        return \Lumina\Core\Database\Factories\SiteFactory::new();
+    }
+
     /**
      * Get the owner of the site.
      *
-     * @return BelongsTo<User, $this>
+     * @return BelongsTo<Model, $this>
      */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            config('auth.providers.users.model', \App\Models\User::class),
+            'owner_id'
+        );
     }
 
     /**
