@@ -1,7 +1,9 @@
 # Phase 3: Tracking Script - Context
 
 **Gathered:** 2026-07-29
-**Status:** Ready for planning
+**Status:** Superseded by ROADMAP restructure — see note below
+
+> **⚠️ ROADMAP Restructure (2026-07-29):** The ROADMAP was restructured from 8 flat phases to 10 phases with a Phase A/B gate. This context was originally written for "Phase 3: Tracking Script" under the old ROADMAP. Under the new structure, the Tracking Script is now **Phase 5** (merged with Ingest Endpoint). The decisions below (D-01 through D-06) remain valid and will be consumed by Phase 5 planning. The new Phase 3 is **Package-Core Extraction** — a new phase that needs its own context gathering.
 
 <domain>
 ## Phase Boundary
