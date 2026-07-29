@@ -1,18 +1,20 @@
 <?php
 
-namespace Database\Factories;
+namespace Lumina\Core\Database\Factories;
 
-use App\Enums\DeviceType;
-use App\Models\Event;
-use App\Models\Site;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Lumina\Core\Enums\DeviceType;
+use Lumina\Core\Models\Event;
+use Lumina\Core\Models\Site;
 
 /**
  * @extends Factory<Event>
  */
 class EventFactory extends Factory
 {
+    protected $model = Event::class;
+
     /**
      * Define the model's default state.
      *
