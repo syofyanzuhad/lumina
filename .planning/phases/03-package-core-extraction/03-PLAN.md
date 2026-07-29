@@ -93,30 +93,42 @@
 **Verification:** File exists in the new location with the correct namespace.
 
 ### Task 2.2 — Move and Update Site Model
-**What:** Move `Site.php` to the package, update namespace, and override `newFactory()`.
-**Files:** 
+**What:** Move `Site.php` to the package, update namespace, decouple `owner()` from `App\Models\User`, add explicit `$table`, and override `newFactory()`.
+**Files:**
 - `app/Models/Site.php` -> `packages/lumina-core/src/Models/Site.php`
 **Steps:**
 1. Move the file.
 2. Change namespace to `namespace Lumina\Core\Models;`.
-3. Add the `newFactory()` method:
+3. Add `protected $table = 'sites';` property for explicitness inside package namespaces.
+4. Update `owner()` to decouple from the host app's User model:
+```php
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(
+            config('auth.providers.users.model', \App\Models\User::class),
+            'owner_id'
+        );
+    }
+```
+5. Add the `newFactory()` method:
 ```php
     protected static function newFactory()
     {
         return \Lumina\Core\Database\Factories\SiteFactory::new();
     }
 ```
-**Verification:** `grep -q "namespace Lumina\\\\Core\\\\Models" packages/lumina-core/src/Models/Site.php`
+**Verification:** `grep -q "auth.providers.users.model" packages/lumina-core/src/Models/Site.php`
 
 ### Task 2.3 — Move and Update Event Model
-**What:** Move `Event.php` to the package, update namespace, fix imports, and override `newFactory()`.
-**Files:** 
+**What:** Move `Event.php` to the package, update namespace, fix imports, add explicit `$table`, and override `newFactory()`.
+**Files:**
 - `app/Models/Event.php` -> `packages/lumina-core/src/Models/Event.php`
 **Steps:**
 1. Move the file.
 2. Change namespace to `namespace Lumina\Core\Models;`.
 3. Update `use App\Enums\DeviceType;` to `use Lumina\Core\Enums\DeviceType;`.
-4. Add the `newFactory()` method:
+4. Add `protected $table = 'events';` property for explicitness inside package namespaces.
+5. Add the `newFactory()` method:
 ```php
     protected static function newFactory()
     {
@@ -208,7 +220,14 @@ class LuminaCoreServiceProvider extends ServiceProvider
 **Steps:** Change `use App\Models\Site;` to `use Lumina\Core\Models\Site;`.
 **Verification:** Run `php -l` on both files to ensure valid syntax.
 
-### Task 5.2 — Update Policy and Request References
+### Task 5.2 — Update User Model Relationship Import
+**What:** `app/Models/User.php` has a `sites()` relationship using `Site::class`. Update it to reference the package model.
+**Files:**
+- `app/Models/User.php`
+**Steps:** Add `use Lumina\Core\Models\Site;` to the imports (replacing any `use App\Models\Site;` if present).
+**Verification:** `grep -q "Lumina\\\\Core\\\\Models\\\\Site" app/Models/User.php`
+
+### Task 5.3 — Update Policy and Request References
 **What:** Update model imports in requests and policies.
 **Files:**
 - `app/Policies/SitePolicy.php`
@@ -216,7 +235,7 @@ class LuminaCoreServiceProvider extends ServiceProvider
 **Steps:** Change `use App\Models\Site;` to `use Lumina\Core\Models\Site;`.
 **Verification:** Run `php -l` on modified files.
 
-### Task 5.3 — Update Database Seeders
+### Task 5.4 — Update Database Seeders
 **What:** Update model imports in seeders.
 **Files:**
 - `database/seeders/SiteSeeder.php`
