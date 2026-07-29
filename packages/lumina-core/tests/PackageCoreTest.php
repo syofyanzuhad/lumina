@@ -9,6 +9,7 @@ use Lumina\Core\Models\Site;
 class PackageCoreTest extends TestCase
 {
     use RefreshDatabase;
+
     public function test_site_factory_creates_site_model(): void
     {
         $site = Site::factory()->create();

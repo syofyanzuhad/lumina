@@ -1,8 +1,8 @@
 <?php
 
-use Lumina\Core\Models\Site;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia;
+use Lumina\Core\Models\Site;
 
 test('index page renders sites list', function () {
     $user = User::factory()->create();

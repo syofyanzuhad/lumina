@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ActiveSiteController extends Controller
 {
@@ -13,7 +14,7 @@ class ActiveSiteController extends Controller
             'site_id' => [
                 'required',
                 'integer',
-                \Illuminate\Validation\Rule::exists('sites', 'id')->where('owner_id', $request->user()->id),
+                Rule::exists('sites', 'id')->where('owner_id', $request->user()->id),
             ],
         ]);
 

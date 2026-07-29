@@ -2,6 +2,7 @@
 
 namespace Lumina\Core\Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 use Lumina\Core\Models\Site;
@@ -20,7 +21,7 @@ class SiteFactory extends Factory
      */
     public function definition(): array
     {
-        $userModel = config('auth.providers.users.model', \App\Models\User::class);
+        $userModel = config('auth.providers.users.model', User::class);
 
         return [
             'domain' => Str::lower($this->faker->unique()->domainName()),

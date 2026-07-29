@@ -1,7 +1,7 @@
 <?php
 
-use Lumina\Core\Models\Site;
 use App\Models\User;
+use Lumina\Core\Models\Site;
 
 test('users can view, update, and delete their own sites', function () {
     $user = User::factory()->create();

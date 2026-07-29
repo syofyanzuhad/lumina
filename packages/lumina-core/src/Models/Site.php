@@ -2,6 +2,7 @@
 
 namespace Lumina\Core\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Lumina\Core\Database\Factories\SiteFactory;
 
 #[Fillable(['domain', 'owner_id'])]
 class Site extends Model
@@ -19,7 +21,7 @@ class Site extends Model
 
     protected static function newFactory()
     {
-        return \Lumina\Core\Database\Factories\SiteFactory::new();
+        return SiteFactory::new();
     }
 
     /**
@@ -30,7 +32,7 @@ class Site extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(
-            config('auth.providers.users.model', \App\Models\User::class),
+            config('auth.providers.users.model', User::class),
             'owner_id'
         );
     }

@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use Lumina\Core\Models\Site;
 use App\Models\User;
+use Lumina\Core\Models\Site;
 
 class SitePolicy
 {

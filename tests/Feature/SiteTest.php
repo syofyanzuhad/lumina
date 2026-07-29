@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\User;
 use Lumina\Core\Models\Event;
 use Lumina\Core\Models\Site;
-use App\Models\User;
 
 test('it can create a site using the factory', function () {
     $site = Site::factory()->create();

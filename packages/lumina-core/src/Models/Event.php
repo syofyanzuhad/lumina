@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Lumina\Core\Database\Factories\EventFactory;
 use Lumina\Core\Enums\DeviceType;
 
 #[Fillable(['site_id', 'path', 'referrer', 'visitor_hash', 'device_type', 'country'])]
@@ -17,7 +18,7 @@ class Event extends Model
 
     protected static function newFactory()
     {
-        return \Lumina\Core\Database\Factories\EventFactory::new();
+        return EventFactory::new();
     }
 
     /**

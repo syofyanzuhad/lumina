@@ -1,7 +1,7 @@
 <?php
 
-use Lumina\Core\Models\Site;
 use App\Models\User;
+use Lumina\Core\Models\Site;
 
 test('it can create a site with normalized domain', function () {
     $user = User::factory()->create();
