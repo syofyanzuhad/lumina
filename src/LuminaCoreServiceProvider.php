@@ -42,6 +42,6 @@ class LuminaCoreServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        //
+        $this->registerMiddlewareAlias();
     }
 }
