@@ -21,6 +21,7 @@ Developers on Laravel stacks get Plausible-class analytics without leaving the L
 - ✓ Auth system (login, registration, Fortify) — existing
 - ✓ Vue 3 + Inertia.js + Tailwind CSS v4 scaffold — existing
 - ✓ PostgreSQL-ready Eloquent setup — existing
+- ✓ Package-core extraction (`packages/lumina-core` path repo) — Validated in Phase 03
 
 ### Active
 
@@ -77,6 +78,7 @@ Developers on Laravel stacks get Plausible-class analytics without leaving the L
 | Database driver for queue (v1) | No concrete need for Redis yet; Laravel Cloud makes upgrade trivial later | — Pending |
 | Aggregate on-read with cache (60s TTL) | Avoids premature materialized views; revisit if query times degrade at real load | — Pending |
 | Postgres partitioning deferred | Not needed at MVP scale; defer until events table proves to be a bottleneck | — Pending |
+| Package-core as Composer path repository | Enables code sharing between embedded and standalone modes without monorepo build overhead | Validated in Phase 03 |
 
 ## Evolution
 
@@ -96,4 +98,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-26 after initialization from project-en.md*
+*Last updated: 2026-07-30 after Phase 03 completion*
