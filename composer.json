@@ -49,7 +49,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Lumina\\Core\\Tests\\": "packages/lumina-core/tests/"
         }
     },
     "scripts": {
