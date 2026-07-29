@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Event;
-use App\Models\Site;
+use Lumina\Core\Models\Event;
+use Lumina\Core\Models\Site;
 use Illuminate\Database\Seeder;
 
 class SiteSeeder extends Seeder
