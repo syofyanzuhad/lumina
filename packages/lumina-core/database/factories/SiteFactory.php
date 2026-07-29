@@ -1,17 +1,18 @@
 <?php
 
-namespace Database\Factories;
+namespace Lumina\Core\Database\Factories;
 
-use App\Models\Site;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Lumina\Core\Models\Site;
 
 /**
  * @extends Factory<Site>
  */
 class SiteFactory extends Factory
 {
+    protected $model = Site::class;
+
     /**
      * Define the model's default state.
      *
@@ -19,9 +20,11 @@ class SiteFactory extends Factory
      */
     public function definition(): array
     {
+        $userModel = config('auth.providers.users.model', \App\Models\User::class);
+
         return [
             'domain' => Str::lower($this->faker->unique()->domainName()),
-            'owner_id' => User::factory(),
+            'owner_id' => $userModel::factory(),
         ];
     }
 }
