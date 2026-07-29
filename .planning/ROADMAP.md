@@ -65,7 +65,7 @@ Phases 1–8 build `packages/lumina-core` as a Composer path repository within t
 
 ---
 
-### Phase 4: Middleware Tracking (Path A) & Metadata Migration
+### Phase 4: Middleware Tracking (Path A) & Metadata Migration ✅
 
 **Goal:** Server-side middleware tracking path (Path A) works end-to-end; `metadata` JSON column added to events table for custom events.
 

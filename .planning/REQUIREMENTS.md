@@ -11,7 +11,7 @@
 - [ ] **SITE-02**: User receives a unique tracking snippet (script tag) after registering a site
 - [ ] **SITE-03**: User can view a list of all their registered sites
 - [ ] **SITE-04**: User can switch between sites in the dashboard
-- [ ] **SITE-05**: Ingest endpoint rejects events for domains not registered in the `sites` table
+- [x] **SITE-05**: Ingest endpoint rejects events for domains not registered in the `sites` table
 
 ### Tracking Script
 
@@ -25,16 +25,16 @@
 
 - [ ] **INGEST-01**: `POST /api/collect` is a public endpoint (no auth required)
 - [ ] **INGEST-02**: Endpoint validates payload and rejects invalid or unregistered-site requests
-- [ ] **INGEST-03**: Validated events are dispatched to an `InsertEvent` queue job (not inserted synchronously)
+- [x] **INGEST-03**: Validated events are dispatched to an `InsertEvent` queue job (not inserted synchronously)
 - [ ] **INGEST-04**: Endpoint responds fast regardless of DB write latency (queue decouples response from insert)
-- [ ] **INGEST-05**: Rate limiting applied per IP and per site
+- [x] **INGEST-05**: Rate limiting applied per IP and per site
 
 ### Privacy & Visitor Uniqueness
 
-- [ ] **PRIV-01**: No raw IP addresses are stored in the database
-- [ ] **PRIV-02**: Visitor uniqueness uses a daily hash: `hash(IP + UserAgent + daily_salt)`
-- [ ] **PRIV-03**: Daily salt rotates every 24 hours (stored in cache/config, not per-visitor)
-- [ ] **PRIV-04**: Visitor hash is not reversible to an individual
+- [x] **PRIV-01**: No raw IP addresses are stored in the database
+- [x] **PRIV-02**: Visitor uniqueness uses a daily hash: `hash(IP + UserAgent + daily_salt)`
+- [x] **PRIV-03**: Daily salt rotates every 24 hours (stored in cache/config, not per-visitor)
+- [x] **PRIV-04**: Visitor hash is not reversible to an individual
 
 ### Dashboard
 
@@ -61,7 +61,7 @@
 
 ### Queue & Workers
 
-- [ ] **QUEUE-01**: Queue uses the database driver in v1 (no Redis dependency)
+- [x] **QUEUE-01**: Queue uses the database driver in v1 (no Redis dependency)
 - [ ] **QUEUE-02**: Queue worker runs as a persistent process on Laravel Cloud (not serverless invocation)
 
 ## v2 Requirements
@@ -110,6 +110,7 @@
 | DATE-01 – DATE-03 | Phase 5 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 34 total
 - Mapped to phases: 34
 - Unmapped: 0 ✓
