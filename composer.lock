@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e6e3d94dbd6d3ff8ac86199889dd9b71",
+    "content-hash": "b916990e4fddc69394811e63ff119fe3",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2503,6 +2503,46 @@
                 }
             ],
             "time": "2026-03-08T20:05:35+00:00"
+        },
+        {
+            "name": "lumina/core",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/lumina-core",
+                "reference": "2f23760943d9b7df83e24ad63bf34d6a172da547"
+            },
+            "require": {
+                "laravel/framework": "^13.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Lumina\\Core\\LuminaCoreServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Lumina\\Core\\": "src/",
+                    "Lumina\\Core\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Lumina\\Core\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Core models, migrations, and shared logic for Lumina analytics.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "monolog/monolog",
@@ -11388,7 +11428,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "lumina/core": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
