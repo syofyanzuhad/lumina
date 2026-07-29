@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
+current_phase: 3
+current_phase_name: Package-Core Extraction
 status: ready_to_plan
 stopped_at: Phase 3 context gathered
-last_updated: "2026-07-29T17:21:49.002Z"
+last_updated: "2026-07-29T17:41:45.892Z"
 progress:
-  total_phases: 10
+  total_phases: 4
   completed_phases: 2
-  total_plans: 7
+  total_plans: 8
   completed_plans: 7
-  percent: 20
 ---
 
 # Project State: Lumina
@@ -20,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-26)
 
 **Core value:** Developers on Laravel stacks get Plausible-class analytics without leaving the Laravel ecosystem or adding new runtimes.
-**Current focus:** Phase 3 — Package-Core Extraction
+**Current focus:** Phase 03 — package-core-extraction
 
 ## Current Status
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Enums;
+namespace Lumina\Core\Enums;
 
 enum DeviceType: string
 {
