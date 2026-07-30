@@ -203,6 +203,13 @@ const formatNumber = (num: number) => {
     return new Intl.NumberFormat().format(num);
 };
 
+const getCountryFlag = (code?: string): string => {
+    if (!code || code.length !== 2) return '🌐';
+    const upper = code.toUpperCase();
+    const codePoints = [...upper].map((char) => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+};
+
 const getDeviceIcon = (deviceStr: string) => {
     const lower = (deviceStr || '').toLowerCase();
     if (lower.includes('mobile')) return Smartphone;
@@ -588,6 +595,7 @@ const getDeviceIcon = (deviceStr: string) => {
                         <div v-for="item in overview.top_countries" :key="item.code || item.name" class="space-y-1.5">
                             <div class="flex justify-between text-xs font-medium">
                                 <span class="truncate font-mono text-foreground flex items-center gap-1.5">
+                                    <span class="text-base leading-none select-none">{{ getCountryFlag(item.code) }}</span>
                                     <span v-if="item.code" class="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase">{{ item.code }}</span>
                                     {{ item.name || item.code }}
                                 </span>
