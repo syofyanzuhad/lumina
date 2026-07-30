@@ -29,7 +29,7 @@
 - Aggregate queries for Browsers, Operating Systems, Countries in `AnalyticsService`
 - Render Browser, OS, and Location cards in Vue & Livewire dashboards
 
-### Phase 12: Custom Event Tracking UI & Breakdown
+- [x] Phase 12: Custom Event Tracking UI & Breakdown (1/1 plan) — completed 2026-07-30
 - Dedicated Custom Events tab and filters in standalone & Livewire UI
 - Event metadata inspector & timeline breakdown
 - Parity across Inertia/Vue and Livewire components
@@ -70,7 +70,7 @@
 | 9. Standalone Dashboard | v1.0 | 1/1 | Complete | 2026-07-30 |
 | 10. E2E Verification | v1.0 | 1/1 | Complete | 2026-07-30 |
 | 11. Enhanced Data Detection | v1.1 | 1/1 | Complete | 2026-07-30 |
-| 12. Custom Event Tracking UI | v1.1 | 0/0 | Planned | — |
+| 12. Custom Event Tracking UI | v1.1 | 1/1 | Complete | 2026-07-30 |
 | 13. Goal & Conversion Tracking | v1.1 | 0/0 | Planned | — |
 | 14. Data Export Engine | v1.1 | 0/0 | Planned | — |
 | 15. Public & Shareable Dashboards | v1.1 | 0/0 | Planned | — |
