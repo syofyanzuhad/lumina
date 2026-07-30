@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Lumina\Core\Database\Factories\EventFactory;
 use Lumina\Core\Enums\DeviceType;
 
-#[Fillable(['site_id', 'path', 'referrer', 'visitor_hash', 'device_type', 'country', 'metadata'])]
+#[Fillable(['site_id', 'path', 'referrer', 'visitor_hash', 'device_type', 'country', 'metadata', 'created_at'])]
 class Event extends Model
 {
     use HasFactory;
