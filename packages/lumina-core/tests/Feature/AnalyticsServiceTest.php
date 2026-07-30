@@ -118,7 +118,7 @@ test('it calculates top referrers with count and percentage', function () {
 
     expect($topReferrers)->toHaveCount(2);
     expect($topReferrers->first())->toBe([
-        'referrer' => 'https://google.com',
+        'referrer' => 'Google',
         'count' => 3,
         'percentage' => 60.0,
     ]);

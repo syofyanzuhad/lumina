@@ -59,8 +59,8 @@ class LivewireDashboardTest extends TestCase
             ->assertSee('Unique Visitors')
             ->assertSee('/home')
             ->assertSee('/pricing')
-            ->assertSee('https://google.com')
-            ->assertSee('https://twitter.com');
+            ->assertSee('Google')
+            ->assertSee('X (Twitter)');
     }
 
     public function test_livewire_dashboard_component_updates_reactively_when_date_period_changes(): void
