@@ -13,23 +13,32 @@ use Lumina\Core\Models\Site;
 
 class CollectController extends Controller
 {
-    protected array $corsHeaders = [
-        'Access-Control-Allow-Origin' => '*',
-        'Access-Control-Allow-Methods' => 'POST, OPTIONS',
-        'Access-Control-Allow-Headers' => 'Content-Type, X-Requested-With',
-    ];
+    protected function getCorsHeaders(Request $request): array
+    {
+        $origin = $request->header('Origin');
+
+        return [
+            'Access-Control-Allow-Origin' => $origin ?: '*',
+            'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Content-Type, X-Requested-With',
+            'Access-Control-Allow-Credentials' => 'true',
+            'Vary' => 'Origin',
+        ];
+    }
 
     public function __invoke(Request $request): JsonResponse
     {
+        $corsHeaders = $this->getCorsHeaders($request);
+
         if ($request->isMethod('OPTIONS')) {
-            return response()->json(null, 204, $this->corsHeaders);
+            return response()->json(null, 204, $corsHeaders);
         }
 
         if ($request->isMethod('GET')) {
             return response()->json([
                 'status' => 'ok',
                 'message' => 'Lumina Analytics Collector API is active.',
-            ], 200, $this->corsHeaders);
+            ], 200, $corsHeaders);
         }
 
         $validated = $request->validate([
@@ -47,7 +56,7 @@ class CollectController extends Controller
         if (! $site) {
             return response()->json([
                 'message' => 'Unregistered domain.',
-            ], 422, $this->corsHeaders);
+            ], 422, $corsHeaders);
         }
 
         $dailySalt = Cache::remember(
@@ -92,6 +101,6 @@ class CollectController extends Controller
             metadata: $metadata,
         );
 
-        return response()->json(null, 204, $this->corsHeaders);
+        return response()->json(null, 204, $corsHeaders);
     }
 }
