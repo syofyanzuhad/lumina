@@ -5,6 +5,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Lumina\Core\Enums\DeviceType;
 use Lumina\Core\Models\Event;
+use Lumina\Core\Models\Goal;
 use Lumina\Core\Models\Site;
 use Lumina\Core\Services\AnalyticsService;
 use Tests\TestCase;
@@ -164,9 +165,47 @@ test('it returns complete dashboard overview payload', function () {
         'top_referrers',
         'daily_pageviews',
         'custom_events',
+        'goals',
     ]);
     expect($overview['total_pageviews'])->toBe(5);
     expect($overview['unique_visitors'])->toBe(3);
+});
+
+test('it computes goal metrics for paths and custom events', function () {
+    Goal::create([
+        'site_id' => $this->siteA->id,
+        'name' => 'Viewed Pricing',
+        'target_type' => 'path',
+        'target_value' => '/pricing',
+    ]);
+
+    Goal::create([
+        'site_id' => $this->siteA->id,
+        'name' => 'Purchased',
+        'target_type' => 'custom_event',
+        'target_value' => 'purchase_click',
+    ]);
+
+    $goals = $this->service->getGoals($this->siteA, $this->startDate, $this->endDate);
+
+    expect($goals)->toHaveCount(2);
+
+    // First goal: /pricing
+    expect($goals[0]['name'])->toBe('Viewed Pricing');
+    expect($goals[0]['completions'])->toBe(1);
+    expect($goals[0]['conversion_rate'])->toBe(33.3);
+
+    // Second goal: purchase_click
+    expect($goals[1]['name'])->toBe('Purchased');
+    expect($goals[1]['completions'])->toBe(2);
+    expect($goals[1]['conversion_rate'])->toBe(66.7);
+
+    // Check trend for second goal
+    expect($goals[1]['trend'])->toHaveCount(3);
+    expect($goals[1]['trend'][1])->toBe([
+        'date' => '2026-07-02',
+        'completions' => 2,
+    ]);
 });
 
 test('it caches aggregation queries for 60 seconds', function () {
