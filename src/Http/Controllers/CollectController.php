@@ -25,6 +25,13 @@ class CollectController extends Controller
             return response()->json(null, 204, $this->corsHeaders);
         }
 
+        if ($request->isMethod('GET')) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Lumina Analytics Collector API is active.',
+            ], 200, $this->corsHeaders);
+        }
+
         $validated = $request->validate([
             'domain' => ['required', 'string'],
             'path' => ['required', 'string'],
