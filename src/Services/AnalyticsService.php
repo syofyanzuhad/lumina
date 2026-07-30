@@ -23,7 +23,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'pageviews', $start, $end);
 
-        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+        return (int) Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
             return Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->count();
@@ -37,7 +37,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'unique_visitors', $start, $end);
 
-        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+        return (int) Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
             return Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->distinct('visitor_hash')
@@ -52,7 +52,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, "top_pages_{$limit}", $start, $end);
 
-        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
             $results = Event::where('site_id', $site->id)
@@ -68,12 +68,14 @@ class AnalyticsService
                 $count = (int) $row->count;
 
                 return [
-                    'path' => $row->path,
+                    'path' => (string) $row->path,
                     'count' => $count,
                     'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
                 ];
-            });
+            })->toArray();
         });
+
+        return collect($data ?? []);
     }
 
     /**
@@ -83,7 +85,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, "top_referrers_{$limit}", $start, $end);
 
-        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
             $results = Event::where('site_id', $site->id)
@@ -101,12 +103,14 @@ class AnalyticsService
                 $count = (int) $row->count;
 
                 return [
-                    'referrer' => $row->referrer,
+                    'referrer' => (string) $row->referrer,
                     'count' => $count,
                     'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
                 ];
-            });
+            })->toArray();
         });
+
+        return collect($data ?? []);
     }
 
     /**
@@ -116,30 +120,32 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'daily_pageviews', $start, $end);
 
-        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
             $events = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->get();
 
             $grouped = $events->groupBy(fn ($e) => $e->created_at->format('Y-m-d'));
 
-            $series = collect();
+            $series = [];
             $curr = $start->copy()->startOfDay();
             $last = $end->copy()->startOfDay();
 
             while ($curr->lte($last)) {
                 $dateStr = $curr->format('Y-m-d');
                 $dayEvents = $grouped->get($dateStr, collect());
-                $series->push([
+                $series[] = [
                     'date' => $dateStr,
                     'pageviews' => $dayEvents->count(),
                     'visitors' => $dayEvents->pluck('visitor_hash')->unique()->count(),
-                ]);
+                ];
                 $curr = $curr->addDay();
             }
 
             return $series;
         });
+
+        return collect($data ?? []);
     }
 
     /**
@@ -149,7 +155,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, "custom_events_{$limit}", $start, $end);
 
-        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
             $events = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->whereNotNull('metadata')
@@ -164,8 +170,11 @@ class AnalyticsService
                 ])
                 ->sortByDesc('count')
                 ->take($limit)
-                ->values();
+                ->values()
+                ->toArray();
         });
+
+        return collect($data ?? []);
     }
 
     /**
