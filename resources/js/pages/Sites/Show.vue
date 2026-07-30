@@ -319,7 +319,7 @@ const deleteGoal = async () => {
                                     id="share-url"
                                     :value="shareUrl"
                                     readonly
-                                    class="font-mono text-sm bg-muted text-muted-foreground flex-1"
+                                    class="font-mono text-sm bg-muted/80 text-foreground font-semibold flex-1 select-all"
                                 />
                                 <Button variant="secondary" @click="copyShareUrl">
                                     <Check v-if="copiedShareUrl" class="h-4 w-4 text-green-500 mr-2" />
