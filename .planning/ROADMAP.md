@@ -45,7 +45,7 @@
 - Respect date range filters and site scoping
 - UI export modal & download actions in dashboard
 
-### Phase 15: Public & Shareable Dashboards
+- [x] Phase 15: Public & Shareable Dashboards (2/2 plans) — completed 2026-07-31
 - Site share settings & secret token generator
 - Read-only route & controller for `/share/{token}`
 - Shareable view mode for Vue & Livewire dashboard layouts
@@ -71,9 +71,9 @@
 | 10. E2E Verification | v1.0 | 1/1 | Complete | 2026-07-30 |
 | 11. Enhanced Data Detection | v1.1 | 1/1 | Complete | 2026-07-30 |
 | 12. Custom Event Tracking UI | v1.1 | 1/1 | Complete | 2026-07-30 |
-| 13. Goal & Conversion Tracking | v1.1 | 0/0 | Planned | — |
-| 14. Data Export Engine | v1.1 | 0/0 | Planned | — |
-| 15. Public & Shareable Dashboards | v1.1 | 0/0 | Planned | — |
+| 13. Goal & Conversion Tracking | v1.1 | 1/1 | Complete | 2026-07-30 |
+| 14. Data Export Engine | v1.1 | 1/1 | Complete | 2026-07-30 |
+| 15. Public & Shareable Dashboards | v1.1 | 2/2 | Complete | 2026-07-31 |
 | 16. Milestone v1.1 E2E Verification | v1.1 | 0/0 | Planned | — |
 
 ## Backlog (Post-v1.1)
