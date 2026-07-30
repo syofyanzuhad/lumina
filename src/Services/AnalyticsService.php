@@ -79,24 +79,32 @@ class AnalyticsService
         $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
-            $results = Event::where('site_id', $site->id)
+            $events = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
-                ->select('path', DB::raw('count(*) as count'))
-                ->groupBy('path')
-                ->orderByDesc('count')
-                ->orderBy('path')
-                ->limit($limit)
+                ->select('path')
                 ->get();
 
-            return $results->map(function ($row) use ($totalPageviews) {
-                $count = (int) $row->count;
+            $grouped = $events->groupBy(function ($e) {
+                $rawPath = (string) $e->path;
+                $pos = strpos($rawPath, '?');
+                return $pos !== false ? substr($rawPath, 0, $pos) : $rawPath;
+            });
 
-                return [
-                    'path' => (string) $row->path,
-                    'count' => $count,
-                    'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
-                ];
-            })->toArray();
+            return $grouped
+                ->map(fn ($group, $path) => [
+                    'path' => (string) $path,
+                    'count' => $group->count(),
+                    'percentage' => $totalPageviews > 0 ? round(($group->count() / $totalPageviews) * 100, 1) : 0.0,
+                ])
+                ->sort(function ($a, $b) {
+                    if ($a['count'] === $b['count']) {
+                        return strcmp($a['path'], $b['path']);
+                    }
+                    return $b['count'] <=> $a['count'];
+                })
+                ->take($limit)
+                ->values()
+                ->toArray();
         });
 
         return collect($data ?? []);

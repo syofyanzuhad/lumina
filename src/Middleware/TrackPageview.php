@@ -63,7 +63,8 @@ class TrackPageview
             ?? $request->header('CF-IPCountry')
             ?? $request->header('X-Vercel-IP-Country');
 
-        $path = '/'.ltrim($request->path(), '/');
+        $cleanPath = parse_url($request->path(), PHP_URL_PATH) ?? '/';
+        $path = '/'.ltrim($cleanPath, '/');
 
         // 6. Dispatch tracking job
         InsertEvent::dispatch(
