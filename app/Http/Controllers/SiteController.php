@@ -47,4 +47,38 @@ class SiteController extends Controller
 
         return redirect()->route('sites.index');
     }
+
+    public function export(Site $site)
+    {
+        Gate::authorize('view', $site);
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$site->domain.'-events.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($site) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['ID', 'Path', 'Referrer', 'Device Type', 'Created At']);
+
+            $site->events()->chunk(1000, function ($events) use ($file) {
+                foreach ($events as $event) {
+                    fputcsv($file, [
+                        $event->id,
+                        $event->path,
+                        $event->referrer,
+                        $event->device_type->value ?? 'unknown',
+                        $event->created_at->toDateTimeString(),
+                    ]);
+                }
+            });
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

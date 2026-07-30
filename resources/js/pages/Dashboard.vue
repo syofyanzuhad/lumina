@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, router, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor } from '@lucide/vue';
+import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download } from '@lucide/vue';
+import AppearanceTabs from '@/components/AppearanceTabs.vue';
 
 interface SiteItem {
     id: number;
@@ -159,6 +160,19 @@ const getDeviceIcon = (deviceStr: string) => {
                 >
                     Last 30 Days
                 </button>
+
+                <div class="hidden sm:block ml-2 border-l border-sidebar-border/70 dark:border-sidebar-border pl-2">
+                    <AppearanceTabs />
+                </div>
+
+                <!-- Export CSV Button -->
+                <a
+                    :href="`/sites/${activeSite.id}/export`"
+                    title="Export to CSV"
+                    class="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80 ml-1"
+                >
+                    <Download class="h-4 w-4" />
+                </a>
 
                 <!-- Refresh Data Button -->
                 <button
