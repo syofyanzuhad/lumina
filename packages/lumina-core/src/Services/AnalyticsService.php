@@ -31,6 +31,12 @@ class AnalyticsService
         Cache::forget("lumina:analytics:{$site->id}:top_browsers_10");
         Cache::forget("lumina:analytics:{$site->id}:top_os_10");
         Cache::forget("lumina:analytics:{$site->id}:top_countries_10");
+        Cache::forget("lumina:analytics:{$site->id}:custom_events_list");
+        Cache::forget("lumina:analytics:{$site->id}:custom_event_summary");
+        Cache::forget("lumina:analytics:{$site->id}:custom_event_timeline");
+        Cache::forget("lumina:analytics:{$site->id}:custom_event_property_keys");
+        Cache::forget("lumina:analytics:{$site->id}:custom_event_property_breakdown");
+        Cache::forget("lumina:analytics:{$site->id}:custom_event_logs");
     }
 
     /**
@@ -357,11 +363,239 @@ class AnalyticsService
     /**
      * Generate deterministic cache key.
      */
-    protected function cacheKey(int $siteId, string $metric, CarbonInterface $start, CarbonInterface $end): string
+    protected function cacheKey(int $siteId, string $metric, CarbonInterface $start, CarbonInterface $end, array $extra = []): string
     {
         $sStr = $start->format('Y-m-d');
         $eStr = $end->format('Y-m-d');
 
-        return "lumina:analytics:{$siteId}:{$metric}:{$sStr}:{$eStr}";
+        $key = "lumina:analytics:{$siteId}:{$metric}:{$sStr}:{$eStr}";
+
+        if (! empty($extra)) {
+            $key .= ':'.implode(':', $extra);
+        }
+
+        return $key;
+    }
+
+    /**
+     * Get summary KPIs for custom events.
+     */
+    public function getCustomEventSummary(Site $site, CarbonInterface $start, CarbonInterface $end, ?string $selectedEvent = null): array
+    {
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_summary', $start, $end, [$selectedEvent ?? 'all']);
+
+        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $selectedEvent) {
+            $query = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('metadata');
+
+            $events = $query->get()->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']));
+
+            if ($selectedEvent) {
+                $events = $events->filter(fn ($e) => $e->metadata['name'] === $selectedEvent);
+            }
+
+            $totalEvents = $events->count();
+            $grouped = $events->groupBy(fn ($e) => $e->metadata['name']);
+            $uniqueEventNames = $grouped->keys()->count();
+
+            $topEventName = null;
+            if ($uniqueEventNames > 0) {
+                $topEventName = $grouped->map->count()->sortDesc()->keys()->first();
+            }
+
+            return [
+                'total_custom_events' => $totalEvents,
+                'unique_event_names' => $uniqueEventNames,
+                'top_event_name' => $topEventName,
+            ];
+        });
+    }
+
+    /**
+     * Get list of all distinct custom event names with counts.
+     */
+    public function getCustomEventsList(Site $site, CarbonInterface $start, CarbonInterface $end): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, 'custom_events_list', $start, $end);
+
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+            $events = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('metadata')
+                ->get()
+                ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']));
+
+            $totalEvents = $events->count();
+
+            return $events
+                ->groupBy(fn ($e) => $e->metadata['name'])
+                ->map(function ($group, $name) use ($totalEvents) {
+                    $count = $group->count();
+
+                    return [
+                        'name' => (string) $name,
+                        'count' => $count,
+                        'percentage' => $totalEvents > 0 ? round(($count / $totalEvents) * 100, 1) : 0.0,
+                        'last_seen' => $group->sortByDesc('created_at')->first()->created_at->toDateTimeString(),
+                    ];
+                })
+                ->sortByDesc('count')
+                ->values()
+                ->toArray();
+        });
+
+        return collect($data ?? []);
+    }
+
+    /**
+     * Get daily timeseries for custom events.
+     */
+    public function getCustomEventTimeline(Site $site, CarbonInterface $start, CarbonInterface $end, ?string $eventName = null): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_timeline', $start, $end, [$eventName ?? 'all']);
+
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName) {
+            $events = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('metadata')
+                ->get()
+                ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']));
+
+            if ($eventName) {
+                $events = $events->filter(fn ($e) => $e->metadata['name'] === $eventName);
+            }
+
+            $grouped = $events->groupBy(fn ($e) => $e->created_at->format('Y-m-d'));
+
+            $series = [];
+            $curr = $start->copy()->startOfDay();
+            $last = $end->copy()->startOfDay();
+
+            while ($curr->lte($last)) {
+                $dateStr = $curr->format('Y-m-d');
+                $dayEvents = $grouped->get($dateStr, collect());
+                $series[] = [
+                    'date' => $dateStr,
+                    'count' => $dayEvents->count(),
+                ];
+                $curr = $curr->addDay();
+            }
+
+            return $series;
+        });
+
+        return collect($data ?? []);
+    }
+
+    /**
+     * Get property keys for a custom event.
+     */
+    public function getCustomEventPropertyKeys(Site $site, string $eventName, CarbonInterface $start, CarbonInterface $end): array
+    {
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_property_keys', $start, $end, [$eventName]);
+
+        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName) {
+            $events = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('metadata')
+                ->get()
+                ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']) && $e->metadata['name'] === $eventName);
+
+            $keys = collect();
+
+            foreach ($events as $event) {
+                if (isset($event->metadata['props']) && is_array($event->metadata['props'])) {
+                    $keys = $keys->merge(array_keys($event->metadata['props']));
+                }
+            }
+
+            return $keys->unique()->sort()->values()->toArray();
+        });
+    }
+
+    /**
+     * Get property value breakdown.
+     */
+    public function getCustomEventPropertyBreakdown(Site $site, string $eventName, string $propertyKey, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_property_breakdown', $start, $end, [$eventName, $propertyKey, $limit]);
+
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName, $propertyKey, $limit) {
+            $events = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('metadata')
+                ->get()
+                ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']) && $e->metadata['name'] === $eventName)
+                ->filter(fn ($e) => isset($e->metadata['props']) && is_array($e->metadata['props']) && array_key_exists($propertyKey, $e->metadata['props']));
+
+            $total = $events->count();
+
+            return $events
+                ->groupBy(function ($e) use ($propertyKey) {
+                    $value = $e->metadata['props'][$propertyKey];
+                    if (is_scalar($value) || is_null($value)) {
+                        return (string) $value;
+                    }
+
+                    return json_encode($value);
+                })
+                ->map(function ($group, $value) use ($total) {
+                    $count = $group->count();
+
+                    return [
+                        'value' => $value === '' ? '(empty)' : $value,
+                        'count' => $count,
+                        'percentage' => $total > 0 ? round(($count / $total) * 100, 1) : 0.0,
+                    ];
+                })
+                ->sortByDesc('count')
+                ->take($limit)
+                ->values()
+                ->toArray();
+        });
+
+        return collect($data ?? []);
+    }
+
+    /**
+     * Get custom event logs.
+     */
+    public function getCustomEventLogs(Site $site, CarbonInterface $start, CarbonInterface $end, ?string $eventName = null, int $limit = 50): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_logs', $start, $end, [$eventName ?? 'all', $limit]);
+
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName, $limit) {
+            $query = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('metadata')
+                ->latest();
+
+            $events = $query->get()->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']));
+
+            if ($eventName) {
+                $events = $events->filter(fn ($e) => $e->metadata['name'] === $eventName);
+            }
+
+            return $events->take($limit)->map(function ($e) {
+                $props = $e->metadata['props'] ?? null;
+
+                return [
+                    'id' => $e->id,
+                    'created_at' => $e->created_at->toDateTimeString(),
+                    'path' => $e->path,
+                    'visitor_hash' => $e->visitor_hash,
+                    'device_type' => is_object($e->device_type) ? $e->device_type->value : (string) $e->device_type,
+                    'browser' => $e->browser,
+                    'os' => $e->os,
+                    'country_name' => $e->country_name ?? $e->country,
+                    'country_code' => $e->country_code,
+                    'event_name' => $e->metadata['name'],
+                    'props' => $props,
+                ];
+            })->values()->toArray();
+        });
+
+        return collect($data ?? []);
     }
 }

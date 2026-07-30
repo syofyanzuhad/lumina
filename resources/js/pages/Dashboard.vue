@@ -3,6 +3,7 @@ import { Head, router, Link } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
+import CustomEventsTab from '@/components/CustomEventsTab.vue';
 
 interface SiteItem {
     id: number;
@@ -74,7 +75,16 @@ const props = defineProps<{
     sites: SiteItem[];
     activeSite: SiteItem;
     period: string;
-    overview: Overview;
+    activeTab?: string;
+    overview?: Overview;
+    selectedEvent?: string | null;
+    selectedPropertyKey?: string | null;
+    custom_event_summary?: any;
+    custom_events_list?: any[];
+    custom_event_timeline?: any[];
+    custom_event_property_keys?: string[];
+    custom_event_property_breakdown?: any[];
+    custom_event_logs?: any[];
 }>();
 
 defineOptions({
@@ -92,7 +102,7 @@ const isRefreshing = ref(false);
 const hoveredDay = ref<DailyItem | null>(null);
 
 const maxDaily = computed(() => {
-    if (!props.overview.daily_pageviews || props.overview.daily_pageviews.length === 0) {
+    if (!props.overview?.daily_pageviews || props.overview.daily_pageviews.length === 0) {
         return 1;
     }
     const max = Math.max(...props.overview.daily_pageviews.map((d) => d.pageviews));
@@ -102,11 +112,15 @@ const maxDaily = computed(() => {
 const changeSite = (event: Event) => {
     const target = event.target as HTMLSelectElement;
     const siteId = target.value;
-    router.get('/dashboard', { site_id: siteId, period: props.period }, { preserveState: true, preserveScroll: true });
+    router.get('/dashboard', { site_id: siteId, period: props.period, tab: props.activeTab }, { preserveState: true, preserveScroll: true });
 };
 
 const setPeriod = (newPeriod: string) => {
-    router.get('/dashboard', { site_id: props.activeSite.id, period: newPeriod }, { preserveState: true, preserveScroll: true });
+    router.get('/dashboard', { site_id: props.activeSite.id, period: newPeriod, tab: props.activeTab }, { preserveState: true, preserveScroll: true });
+};
+
+const setTab = (newTab: string) => {
+    router.get('/dashboard', { site_id: props.activeSite.id, period: props.period, tab: newTab }, { preserveState: true, preserveScroll: true });
 };
 
 const isLive = ref(false);
@@ -267,32 +281,59 @@ const getDeviceIcon = (deviceStr: string) => {
             </div>
         </div>
 
-        <!-- Empty State View -->
-        <div v-if="overview.total_pageviews === 0" class="rounded-xl border border-dashed border-sidebar-border/80 dark:border-sidebar-border p-12 text-center bg-card shadow-sm">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                <Sparkles class="h-7 w-7" />
-            </div>
-            <h3 class="mt-4 text-lg font-bold">No tracking data collected yet</h3>
-            <p class="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
-                Install the tracking snippet on <strong class="text-foreground">{{ activeSite.domain }}</strong> to start receiving real-time pageviews and visitor metrics.
-            </p>
-            <div class="mt-6 flex justify-center gap-3">
-                <Link
-                    :href="`/sites/${activeSite.id}`"
-                    class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md hover:bg-indigo-500 transition-all"
-                >
-                    <Code class="h-4 w-4" />
-                    Get Tracking Snippet
-                </Link>
-            </div>
+        <!-- Tab Header Controls -->
+        <div class="flex items-center gap-1.5 p-1 bg-muted rounded-xl border border-sidebar-border/50 self-start">
+            <button
+                @click="setTab('overview')"
+                :class="[
+                    'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all',
+                    (!activeTab || activeTab === 'overview')
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
+                        : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80'
+                ]"
+            >
+                Overview
+            </button>
+            <button
+                @click="setTab('events')"
+                :class="[
+                    'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all',
+                    activeTab === 'events'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
+                        : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80'
+                ]"
+            >
+                Custom Events
+            </button>
         </div>
 
-        <!-- Analytics Overview Dashboard -->
-        <template v-else>
-            <!-- KPI Summary Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <!-- Pageviews Card -->
-                <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+        <template v-if="!activeTab || activeTab === 'overview'">
+            <!-- Empty State View -->
+            <div v-if="overview?.total_pageviews === 0" class="rounded-xl border border-dashed border-sidebar-border/80 dark:border-sidebar-border p-12 text-center bg-card shadow-sm">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <Sparkles class="h-7 w-7" />
+                </div>
+                <h3 class="mt-4 text-lg font-bold">No tracking data collected yet</h3>
+                <p class="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
+                    Install the tracking snippet on <strong class="text-foreground">{{ activeSite.domain }}</strong> to start receiving real-time pageviews and visitor metrics.
+                </p>
+                <div class="mt-6 flex justify-center gap-3">
+                    <Link
+                        :href="`/sites/${activeSite.id}`"
+                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md hover:bg-indigo-500 transition-all"
+                    >
+                        <Code class="h-4 w-4" />
+                        Get Tracking Snippet
+                    </Link>
+                </div>
+            </div>
+
+            <!-- Analytics Overview Dashboard -->
+            <template v-else-if="overview">
+                <!-- KPI Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Pageviews Card -->
+                    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Pageviews</span>
                         <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -511,6 +552,21 @@ const getDeviceIcon = (deviceStr: string) => {
                     </div>
                 </div>
             </div>
+        </template>
+
+        <template v-else-if="activeTab === 'events'">
+            <CustomEventsTab
+                :siteId="activeSite.id"
+                :period="period"
+                :selectedEvent="selectedEvent"
+                :selectedPropertyKey="selectedPropertyKey"
+                :summary="custom_event_summary"
+                :eventsList="custom_events_list"
+                :timeline="custom_event_timeline"
+                :propertyKeys="custom_event_property_keys"
+                :propertyBreakdown="custom_event_property_breakdown"
+                :logs="custom_event_logs"
+            />
         </template>
     </div>
 </template>

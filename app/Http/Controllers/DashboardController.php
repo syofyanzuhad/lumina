@@ -33,14 +33,45 @@ class DashboardController extends Controller
         $period = $request->query('period', '30d');
         [$start, $end] = $this->resolveDateRange($period, $request->query('start_date'), $request->query('end_date'));
 
-        $overview = $analytics->getOverview($activeSite, $start, $end);
+        $activeTab = $request->query('tab', 'overview');
 
-        return Inertia::render('Dashboard', [
+        $data = [
             'sites' => $sites,
             'activeSite' => $activeSite,
             'period' => $period,
-            'overview' => $overview,
-        ]);
+            'activeTab' => $activeTab,
+        ];
+
+        if ($activeTab === 'overview') {
+            $data['overview'] = $analytics->getOverview($activeSite, $start, $end);
+        } elseif ($activeTab === 'events') {
+            $selectedEvent = $request->query('event');
+            $selectedPropertyKey = $request->query('property');
+
+            $data['selectedEvent'] = $selectedEvent;
+            $data['selectedPropertyKey'] = $selectedPropertyKey;
+
+            $data['custom_event_summary'] = $analytics->getCustomEventSummary($activeSite, $start, $end, $selectedEvent);
+            $data['custom_events_list'] = $analytics->getCustomEventsList($activeSite, $start, $end);
+            $data['custom_event_timeline'] = $analytics->getCustomEventTimeline($activeSite, $start, $end, $selectedEvent);
+
+            if ($selectedEvent) {
+                $data['custom_event_property_keys'] = $analytics->getCustomEventPropertyKeys($activeSite, $selectedEvent, $start, $end);
+
+                if ($selectedPropertyKey) {
+                    $data['custom_event_property_breakdown'] = $analytics->getCustomEventPropertyBreakdown($activeSite, $selectedEvent, $selectedPropertyKey, $start, $end);
+                } else {
+                    $data['custom_event_property_breakdown'] = [];
+                }
+            } else {
+                $data['custom_event_property_keys'] = [];
+                $data['custom_event_property_breakdown'] = [];
+            }
+
+            $data['custom_event_logs'] = $analytics->getCustomEventLogs($activeSite, $start, $end, $selectedEvent);
+        }
+
+        return Inertia::render('Dashboard', $data);
     }
 
     protected function resolveDateRange(string $period, ?string $startDate, ?string $endDate): array

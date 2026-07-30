@@ -102,4 +102,57 @@ class DashboardControllerTest extends TestCase
             ->where('activeSite.domain', 'user1-site.com')
         );
     }
+
+    public function test_user_can_view_custom_events_tab_on_inertia_dashboard(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'my-site.com']);
+
+        $response = $this->actingAs($user)->get('/dashboard?tab=events');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->where('activeTab', 'events')
+            ->has('custom_event_summary')
+            ->has('custom_events_list')
+            ->has('custom_event_timeline')
+            ->has('custom_event_logs')
+        );
+    }
+
+    public function test_user_can_filter_custom_events_by_event_name(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'my-site.com']);
+
+        $response = $this->actingAs($user)->get('/dashboard?tab=events&event=purchase_click');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->where('activeTab', 'events')
+            ->where('selectedEvent', 'purchase_click')
+            ->has('custom_event_property_keys')
+            ->has('custom_event_property_breakdown')
+        );
+    }
+
+    public function test_inertia_dashboard_returns_custom_event_timeline_and_property_breakdowns(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'my-site.com']);
+
+        $response = $this->actingAs($user)->get('/dashboard?tab=events&event=purchase_click&property=plan');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->where('activeTab', 'events')
+            ->where('selectedEvent', 'purchase_click')
+            ->where('selectedPropertyKey', 'plan')
+            ->has('custom_event_property_keys')
+            ->has('custom_event_property_breakdown')
+        );
+    }
 }

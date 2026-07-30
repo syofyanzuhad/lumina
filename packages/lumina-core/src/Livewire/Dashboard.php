@@ -17,6 +17,12 @@ class Dashboard extends Component
 
     public ?string $endDate = null;
 
+    public string $activeTab = 'overview';
+
+    public ?string $selectedEvent = null;
+
+    public ?string $selectedPropertyKey = null;
+
     public function mount(Site $site, string $period = '30d'): void
     {
         $this->site = $site;
@@ -28,17 +34,56 @@ class Dashboard extends Component
         $this->period = $period;
     }
 
+    public function setTab(string $tab): void
+    {
+        $this->activeTab = $tab;
+    }
+
+    public function selectEvent(?string $eventName): void
+    {
+        $this->selectedEvent = $eventName;
+        $this->selectedPropertyKey = null; // Reset property key when event changes
+    }
+
+    public function selectPropertyKey(?string $key): void
+    {
+        $this->selectedPropertyKey = $key;
+    }
+
     public function render(AnalyticsService $analytics)
     {
         [$start, $end] = $this->resolveDateRange();
 
-        $overview = $analytics->getOverview($this->site, $start, $end);
-
-        return view('lumina::livewire.dashboard', array_merge($overview, [
+        $data = [
             'period' => $this->period,
             'start' => $start,
             'end' => $end,
-        ]));
+        ];
+
+        if ($this->activeTab === 'overview') {
+            $data = array_merge($data, $analytics->getOverview($this->site, $start, $end));
+        } elseif ($this->activeTab === 'events') {
+            $data['custom_event_summary'] = $analytics->getCustomEventSummary($this->site, $start, $end, $this->selectedEvent);
+            $data['custom_events_list'] = $analytics->getCustomEventsList($this->site, $start, $end);
+            $data['custom_event_timeline'] = $analytics->getCustomEventTimeline($this->site, $start, $end, $this->selectedEvent);
+
+            if ($this->selectedEvent) {
+                $data['custom_event_property_keys'] = $analytics->getCustomEventPropertyKeys($this->site, $this->selectedEvent, $start, $end);
+
+                if ($this->selectedPropertyKey) {
+                    $data['custom_event_property_breakdown'] = $analytics->getCustomEventPropertyBreakdown($this->site, $this->selectedEvent, $this->selectedPropertyKey, $start, $end);
+                } else {
+                    $data['custom_event_property_breakdown'] = [];
+                }
+            } else {
+                $data['custom_event_property_keys'] = [];
+                $data['custom_event_property_breakdown'] = [];
+            }
+
+            $data['custom_event_logs'] = $analytics->getCustomEventLogs($this->site, $start, $end, $this->selectedEvent);
+        }
+
+        return view('lumina::livewire.dashboard', $data);
     }
 
     protected function resolveDateRange(): array
