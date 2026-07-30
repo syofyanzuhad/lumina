@@ -38,6 +38,25 @@ interface CustomEventItem {
     count: number;
 }
 
+interface TopBrowser {
+    browser: string;
+    count: number;
+    percentage: number;
+}
+
+interface TopOS {
+    os: string;
+    count: number;
+    percentage: number;
+}
+
+interface TopCountry {
+    code: string;
+    name: string;
+    count: number;
+    percentage: number;
+}
+
 interface Overview {
     total_pageviews: number;
     unique_visitors: number;
@@ -45,6 +64,9 @@ interface Overview {
     top_referrers: TopReferrer[];
     daily_pageviews: DailyItem[];
     device_breakdown?: DeviceItem[];
+    top_browsers?: TopBrowser[];
+    top_os?: TopOS[];
+    top_countries?: TopCountry[];
     custom_events: CustomEventItem[];
 }
 
@@ -399,6 +421,78 @@ const getDeviceIcon = (deviceStr: string) => {
                         </div>
 
                         <p v-if="!overview.device_breakdown || overview.device_breakdown.length === 0" class="text-xs text-muted-foreground">No device data available.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details Section 2: Top Browsers, Top OS, and Top Locations -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Top Browsers Card -->
+                <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-foreground">Top Browsers</h3>
+                        <span v-if="overview.top_browsers" class="text-xs text-muted-foreground">{{ overview.top_browsers.length }} browsers</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div v-for="item in overview.top_browsers" :key="item.browser" class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="truncate font-mono text-foreground">{{ item.browser }}</span>
+                                <span class="text-muted-foreground font-mono">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-sky-600 dark:bg-sky-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${item.percentage}%` }"></div>
+                            </div>
+                        </div>
+
+                        <p v-if="!overview.top_browsers || overview.top_browsers.length === 0" class="text-xs text-muted-foreground">No browser data available.</p>
+                    </div>
+                </div>
+
+                <!-- Top OS Card -->
+                <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-foreground">Top Operating Systems</h3>
+                        <span v-if="overview.top_os" class="text-xs text-muted-foreground">{{ overview.top_os.length }} operating systems</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div v-for="item in overview.top_os" :key="item.os" class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="truncate font-mono text-foreground">{{ item.os }}</span>
+                                <span class="text-muted-foreground font-mono">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-purple-600 dark:bg-purple-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${item.percentage}%` }"></div>
+                            </div>
+                        </div>
+
+                        <p v-if="!overview.top_os || overview.top_os.length === 0" class="text-xs text-muted-foreground">No OS data available.</p>
+                    </div>
+                </div>
+
+                <!-- Top Locations Card -->
+                <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-foreground">Top Locations</h3>
+                        <span v-if="overview.top_countries" class="text-xs text-muted-foreground">{{ overview.top_countries.length }} countries</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div v-for="item in overview.top_countries" :key="item.code || item.name" class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="truncate font-mono text-foreground flex items-center gap-1.5">
+                                    <span v-if="item.code" class="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase">{{ item.code }}</span>
+                                    {{ item.name || item.code }}
+                                </span>
+                                <span class="text-muted-foreground font-mono">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-rose-600 dark:bg-rose-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${item.percentage}%` }"></div>
+                            </div>
+                        </div>
+
+                        <p v-if="!overview.top_countries || overview.top_countries.length === 0" class="text-xs text-muted-foreground">No location data available.</p>
                     </div>
                 </div>
             </div>
