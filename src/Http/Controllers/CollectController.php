@@ -15,7 +15,9 @@ class CollectController extends Controller
 {
     protected function getCorsHeaders(Request $request): array
     {
-        $origin = $request->header('Origin');
+        $origin = $request->headers->get('Origin')
+            ?? $request->headers->get('origin')
+            ?? $request->server->get('HTTP_ORIGIN');
 
         return [
             'Access-Control-Allow-Origin' => $origin ?: '*',
