@@ -5,6 +5,7 @@
     "scripts": {
         "build": "vite build",
         "build:ssr": "vite build && vite build --ssr",
+        "build:tracker": "npx terser resources/js/tracker.js -o public/js/script.js -c -m",
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
@@ -28,6 +29,7 @@
         "eslint-plugin-vue": "^9.32.0",
         "prettier": "^3.4.2",
         "prettier-plugin-tailwindcss": "^0.6.11",
+        "terser": "^5.39.0",
         "typescript": "^5.2.2",
         "typescript-eslint": "^8.23.0",
         "vite": "^8.0.0",
