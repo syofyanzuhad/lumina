@@ -74,6 +74,8 @@ class TrackPageview
             deviceType: $deviceType,
             country: $country,
             metadata: null,
+            userAgent: $request->userAgent(),
+            ip: $request->ip(),
         );
 
         return $next($request);

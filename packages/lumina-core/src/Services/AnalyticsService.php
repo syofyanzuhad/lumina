@@ -28,6 +28,9 @@ class AnalyticsService
         Cache::forget("lumina:analytics:{$site->id}:top_referrers_10");
         Cache::forget("lumina:analytics:{$site->id}:custom_events_10");
         Cache::forget("lumina:analytics:{$site->id}:device_breakdown");
+        Cache::forget("lumina:analytics:{$site->id}:top_browsers_10");
+        Cache::forget("lumina:analytics:{$site->id}:top_os_10");
+        Cache::forget("lumina:analytics:{$site->id}:top_countries_10");
     }
 
     /**
@@ -194,6 +197,116 @@ class AnalyticsService
     }
 
     /**
+     * Get top browsers for site and date range.
+     */
+    public function getTopBrowsers(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, "top_browsers_{$limit}", $start, $end);
+
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+            $totalPageviews = $this->getPageviews($site, $start, $end);
+
+            $results = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('browser')
+                ->where('browser', '!=', '')
+                ->select('browser', DB::raw('count(*) as count'))
+                ->groupBy('browser')
+                ->orderByDesc('count')
+                ->orderBy('browser')
+                ->limit($limit)
+                ->get();
+
+            return $results->map(function ($row) use ($totalPageviews) {
+                $count = (int) $row->count;
+
+                return [
+                    'browser' => (string) $row->browser,
+                    'count' => $count,
+                    'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
+                ];
+            })->toArray();
+        });
+
+        return collect($data ?? []);
+    }
+
+    /**
+     * Get top operating systems for site and date range.
+     */
+    public function getTopOperatingSystems(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, "top_os_{$limit}", $start, $end);
+
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+            $totalPageviews = $this->getPageviews($site, $start, $end);
+
+            $results = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('os')
+                ->where('os', '!=', '')
+                ->select('os', DB::raw('count(*) as count'))
+                ->groupBy('os')
+                ->orderByDesc('count')
+                ->orderBy('os')
+                ->limit($limit)
+                ->get();
+
+            return $results->map(function ($row) use ($totalPageviews) {
+                $count = (int) $row->count;
+
+                return [
+                    'os' => (string) $row->os,
+                    'count' => $count,
+                    'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
+                ];
+            })->toArray();
+        });
+
+        return collect($data ?? []);
+    }
+
+    /**
+     * Get top countries for site and date range.
+     */
+    public function getTopCountries(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, "top_countries_{$limit}", $start, $end);
+
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+            $totalPageviews = $this->getPageviews($site, $start, $end);
+
+            $results = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->where(function ($q) {
+                    $q->whereNotNull('country_code')->orWhereNotNull('country');
+                })
+                ->select(
+                    DB::raw('COALESCE(country_code, country) as code'),
+                    DB::raw('COALESCE(country_name, country) as name'),
+                    DB::raw('count(*) as count')
+                )
+                ->groupBy('code', 'name')
+                ->orderByDesc('count')
+                ->limit($limit)
+                ->get();
+
+            return $results->map(function ($row) use ($totalPageviews) {
+                $count = (int) $row->count;
+
+                return [
+                    'code' => (string) $row->code,
+                    'name' => (string) $row->name,
+                    'count' => $count,
+                    'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
+                ];
+            })->toArray();
+        });
+
+        return collect($data ?? []);
+    }
+
+    /**
      * Get custom event breakdown from metadata column.
      */
     public function getCustomEvents(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
@@ -234,6 +347,9 @@ class AnalyticsService
             'top_referrers' => $this->getTopReferrers($site, $start, $end),
             'daily_pageviews' => $this->getDailyPageviews($site, $start, $end),
             'device_breakdown' => $this->getDeviceBreakdown($site, $start, $end),
+            'top_browsers' => $this->getTopBrowsers($site, $start, $end),
+            'top_os' => $this->getTopOperatingSystems($site, $start, $end),
+            'top_countries' => $this->getTopCountries($site, $start, $end),
             'custom_events' => $this->getCustomEvents($site, $start, $end),
         ];
     }
