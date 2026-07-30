@@ -80,4 +80,76 @@ class LivewireDashboardTest extends TestCase
             ->assertSet('period', '7d')
             ->assertDontSee('/old-page');
     }
+
+    public function test_livewire_dashboard_can_switch_to_custom_events_tab(): void
+    {
+        Livewire::test(Dashboard::class, ['site' => $this->site])
+            ->call('setTab', 'events')
+            ->assertSet('activeTab', 'events')
+            ->assertSee('No custom events tracked yet');
+    }
+
+    public function test_livewire_dashboard_shows_custom_events_data(): void
+    {
+        Event::create([
+            'site_id' => $this->site->id,
+            'metadata' => ['name' => 'newsletter_signup', 'props' => ['plan' => 'free']],
+            'path' => '/',
+            'device_type' => DeviceType::Desktop,
+            'visitor_hash' => 'hash_evt',
+            'created_at' => Carbon::now(),
+        ]);
+
+        Livewire::test(Dashboard::class, ['site' => $this->site])
+            ->call('setTab', 'events')
+            ->assertSee('newsletter_signup')
+            ->assertSee('Total Custom Events')
+            ->assertSee('Unique Event Types');
+    }
+
+    public function test_livewire_dashboard_can_filter_by_custom_event_name(): void
+    {
+        Event::create([
+            'site_id' => $this->site->id,
+            'metadata' => ['name' => 'newsletter_signup', 'props' => ['plan' => 'free']],
+            'path' => '/',
+            'device_type' => DeviceType::Desktop,
+            'visitor_hash' => 'hash_evt_1',
+            'created_at' => Carbon::now(),
+        ]);
+
+        Event::create([
+            'site_id' => $this->site->id,
+            'metadata' => ['name' => 'purchase', 'props' => ['amount' => 50]],
+            'path' => '/checkout',
+            'device_type' => DeviceType::Desktop,
+            'visitor_hash' => 'hash_evt_2',
+            'created_at' => Carbon::now(),
+        ]);
+
+        Livewire::test(Dashboard::class, ['site' => $this->site])
+            ->call('setTab', 'events')
+            ->call('selectEvent', 'purchase')
+            ->assertSet('selectedEvent', 'purchase')
+            ->assertSee('Property Value Breakdown');
+    }
+
+    public function test_livewire_dashboard_can_select_property_key(): void
+    {
+        Event::create([
+            'site_id' => $this->site->id,
+            'metadata' => ['name' => 'purchase', 'props' => ['amount' => 50, 'currency' => 'USD']],
+            'path' => '/checkout',
+            'device_type' => DeviceType::Desktop,
+            'visitor_hash' => 'hash_evt',
+            'created_at' => Carbon::now(),
+        ]);
+
+        Livewire::test(Dashboard::class, ['site' => $this->site])
+            ->call('setTab', 'events')
+            ->call('selectEvent', 'purchase')
+            ->call('selectPropertyKey', 'currency')
+            ->assertSet('selectedPropertyKey', 'currency')
+            ->assertSee('USD');
+    }
 }

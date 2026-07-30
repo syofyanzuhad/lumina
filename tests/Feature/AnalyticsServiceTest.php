@@ -193,3 +193,70 @@ test('it caches aggregation queries for 60 seconds', function () {
     $thirdCall = $this->service->getPageviews($this->siteA, $this->startDate, $this->endDate);
     expect($thirdCall)->toBe(6);
 });
+
+test('it aggregates custom event summary', function () {
+    $summary = $this->service->getCustomEventSummary($this->siteA, $this->startDate, $this->endDate);
+
+    expect($summary)->toBe([
+        'total_custom_events' => 2,
+        'unique_event_names' => 1,
+        'top_event_name' => 'purchase_click',
+    ]);
+});
+
+test('it aggregates custom event list with counts and percentages', function () {
+    $list = $this->service->getCustomEventsList($this->siteA, $this->startDate, $this->endDate);
+
+    expect($list)->toHaveCount(1);
+    expect($list->first())->toHaveKeys(['name', 'count', 'percentage', 'last_seen']);
+    expect($list->first()['name'])->toBe('purchase_click');
+    expect($list->first()['count'])->toBe(2);
+    expect($list->first()['percentage'])->toBe(100.0);
+});
+
+test('it generates daily timeline timeseries for custom events', function () {
+    $timelineAll = $this->service->getCustomEventTimeline($this->siteA, $this->startDate, $this->endDate);
+
+    expect($timelineAll)->toHaveCount(3);
+    expect($timelineAll[1])->toBe([
+        'date' => '2026-07-02',
+        'count' => 2,
+    ]);
+
+    $timelineFiltered = $this->service->getCustomEventTimeline($this->siteA, $this->startDate, $this->endDate, 'purchase_click');
+    expect($timelineFiltered[1]['count'])->toBe(2);
+
+    $timelineFilteredEmpty = $this->service->getCustomEventTimeline($this->siteA, $this->startDate, $this->endDate, 'non_existent');
+    expect($timelineFilteredEmpty[1]['count'])->toBe(0);
+});
+
+test('it extracts distinct metadata property keys for a given event name', function () {
+    $keys = $this->service->getCustomEventPropertyKeys($this->siteA, 'purchase_click', $this->startDate, $this->endDate);
+
+    expect($keys)->toBe(['plan']);
+});
+
+test('it calculates property value distributions for a specified property key', function () {
+    $breakdown = $this->service->getCustomEventPropertyBreakdown($this->siteA, 'purchase_click', 'plan', $this->startDate, $this->endDate);
+
+    expect($breakdown)->toHaveCount(2);
+    expect($breakdown[0])->toBe([
+        'value' => 'pro',
+        'count' => 1,
+        'percentage' => 50.0,
+    ]);
+    expect($breakdown[1])->toBe([
+        'value' => 'enterprise',
+        'count' => 1,
+        'percentage' => 50.0,
+    ]);
+});
+
+test('it fetches recent custom event log records with formatted metadata payload', function () {
+    $logs = $this->service->getCustomEventLogs($this->siteA, $this->startDate, $this->endDate);
+
+    expect($logs)->toHaveCount(2);
+    expect($logs->first())->toHaveKeys(['id', 'created_at', 'path', 'visitor_hash', 'device_type', 'browser', 'os', 'country_name', 'country_code', 'event_name', 'props']);
+    expect($logs->first()['event_name'])->toBe('purchase_click');
+    expect($logs->first()['props'])->toBe(['plan' => 'enterprise']); // latest first
+});
