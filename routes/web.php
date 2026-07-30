@@ -5,7 +5,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\DemoController;
+
 Route::inertia('/', 'Welcome')->name('home')->middleware('lumina.track');
+Route::get('/demo', [DemoController::class, 'index'])->name('demo')->middleware('lumina.track');
 
 Route::middleware(['auth', 'verified', 'lumina.track'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
