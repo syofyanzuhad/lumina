@@ -28,7 +28,13 @@ class EventFactory extends Factory
             'referrer' => $this->faker->optional(0.7)->url(),
             'visitor_hash' => hash('sha256', $this->faker->ipv4().$this->faker->userAgent().Str::random(16)),
             'device_type' => $this->faker->randomElement(DeviceType::cases()),
-            'country' => $this->faker->optional(0.9)->countryCode(),
+            'country' => $countryCode = $this->faker->optional(0.9)->countryCode(),
+            'browser' => $this->faker->randomElement(['Chrome', 'Firefox', 'Safari', 'Edge']),
+            'browser_version' => $this->faker->numberBetween(80, 120).'.0',
+            'os' => $this->faker->randomElement(['Windows', 'macOS', 'iOS', 'Android']),
+            'os_version' => $this->faker->numberBetween(10, 17).'.0',
+            'country_code' => $countryCode,
+            'country_name' => $countryCode ? $this->faker->country() : null,
             'created_at' => $this->faker->dateTimeBetween('-30 days', 'now'),
         ];
     }
