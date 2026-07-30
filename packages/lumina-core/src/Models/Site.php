@@ -12,12 +12,33 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Lumina\Core\Database\Factories\SiteFactory;
 
-#[Fillable(['domain', 'owner_id'])]
+#[Fillable(['domain', 'owner_id', 'is_public', 'share_token', 'share_password'])]
 class Site extends Model
 {
     use HasFactory;
 
     protected $table = 'sites';
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'share_password',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_public' => 'boolean',
+        ];
+    }
 
     protected static function newFactory()
     {
@@ -65,5 +86,29 @@ class Site extends Model
         return Attribute::make(
             set: fn (string $value) => Str::lower($value),
         );
+    }
+
+    /**
+     * Check if the site has a share password set.
+     */
+    public function hasSharePassword(): bool
+    {
+        return ! empty($this->share_password);
+    }
+
+    /**
+     * Check if the site is publicly accessible via share token.
+     */
+    public function isPubliclyAccessible(): bool
+    {
+        return (bool) $this->is_public && ! empty($this->share_token);
+    }
+
+    /**
+     * Generate a new 32-character random share token.
+     */
+    public function generateShareToken(): string
+    {
+        return Str::random(32);
     }
 }
