@@ -4,6 +4,14 @@ import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import CustomEventsTab from '@/components/CustomEventsTab.vue';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface SiteItem {
     id: number;
@@ -260,14 +268,55 @@ const getDeviceIcon = (deviceStr: string) => {
                     <AppearanceTabs />
                 </div>
 
-                <!-- Export CSV Button -->
-                <a
-                    :href="`/sites/${activeSite.id}/export`"
-                    title="Export to CSV"
-                    class="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80 ml-1"
-                >
-                    <Download class="h-4 w-4" />
-                </a>
+                <!-- Export Menu Dropdown -->
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <button
+                            type="button"
+                            title="Export Data"
+                            class="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80 ml-1 flex items-center gap-1"
+                        >
+                            <Download class="h-4 w-4" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-56">
+                        <DropdownMenuLabel>Export Pageviews</DropdownMenuLabel>
+                        <DropdownMenuItem as-child>
+                            <a :href="`/sites/${activeSite.id}/export?type=pageviews&format=csv&period=${period}`" target="_blank" class="w-full cursor-pointer">
+                                Pageviews (CSV)
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <a :href="`/sites/${activeSite.id}/export?type=pageviews&format=json&period=${period}`" target="_blank" class="w-full cursor-pointer">
+                                Pageviews (JSON)
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Export Custom Events</DropdownMenuLabel>
+                        <DropdownMenuItem as-child>
+                            <a :href="`/sites/${activeSite.id}/export?type=events&format=csv&period=${period}`" target="_blank" class="w-full cursor-pointer">
+                                Custom Events (CSV)
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <a :href="`/sites/${activeSite.id}/export?type=events&format=json&period=${period}`" target="_blank" class="w-full cursor-pointer">
+                                Custom Events (JSON)
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Export Overview Summary</DropdownMenuLabel>
+                        <DropdownMenuItem as-child>
+                            <a :href="`/sites/${activeSite.id}/export?type=summary&format=csv&period=${period}`" target="_blank" class="w-full cursor-pointer">
+                                Summary (CSV)
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <a :href="`/sites/${activeSite.id}/export?type=summary&format=json&period=${period}`" target="_blank" class="w-full cursor-pointer">
+                                Summary (JSON)
+                            </a>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
 
                 <!-- Live Auto-Refresh Toggle -->
                 <button
@@ -345,7 +394,7 @@ const getDeviceIcon = (deviceStr: string) => {
             </div>
 
             <!-- Analytics Overview Dashboard -->
-            <template v-else-if="overview">
+            <div v-else-if="overview" class="space-y-6">
                 <!-- KPI Summary Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Pageviews Card -->
@@ -593,6 +642,7 @@ const getDeviceIcon = (deviceStr: string) => {
                     </div>
                 </div>
             </div>
+        </div>
         </template>
 
         <template v-else-if="activeTab === 'events'">
