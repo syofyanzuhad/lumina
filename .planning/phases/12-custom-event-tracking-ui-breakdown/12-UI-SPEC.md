@@ -278,3 +278,44 @@ When `$site` has 0 custom events in the selected date period:
 - **Mobile (< 648px)**: Stack all cards into a single column (`grid-cols-1`). Tab bar wraps horizontally.
 - **Tablet (648px – 1024px)**: 2-column layout for KPI cards and breakdown section (`grid-cols-1 md:grid-cols-2`).
 - **Desktop (> 1024px)**: 3-column layout for KPI metrics, side-by-side Top Events vs Metadata Property Breakdown, full-width timeline chart and log stream inspector.
+
+---
+
+## UI Considerations — Probe Coverage (8-Category Taxonomy)
+
+| Element | Category | Status | Resolution |
+|---------|----------|--------|------------|
+| E1 — CustomEventsTab pill | loading | covered | Tab pill switches synchronously; no async load on tab itself |
+| E1 — CustomEventsTab pill | long-text | backstop | Tab labels are fixed strings — truncation test with 30+ char label required |
+| E2 — CustomEventsBreakdown list | empty | covered | "No custom events tracked yet" card with code snippet (§3 above) |
+| E2 — CustomEventsBreakdown list | loading | covered | `animate-pulse` skeleton rows (§1 above) |
+| E2 — CustomEventsBreakdown list | error | backstop | Rose warning card with Retry; verify: renders when `getCustomEventsList()` throws |
+| E2 — CustomEventsBreakdown list | populated | covered | Progress bar list with event name badge, count, percentage |
+| E2 — CustomEventsBreakdown list | partial | backstop | Events with null/empty metadata props display name + count; verify: no props → graceful render |
+| E2 — CustomEventsBreakdown list | overflow | backstop | Scrollable container > 10 events; verify: 50+ items don't overflow card |
+| E2 — CustomEventsBreakdown list | zero-one-many | covered | Empty state for zero; "1 occurrence" vs "{N} occurrences" singular/plural copy |
+| E3 — CustomEventsTimeline chart | empty | covered | Flat zero-baseline with muted label when no events in period |
+| E3 — CustomEventsTimeline chart | loading | covered | Pulsing vertical bar skeleton outlines (§1 above) |
+| E3 — CustomEventsTimeline chart | error | backstop | Rose error card; verify: renders when timeline query fails |
+| E3 — CustomEventsTimeline chart | populated | covered | Interactive bar chart with hover tooltip showing daily count |
+| E3 — CustomEventsTimeline chart | partial | backstop | Sparse data (1–3 bars / 30 days) proportional heights; verify: single-day spike reads clearly |
+| E4 — CustomEventInspector panel | empty | backstop | No property keys → "No metadata properties" placeholder; verify: `propertyKeys: []` renders gracefully |
+| E4 — CustomEventInspector panel | loading | covered | Skeleton state for property breakdown cards |
+| E4 — CustomEventInspector panel | error | backstop | Error card on property key fetch fail; verify: rose error with Retry |
+| E4 — CustomEventInspector panel | populated | covered | Pill tabs for property keys + progress bar distribution list |
+| E4 — CustomEventInspector panel | partial | backstop | Single-value key renders 100% bar; verify: readable |
+| E4 — CustomEventInspector panel | overflow | backstop | Long property values (UUID, URL) truncate; verify: 100-char value doesn't break layout |
+| E4 — CustomEventInspector panel | zero-one-many | covered | Zero keys → empty placeholder; one → single pill auto-selected; many → horizontal scroll |
+| E5 — Event Filter Dropdown | loading | backstop | Dropdown disabled while event list loads; verify: disabled/skeleton before options arrive |
+| E5 — Event Filter Dropdown | long-text | backstop | Event names > 40 chars truncate with ellipsis; verify: 60-char name renders in dropdown |
+| E6 — Log stream row | empty | backstop | ⚠ unresolved — planner must treat as assumption: "No recent events" row when stream empty |
+| E6 — Log stream row | populated | covered | Rows with timestamp, event name, URL path, visitor hash, "View Raw Payload" action |
+| E6 — Log stream row | partial | backstop | Null path or visitor_hash → "—" placeholder; verify: no JS error on partial data |
+| E6 — Log stream row | overflow | covered | Expandable JSON drawer uses `overflow-x-auto` on code block |
+| E6 — Log stream row | zero-one-many | backstop | 1 log: no pagination; many: "Show more"; verify: 100+ logs no layout overflow |
+| E6 — Log stream row | long-text | backstop | Long URL paths truncate; visitor hash → 8 chars; verify: 200-char URL ellipsis |
+| E7 — KPI summary cards | loading | covered | `animate-pulse` skeleton rectangle for metric number (§1 above) |
+| E7 — KPI summary cards | error | backstop | Rose error card on summary query fail; verify: error state on `getCustomEventSummary()` throw |
+| E7 — KPI summary cards | populated | covered | 3-card grid: Total Events, Unique Event Types, Most Frequent Event |
+| E8 — Empty state card | empty | covered | Entire element IS the empty state — centered card with code icon and tracking snippet |
+| E9 — Error state card | error | covered | Rose-tinted card with title and Retry button (§2 above) |
