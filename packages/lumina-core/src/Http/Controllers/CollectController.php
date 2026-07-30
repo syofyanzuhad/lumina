@@ -81,7 +81,8 @@ class CollectController extends Controller
             ?? $request->header('CF-IPCountry')
             ?? $request->header('X-Vercel-IP-Country');
 
-        $path = '/'.ltrim($validated['path'], '/');
+        $cleanPath = parse_url($validated['path'], PHP_URL_PATH) ?? '/';
+        $path = '/'.ltrim($cleanPath, '/');
 
         $metadata = null;
         if (! empty($validated['name'])) {
