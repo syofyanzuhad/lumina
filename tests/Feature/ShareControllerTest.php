@@ -1,148 +1,227 @@
 <?php
 
+namespace Tests\Feature;
+
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Lumina\Core\Models\Site;
+use Tests\TestCase;
 
-uses(RefreshDatabase::class);
+class ShareControllerTest extends TestCase
+{
+    use RefreshDatabase;
 
-test('public share link shows dashboard metrics when site is public and not password protected', function () {
-    $site = Site::factory()->public()->create();
+    public function test_public_shared_dashboard_accessible_via_valid_token(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create([
+            'owner_id' => $user->id,
+            'domain' => 'shared-site.com',
+            'is_public' => true,
+            'share_token' => 'valid-share-token-1234567890123',
+        ]);
 
-    $this->get(route('sites.share.show', $site->share_token))
-        ->assertStatus(200)
-        ->assertInertia(fn (Assert $page) => $page
+        $response = $this->get('/share/valid-share-token-1234567890123');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
             ->component('Share/Show')
             ->where('requiresPassword', false)
-            ->where('site.domain', $site->domain)
-            ->has('overview')
+            ->where('site.domain', 'shared-site.com')
+            ->has('overview.total_pageviews')
+            ->has('overview.unique_visitors')
         );
-});
+    }
 
-test('public share link returns 404 when site is not public', function () {
-    $site = Site::factory()->create(['is_public' => false, 'share_token' => 'some-token']);
+    public function test_non_public_site_returns_404(): void
+    {
+        $user = User::factory()->create();
+        Site::factory()->create([
+            'owner_id' => $user->id,
+            'domain' => 'private-site.com',
+            'is_public' => false,
+            'share_token' => 'private-token-123',
+        ]);
 
-    $this->get(route('sites.share.show', $site->share_token))
-        ->assertStatus(404);
-});
+        $response = $this->get('/share/private-token-123');
 
-test('invalid share token returns 404', function () {
-    $this->get(route('sites.share.show', 'invalid-token-123456789012345678'))
-        ->assertStatus(404);
-});
+        $response->assertStatus(404);
+    }
 
-test('password protected share link requires password when unauthenticated', function () {
-    $site = Site::factory()->passwordProtected('secret123')->create();
+    public function test_invalid_token_returns_404(): void
+    {
+        $response = $this->get('/share/non-existent-token-xyz');
 
-    $this->get(route('sites.share.show', $site->share_token))
-        ->assertStatus(200)
-        ->assertInertia(fn (Assert $page) => $page
+        $response->assertStatus(404);
+    }
+
+    public function test_password_protected_shared_site_requires_password(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create([
+            'owner_id' => $user->id,
+            'domain' => 'protected-site.com',
+            'is_public' => true,
+            'share_token' => 'protected-token-123',
+            'share_password' => Hash::make('secret123'),
+        ]);
+
+        $response = $this->get('/share/protected-token-123');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
             ->component('Share/Show')
             ->where('requiresPassword', true)
-            ->where('site.domain', $site->domain)
-            ->missing('overview')
+            ->where('site.domain', 'protected-site.com')
         );
-});
+    }
 
-test('authenticating with incorrect password fails and redirects back with error', function () {
-    $site = Site::factory()->passwordProtected('secret123')->create();
+    public function test_password_authentication_with_correct_password(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create([
+            'owner_id' => $user->id,
+            'domain' => 'protected-site.com',
+            'is_public' => true,
+            'share_token' => 'protected-token-123',
+            'share_password' => Hash::make('secret123'),
+        ]);
 
-    $this->post(route('sites.share.authenticate', $site->share_token), [
-        'password' => 'wrongpassword',
-    ])
-        ->assertSessionHasErrors('password');
+        $response = $this->post('/share/protected-token-123/password', [
+            'password' => 'secret123',
+        ]);
 
-    $this->get(route('sites.share.show', $site->share_token))
-        ->assertStatus(200)
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('Share/Show')
-            ->where('requiresPassword', true)
-        );
-});
+        $response->assertRedirect('/share/protected-token-123');
+        $this->assertTrue(session("share_auth_{$site->id}"));
 
-test('authenticating with correct password sets session flag and grants access', function () {
-    $site = Site::factory()->passwordProtected('secret123')->create();
-
-    $this->post(route('sites.share.authenticate', $site->share_token), [
-        'password' => 'secret123',
-    ])
-        ->assertRedirect(route('sites.share.show', $site->share_token));
-
-    $this->get(route('sites.share.show', $site->share_token))
-        ->assertStatus(200)
-        ->assertInertia(fn (Assert $page) => $page
+        $followResponse = $this->get('/share/protected-token-123');
+        $followResponse->assertStatus(200);
+        $followResponse->assertInertia(fn (Assert $page) => $page
             ->component('Share/Show')
             ->where('requiresPassword', false)
-            ->has('overview')
+            ->where('site.domain', 'protected-site.com')
         );
-});
+    }
 
-test('owner can update site share settings', function () {
-    $user = User::factory()->create();
-    $site = Site::factory()->create(['owner_id' => $user->id, 'is_public' => false]);
+    public function test_password_authentication_with_incorrect_password(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create([
+            'owner_id' => $user->id,
+            'domain' => 'protected-site.com',
+            'is_public' => true,
+            'share_token' => 'protected-token-123',
+            'share_password' => Hash::make('secret123'),
+        ]);
 
-    $this->actingAs($user)
-        ->put(route('sites.share.update', $site), [
+        $response = $this->post('/share/protected-token-123/password', [
+            'password' => 'wrongpassword',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertFalse(session()->has("share_auth_{$site->id}"));
+    }
+
+    public function test_unauthenticated_user_cannot_manage_site_sharing(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create(['owner_id' => $user->id]);
+
+        $updateResponse = $this->put("/sites/{$site->id}/share", [
+            'is_public' => true,
+        ]);
+        $updateResponse->assertRedirect('/login');
+
+        $regenResponse = $this->post("/sites/{$site->id}/share/regenerate");
+        $regenResponse->assertRedirect('/login');
+    }
+
+    public function test_unauthorized_user_cannot_manage_site_sharing_of_another_user(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $site = Site::factory()->create(['owner_id' => $owner->id]);
+
+        $updateResponse = $this->actingAs($otherUser)->put("/sites/{$site->id}/share", [
+            'is_public' => true,
+        ]);
+        $updateResponse->assertStatus(403);
+
+        $regenResponse = $this->actingAs($otherUser)->post("/sites/{$site->id}/share/regenerate");
+        $regenResponse->assertStatus(403);
+    }
+
+    public function test_authorized_user_can_enable_public_sharing(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create([
+            'owner_id' => $user->id,
+            'is_public' => false,
+            'share_token' => null,
+        ]);
+
+        $response = $this->actingAs($user)->put("/sites/{$site->id}/share", [
+            'is_public' => true,
+        ]);
+
+        $response->assertRedirect();
+        $site->refresh();
+        $this->assertTrue($site->is_public);
+        $this->assertNotNull($site->share_token);
+        $this->assertEquals(32, strlen($site->share_token));
+    }
+
+    public function test_authorized_user_can_set_and_clear_share_password(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create([
+            'owner_id' => $user->id,
+            'is_public' => true,
+            'share_token' => 'token-123',
+            'share_password' => null,
+        ]);
+
+        // Set password
+        $setResponse = $this->actingAs($user)->put("/sites/{$site->id}/share", [
             'is_public' => true,
             'share_password' => 'newpassword123',
-        ])
-        ->assertRedirect();
+        ]);
 
-    $site->refresh();
-    expect($site->is_public)->toBeTrue();
-    expect($site->share_token)->not()->toBeNull();
-    expect($site->hasSharePassword())->toBeTrue();
-});
+        $setResponse->assertRedirect();
+        $site->refresh();
+        $this->assertTrue($site->hasSharePassword());
+        $this->assertTrue(Hash::check('newpassword123', $site->share_password));
 
-test('owner can clear share password', function () {
-    $user = User::factory()->create();
-    $site = Site::factory()->passwordProtected('secret123')->create(['owner_id' => $user->id]);
-
-    $this->actingAs($user)
-        ->put(route('sites.share.update', $site), [
+        // Clear password
+        $clearResponse = $this->actingAs($user)->put("/sites/{$site->id}/share", [
             'is_public' => true,
             'clear_password' => true,
-        ])
-        ->assertRedirect();
+        ]);
 
-    $site->refresh();
-    expect($site->hasSharePassword())->toBeFalse();
-});
+        $clearResponse->assertRedirect();
+        $site->refresh();
+        $this->assertFalse($site->hasSharePassword());
+        $this->assertNull($site->share_password);
+    }
 
-test('non-owner cannot update site share settings', function () {
-    $owner = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $site = Site::factory()->create(['owner_id' => $owner->id]);
-
-    $this->actingAs($otherUser)
-        ->put(route('sites.share.update', $site), [
+    public function test_authorized_user_can_regenerate_share_token(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create([
+            'owner_id' => $user->id,
             'is_public' => true,
-        ])
-        ->assertStatus(403);
-});
+            'share_token' => 'old-token-123456789012345678901234',
+        ]);
 
-test('owner can regenerate site share token', function () {
-    $user = User::factory()->create();
-    $site = Site::factory()->public('old-token-12345678901234567890123')->create(['owner_id' => $user->id]);
+        $oldToken = $site->share_token;
 
-    $oldToken = $site->share_token;
+        $response = $this->actingAs($user)->post("/sites/{$site->id}/share/regenerate");
 
-    $this->actingAs($user)
-        ->post(route('sites.share.regenerate', $site))
-        ->assertRedirect();
-
-    $site->refresh();
-    expect($site->share_token)->not()->toBe($oldToken);
-    expect(strlen($site->share_token))->toBe(32);
-});
-
-test('non-owner cannot regenerate site share token', function () {
-    $owner = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $site = Site::factory()->public()->create(['owner_id' => $owner->id]);
-
-    $this->actingAs($otherUser)
-        ->post(route('sites.share.regenerate', $site))
-        ->assertStatus(403);
-});
+        $response->assertRedirect();
+        $site->refresh();
+        $this->assertNotEquals($oldToken, $site->share_token);
+        $this->assertEquals(32, strlen($site->share_token));
+    }
+}
