@@ -5,7 +5,8 @@
     "type": "library",
     "require": {
         "php": "^8.3",
-        "laravel/framework": "^13.0"
+        "laravel/framework": "^13.0",
+        "jenssegers/agent": "^2.6"
     },
     "autoload": {
         "psr-4": {
