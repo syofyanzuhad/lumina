@@ -89,7 +89,7 @@
         </div>
 
         <!-- Tables Grid: Top Pages & Top Referrers -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Top Pages -->
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
                 <h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Top Pages</h3>
@@ -126,6 +126,94 @@
                         </div>
                     @empty
                         <p class="text-xs text-slate-400">No external referrers.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Device Breakdown -->
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                <h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Device Types</h3>
+                <div class="space-y-3">
+                    @forelse ($device_breakdown ?? [] as $dev)
+                        <div>
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span class="truncate font-mono capitalize">{{ $dev['device'] }}</span>
+                                <span>{{ number_format($dev['count']) }} ({{ $dev['percentage'] }}%)</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-amber-500 dark:bg-amber-400 h-1.5 rounded-full" style="width: {{ $dev['percentage'] }}%"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-xs text-slate-400">No device data available.</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <!-- Breakdown Grid 2: Top Browsers, Top OS, Top Locations -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Top Browsers -->
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                <h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Top Browsers</h3>
+                <div class="space-y-3">
+                    @forelse ($top_browsers ?? [] as $browser)
+                        <div>
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span class="truncate font-mono">{{ $browser['browser'] }}</span>
+                                <span>{{ number_format($browser['count']) }} ({{ $browser['percentage'] }}%)</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-sky-600 dark:bg-sky-500 h-1.5 rounded-full" style="width: {{ $browser['percentage'] }}%"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-xs text-slate-400">No browser data available.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Top OS -->
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                <h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Top Operating Systems</h3>
+                <div class="space-y-3">
+                    @forelse ($top_os ?? [] as $osItem)
+                        <div>
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span class="truncate font-mono">{{ $osItem['os'] }}</span>
+                                <span>{{ number_format($osItem['count']) }} ({{ $osItem['percentage'] }}%)</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-purple-600 dark:bg-purple-500 h-1.5 rounded-full" style="width: {{ $osItem['percentage'] }}%"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-xs text-slate-400">No OS data available.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Top Locations -->
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                <h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Top Locations</h3>
+                <div class="space-y-3">
+                    @forelse ($top_countries ?? [] as $cItem)
+                        <div>
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span class="truncate font-mono">
+                                    @if(!empty($cItem['code']))
+                                        <span class="text-[10px] font-bold px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase mr-1">{{ $cItem['code'] }}</span>
+                                    @endif
+                                    {{ $cItem['name'] ?? $cItem['code'] }}
+                                </span>
+                                <span>{{ number_format($cItem['count']) }} ({{ $cItem['percentage'] }}%)</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-rose-600 dark:bg-rose-500 h-1.5 rounded-full" style="width: {{ $cItem['percentage'] }}%"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-xs text-slate-400">No location data available.</p>
                     @endforelse
                 </div>
             </div>
