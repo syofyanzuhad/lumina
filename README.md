@@ -5,11 +5,18 @@
 
 ---
 
-## 🌟 Core Architecture
+## 🌟 Core Architecture & Milestone v1.1 Features
 
 Lumina is architected as a **monorepo**:
-- **`packages/lumina-core`**: High-performance core package containing models (`Site`, `Event`), migrations, visitor hashing (`sha256(IP + UserAgent + dailySalt)`), server-side tracking middleware (Path A), public script ingest controller (Path B), `AnalyticsService` query engine with 60s caching, and the embedded `lumina-dashboard` Livewire component.
-- **Standalone App**: Modern Vue 3 + Inertia.js web dashboard with multi-site switcher, date range filters, interactive daily trend charts, top pages/referrers, and custom events.
+- **`packages/lumina-core`**: High-performance core package containing models (`Site`, `Event`, `Goal`), migrations, visitor hashing (`sha256(IP + UserAgent + dailySalt)`), server-side tracking middleware (Path A), public script ingest controller (Path B), `AnalyticsService` query engine with 60s caching, and the embedded `lumina-dashboard` Livewire component.
+- **Standalone App**: Modern Vue 3 + Inertia.js web dashboard with multi-site switcher, date range filters, interactive daily trend charts, top pages/referrers, custom events breakdown, goal conversion tracking, streaming exports, and public shareable links.
+
+### What's New in Milestone v1.1
+- **Enhanced Data Detection**: Automatic User-Agent resolution (Browser & Operating System) via `whichbrowser/parser` and GeoIP country code/name resolution.
+- **Custom Event Tracking & UI**: Track custom JavaScript events via `lumina('event_name', metadata)` with UI breakdown by event name and custom JSON properties.
+- **Goal & Conversion Tracking**: Define conversion goals by target path or custom event, with conversion count and rate calculations.
+- **Streaming Data Export Engine**: Export pageviews, custom events, or summary reports in CSV or JSON formats via memory-efficient streaming HTTP responses (`GET /sites/{site}/export`).
+- **Public & Shareable Dashboards**: Share public analytics dashboards via unique share tokens (`/share/{token}`) with optional bcrypt password protection.
 
 ---
 
@@ -81,7 +88,7 @@ Route::middleware([TrackPageview::class])->group(function () {
 });
 ```
 
-### 4. Client-Side Tracking Snippet (Path B)
+### 4. Client-Side Tracking Snippet & Custom Events (Path B)
 Include the non-blocking vanilla JS script tag (< 2KB):
 ```html
 <script defer data-domain="yourdomain.com" src="https://your-lumina.com/js/script.js"></script>
@@ -89,24 +96,54 @@ Include the non-blocking vanilla JS script tag (< 2KB):
 
 #### Custom Events API
 ```js
+// Track custom event with optional metadata properties
 window.lumina('checkout_completed', { plan: 'pro', price: 29.99 });
 ```
 
-### 5. Render Embedded Livewire Dashboard Component
-In any Blade view in your host application:
-```blade
-<livewire:lumina-dashboard :site="$site" />
+---
+
+## 📊 Milestone v1.1 APIs & Usage
+
+### 1. Goal Conversion Tracking
+Create and manage conversion goals via REST endpoints:
+```php
+// POST /sites/{site}/goals
+[
+    'name' => 'Signups',
+    'target_type' => 'custom_event', // 'path' or 'custom_event'
+    'target_value' => 'signup_completed',
+]
 ```
+
+### 2. Streaming Data Export Endpoints
+Fetch streamed CSV or JSON exports directly:
+- `GET /sites/{site}/export?type=events&format=csv`
+- `GET /sites/{site}/export?type=pageviews&format=json`
+- `GET /sites/{site}/export?type=summary&format=csv`
+
+### 3. Public & Shareable Dashboards
+Configure public dashboard access and optional password protection:
+```php
+// PUT /sites/{site}/share
+[
+    'is_public' => true,
+    'share_password' => 'optional-secret-passphrase',
+]
+```
+Access public share links at `/share/{token}` (with password challenge if enabled).
 
 ---
 
 ## 🧪 Testing & Verification
 
-Run the comprehensive Pest test suite across all 10 phases:
+Run the comprehensive Pest test suite across all 16 phases including the master E2E integration test:
 
 ```bash
-# Run full application test suite
+# Run full application test suite (138+ tests)
 php artisan test
+
+# Run master Milestone v1.1 E2E feature verification test
+php artisan test --compact --filter=MilestoneV11Test
 
 # Run package-core tests
 vendor/bin/pest packages/lumina-core/tests/
