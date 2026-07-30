@@ -13,10 +13,15 @@ class DemoController extends Controller
 {
     public function index(Request $request, AnalyticsService $analytics): Response
     {
-        $site = Site::first();
+        $site = Site::where('share_token', 'demo-share-token-analytics')->first()
+            ?? Site::where('is_public', true)->first()
+            ?? Site::first();
+
+        if ($site && $site->share_token && $site->is_public) {
+            return app(ShareController::class)->show($request, $site->share_token, $analytics);
+        }
 
         if (! $site) {
-            // Fallback demo site if database has no sites
             $site = new Site([
                 'id' => 1,
                 'domain' => 'demo.lumina.dev',
@@ -63,12 +68,17 @@ class DemoController extends Controller
                 ],
             ];
 
-        return Inertia::render('Demo', [
+        return Inertia::render('Share/Show', [
             'site' => [
                 'id' => $site->id,
                 'domain' => $site->domain,
+                'is_public' => true,
+                'share_token' => $site->share_token ?? 'demo',
+                'has_password' => false,
             ],
+            'requiresPassword' => false,
             'period' => $period,
+            'activeTab' => $request->query('tab', 'overview'),
             'overview' => $overview,
         ]);
     }
