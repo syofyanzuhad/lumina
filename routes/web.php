@@ -5,11 +5,18 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\GoalController;
+use App\Http\Controllers\ShareController;
 use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home')->middleware('lumina.track');
 Route::get('/demo', [DemoController::class, 'index'])->name('demo')->middleware('lumina.track');
+
+// Public Share Routes
+Route::middleware(['lumina.track'])->group(function () {
+    Route::get('/share/{token}', [ShareController::class, 'show'])->name('sites.share.show');
+    Route::post('/share/{token}/password', [ShareController::class, 'authenticate'])->name('sites.share.authenticate');
+});
 
 Route::middleware(['auth', 'verified', 'lumina.track'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -20,6 +27,10 @@ Route::middleware(['auth', 'verified', 'lumina.track'])->group(function () {
     Route::get('/sites/{site}', [SiteController::class, 'show'])->name('sites.show');
     Route::get('/sites/{site}/export', [ExportController::class, 'export'])->name('sites.export');
     Route::delete('/sites/{site}', [SiteController::class, 'destroy'])->name('sites.destroy');
+
+    // Public Share Management
+    Route::put('/sites/{site}/share', [ShareController::class, 'update'])->name('sites.share.update');
+    Route::post('/sites/{site}/share/regenerate', [ShareController::class, 'regenerate'])->name('sites.share.regenerate');
 
     // Goals
     Route::get('/sites/{site}/goals', [GoalController::class, 'index'])->name('sites.goals.index');
