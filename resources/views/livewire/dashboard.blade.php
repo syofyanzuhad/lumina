@@ -237,6 +237,42 @@
             </div>
         </div>
 
+        @if (isset($goals) && $goals->count() > 0)
+            <!-- Goals Performance -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach ($goals as $goal)
+                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm flex flex-col h-full">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate" title="{{ $goal['name'] }}">{{ $goal['name'] }}</h3>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase">{{ $goal['target_type'] === 'path' ? 'Path' : 'Event' }}</span>
+                        </div>
+
+                        <div class="flex items-baseline justify-between mb-6">
+                            <div class="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">{{ number_format($goal['completions']) }}</div>
+                            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ $goal['conversion_rate'] }}% CV</div>
+                        </div>
+
+                        <div class="mt-auto h-16 flex items-end gap-1 w-full relative">
+                            @php
+                                $maxTrend = count($goal['trend']) > 0 ? max(array_column($goal['trend'], 'completions')) : 1;
+                                $maxTrend = max(1, $maxTrend);
+                            @endphp
+                            @foreach ($goal['trend'] as $day)
+                                @php
+                                    $heightPct = max(round(($day['completions'] / $maxTrend) * 100), 2);
+                                @endphp
+                                <div
+                                    class="flex-1 rounded-t-sm bg-indigo-500/80 dark:bg-indigo-400/80 hover:bg-indigo-600 transition-colors min-h-[2px]"
+                                    style="height: {{ $heightPct }}%"
+                                    title="{{ $day['date'] }}: {{ $day['completions'] }}"
+                                ></div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
         @if ($custom_events->count() > 0)
             <!-- Custom Events Table -->
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
