@@ -37,6 +37,7 @@ class AnalyticsService
         Cache::forget("lumina:analytics:{$site->id}:custom_event_property_keys");
         Cache::forget("lumina:analytics:{$site->id}:custom_event_property_breakdown");
         Cache::forget("lumina:analytics:{$site->id}:custom_event_logs");
+        Cache::forget("lumina:analytics:{$site->id}:goals");
     }
 
     /**
@@ -357,6 +358,7 @@ class AnalyticsService
             'top_os' => $this->getTopOperatingSystems($site, $start, $end),
             'top_countries' => $this->getTopCountries($site, $start, $end),
             'custom_events' => $this->getCustomEvents($site, $start, $end),
+            'goals' => $this->getGoals($site, $start, $end),
         ];
     }
 
@@ -594,6 +596,73 @@ class AnalyticsService
                     'props' => $props,
                 ];
             })->values()->toArray();
+        });
+
+        return collect($data ?? []);
+    }
+
+    /**
+     * Get goals and conversion rates.
+     */
+    public function getGoals(Site $site, CarbonInterface $start, CarbonInterface $end): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, 'goals', $start, $end);
+
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+            $goals = $site->goals;
+
+            if ($goals->isEmpty()) {
+                return [];
+            }
+
+            $uniqueVisitors = $this->getUniqueVisitors($site, $start, $end);
+            $results = [];
+
+            foreach ($goals as $goal) {
+                $query = Event::where('site_id', $site->id)
+                    ->whereBetween('created_at', [$start, $end]);
+
+                if ($goal->target_type === 'path') {
+                    $query->where('path', $goal->target_value);
+                    $events = $query->get();
+                } elseif ($goal->target_type === 'custom_event') {
+                    $events = $query->whereNotNull('metadata')->get()
+                        ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']) && $e->metadata['name'] === $goal->target_value);
+                } else {
+                    $events = collect();
+                }
+
+                $completions = $events->count();
+                $conversionRate = $uniqueVisitors > 0 ? round(($completions / $uniqueVisitors) * 100, 1) : 0.0;
+
+                $grouped = $events->groupBy(fn ($e) => $e->created_at->format('Y-m-d'));
+
+                $trend = [];
+                $curr = $start->copy()->startOfDay();
+                $last = $end->copy()->startOfDay();
+
+                while ($curr->lte($last)) {
+                    $dateStr = $curr->format('Y-m-d');
+                    $dayEvents = $grouped->get($dateStr, collect());
+                    $trend[] = [
+                        'date' => $dateStr,
+                        'completions' => $dayEvents->count(),
+                    ];
+                    $curr = $curr->addDay();
+                }
+
+                $results[] = [
+                    'id' => $goal->id,
+                    'name' => $goal->name,
+                    'target_type' => $goal->target_type,
+                    'target_value' => $goal->target_value,
+                    'completions' => $completions,
+                    'conversion_rate' => $conversionRate,
+                    'trend' => $trend,
+                ];
+            }
+
+            return $results;
         });
 
         return collect($data ?? []);
