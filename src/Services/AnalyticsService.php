@@ -291,31 +291,43 @@ class AnalyticsService
         $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
-            $results = Event::where('site_id', $site->id)
+            $events = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->where(function ($q) {
                     $q->whereNotNull('country_code')->orWhereNotNull('country');
                 })
-                ->select(
-                    DB::raw('COALESCE(country_code, country) as code'),
-                    DB::raw('COALESCE(country_name, country) as name'),
-                    DB::raw('count(*) as count')
-                )
-                ->groupBy('code', 'name')
-                ->orderByDesc('count')
-                ->limit($limit)
+                ->select('country_code', 'country', 'country_name')
                 ->get();
 
-            return $results->map(function ($row) use ($totalPageviews) {
-                $count = (int) $row->count;
+            $grouped = $events->groupBy(function ($e) {
+                $code = $e->country_code ?: $e->country;
+                return strtoupper(trim((string) $code));
+            });
 
-                return [
-                    'code' => (string) $row->code,
-                    'name' => (string) $row->name,
-                    'count' => $count,
-                    'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
-                ];
-            })->toArray();
+            return $grouped
+                ->map(function ($group, $code) use ($totalPageviews) {
+                    $first = $group->first();
+                    $name = $first->country_name ?: CountryHelper::getName($code);
+                    if ($name === $code || empty($name)) {
+                        $name = CountryHelper::getName($code) ?? $code;
+                    }
+
+                    return [
+                        'code' => (string) $code,
+                        'name' => (string) $name,
+                        'count' => $group->count(),
+                        'percentage' => $totalPageviews > 0 ? round(($group->count() / $totalPageviews) * 100, 1) : 0.0,
+                    ];
+                })
+                ->sort(function ($a, $b) {
+                    if ($a['count'] === $b['count']) {
+                        return strcmp($a['name'], $b['name']);
+                    }
+                    return $b['count'] <=> $a['count'];
+                })
+                ->take($limit)
+                ->values()
+                ->toArray();
         });
 
         return collect($data ?? []);
