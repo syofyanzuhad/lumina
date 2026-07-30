@@ -5,7 +5,14 @@
   if (!scriptEl) return;
 
   var domain = scriptEl.getAttribute('data-domain');
-  var apiEndpoint = scriptEl.getAttribute('data-api') || '/api/collect';
+  var apiEndpoint = scriptEl.getAttribute('data-api');
+  if (!apiEndpoint) {
+    try {
+      apiEndpoint = new URL('/api/collect', scriptEl.src).href;
+    } catch (e) {
+      apiEndpoint = '/api/collect';
+    }
+  }
   if (!domain) return;
 
   var lastPath = '';
