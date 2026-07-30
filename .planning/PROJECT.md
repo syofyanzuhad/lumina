@@ -29,26 +29,28 @@ Developers on Laravel stacks get Plausible-class analytics without leaving the L
 - ✓ Embedded Livewire dashboard component & view — v1.0
 - ✓ Standalone Inertia + Vue 3 dashboard (KPI cards, charts, site switcher, date filters) — v1.0
 - ✓ End-to-end verification test suite (107/107 tests passing) — v1.0
+- ✓ Enhanced Data Detection (Browser, OS, GeoIP parsing) — v1.1
+- ✓ Custom Event Tracking UI & Metadata breakdown — v1.1
+- ✓ Goal & Conversion Rate Tracking — v1.1
+- ✓ Streaming Data Exports (CSV & JSON) — v1.1
+- ✓ Public & Shareable Dashboards (Password protected) — v1.1
+- ✓ Milestone v1.1 Verification & Master E2E Suite (138/138 tests passing) — v1.1
 
-### Active (Milestone v1.1)
+### Active (Milestone v2.0 Ideas / Backlog)
 
-- [ ] Enhanced Data Detection — parse User-Agent for detailed Browser & OS versions, IP Geolocation / country code detection
-- [ ] Custom Event Tracking UI — surface custom event counts, property breakdowns, and timeline in Vue & Livewire dashboards
-- [ ] Goal & Conversion Tracking — define target URL paths or custom events as goals and compute conversion rates
-- [ ] Data Export — export pageview and event data to CSV and JSON formats for filtered date ranges
-- [ ] Public / Shareable Dashboard — generated read-only tokenized dashboard links for client/team sharing
+- [ ] Postgres table partitioning — only if events table bottlenecks at scale
+- [ ] ClickHouse migration — only if Postgres aggregations degrade at real scale
+- [ ] Team support / `team_id` scoping
 
 ### Out of Scope
 
 - Real-time live dashboard (WebSocket/Reverb) — polling/manual refresh remains sufficient
 - Multi-tenant SaaS billing — single-owner self-hosted focus
-- Teams / `team_id` scoping — deferred to v2.0
 - Mobile SDK, session replay, feature flags, A/B testing — outside basic analytics scope
-- ClickHouse / columnar storage — only if Postgres aggregations degrade at real scale
 
 ## Context
 
-- **Shipped State**: Shipped v1.0 with 10 completed phases, 15 plans, and 107 passing tests.
+- **Shipped State**: Shipped Milestone v1.1 with 16 completed phases and 138 passing tests.
 - **Ecosystem gap**: Fills the gap as the premier native Laravel web analytics package & standalone tool.
 - **Architecture**: Core domain logic lives in `packages/lumina-core` path package. Can be embedded via Livewire or deployed standalone with Inertia/Vue.
 - **Queue & Docker**: Async event processing via `InsertEvent` queued job. Production Docker container and Supervisor worker configurations supplied.
@@ -72,11 +74,11 @@ Developers on Laravel stacks get Plausible-class analytics without leaving the L
 | PostgreSQL + MySQL compatibility | Enforces standard Eloquent query builder across both database engines | ✓ Good |
 | Rate limit per IP + per site | Stricter than IP-only; prevents single site queue flooding | ✓ Good |
 | Aggregate on-read with cache (60s TTL) | High performance without complex materialized view maintenance | ✓ Good |
+| Streaming HTTP responses for data exports | Prevents memory exhaustion when streaming large CSV/JSON datasets | ✓ Good |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-07-30 after v1.0 milestone completion*
-
+*Last updated: 2026-07-31 after v1.1 milestone completion*
