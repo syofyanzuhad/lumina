@@ -17,6 +17,20 @@ class AnalyticsService
     protected int $ttl = 60;
 
     /**
+     * Clear cached analytics metrics for a specific site.
+     */
+    public function clearCache(Site $site): void
+    {
+        Cache::forget("lumina:analytics:{$site->id}:pageviews");
+        Cache::forget("lumina:analytics:{$site->id}:unique_visitors");
+        Cache::forget("lumina:analytics:{$site->id}:daily_pageviews");
+        Cache::forget("lumina:analytics:{$site->id}:top_pages_10");
+        Cache::forget("lumina:analytics:{$site->id}:top_referrers_10");
+        Cache::forget("lumina:analytics:{$site->id}:custom_events_10");
+        Cache::forget("lumina:analytics:{$site->id}:device_breakdown");
+    }
+
+    /**
      * Get total pageviews for site and date range.
      */
     public function getPageviews(Site $site, CarbonInterface $start, CarbonInterface $end): int
@@ -149,6 +163,37 @@ class AnalyticsService
     }
 
     /**
+     * Get device breakdown (desktop, mobile, tablet, etc.).
+     */
+    public function getDeviceBreakdown(Site $site, CarbonInterface $start, CarbonInterface $end): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, 'device_breakdown', $start, $end);
+
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+            $totalPageviews = $this->getPageviews($site, $start, $end);
+
+            $results = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->select('device_type', DB::raw('count(*) as count'))
+                ->groupBy('device_type')
+                ->orderByDesc('count')
+                ->get();
+
+            return $results->map(function ($row) use ($totalPageviews) {
+                $count = (int) $row->count;
+
+                return [
+                    'device' => is_object($row->device_type) ? $row->device_type->value : (string) $row->device_type,
+                    'count' => $count,
+                    'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
+                ];
+            })->toArray();
+        });
+
+        return collect($data ?? []);
+    }
+
+    /**
      * Get custom event breakdown from metadata column.
      */
     public function getCustomEvents(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
@@ -188,6 +233,7 @@ class AnalyticsService
             'top_pages' => $this->getTopPages($site, $start, $end),
             'top_referrers' => $this->getTopReferrers($site, $start, $end),
             'daily_pageviews' => $this->getDailyPageviews($site, $start, $end),
+            'device_breakdown' => $this->getDeviceBreakdown($site, $start, $end),
             'custom_events' => $this->getCustomEvents($site, $start, $end),
         ];
     }
