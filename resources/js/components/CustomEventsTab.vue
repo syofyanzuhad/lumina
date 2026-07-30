@@ -44,6 +44,7 @@ interface LogItem {
 const props = defineProps<{
     siteId: number;
     period: string;
+    baseUrl?: string;
     selectedEvent?: string | null;
     selectedPropertyKey?: string | null;
     summary?: CustomEventSummary;
@@ -73,10 +74,12 @@ const toggleLog = (id: number) => {
     }
 };
 
+const getTargetUrl = () => props.baseUrl || '/dashboard';
+
 const handleEventChange = (event: Event) => {
     const target = event.target as HTMLSelectElement;
     const eventName = target.value;
-    router.get('/dashboard', {
+    router.get(getTargetUrl(), {
         tab: 'events',
         site_id: props.siteId,
         period: props.period,
@@ -85,7 +88,7 @@ const handleEventChange = (event: Event) => {
 };
 
 const selectEvent = (eventName: string) => {
-    router.get('/dashboard', {
+    router.get(getTargetUrl(), {
         tab: 'events',
         site_id: props.siteId,
         period: props.period,
@@ -94,7 +97,7 @@ const selectEvent = (eventName: string) => {
 };
 
 const selectPropertyKey = (key: string) => {
-    router.get('/dashboard', {
+    router.get(getTargetUrl(), {
         tab: 'events',
         site_id: props.siteId,
         period: props.period,
