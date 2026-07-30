@@ -1,0 +1,43 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:80"
+    environment:
+      APP_ENV: "${APP_ENV:-production}"
+      APP_KEY: "${APP_KEY}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-http://localhost:8080}"
+      DB_CONNECTION: "pgsql"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      DB_DATABASE: "${DB_DATABASE:-lumina}"
+      DB_USERNAME: "${DB_USERNAME:-lumina}"
+      DB_PASSWORD: "${DB_PASSWORD:-secret}"
+      QUEUE_CONNECTION: "database"
+      SESSION_DRIVER: "database"
+      CACHE_STORE: "database"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${DB_DATABASE:-lumina}"
+      POSTGRES_USER: "${DB_USERNAME:-lumina}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-secret}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-lumina} -d ${DB_DATABASE:-lumina}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
