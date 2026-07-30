@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, Link } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 
@@ -86,6 +86,49 @@ const changeSite = (event: Event) => {
 const setPeriod = (newPeriod: string) => {
     router.get('/dashboard', { site_id: props.activeSite.id, period: newPeriod }, { preserveState: true, preserveScroll: true });
 };
+
+const isLive = ref(false);
+let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+const startPolling = () => {
+    stopPolling();
+    pollInterval = setInterval(() => {
+        if (document.visibilityState === 'visible' && !isRefreshing.value) {
+            refreshData();
+        }
+    }, 30000);
+};
+
+const stopPolling = () => {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
+};
+
+const toggleLive = () => {
+    isLive.value = !isLive.value;
+    if (isLive.value) {
+        startPolling();
+    } else {
+        stopPolling();
+    }
+};
+
+const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && isLive.value && !isRefreshing.value) {
+        refreshData();
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+});
+
+onUnmounted(() => {
+    stopPolling();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+});
 
 const refreshData = () => {
     isRefreshing.value = true;
@@ -173,6 +216,22 @@ const getDeviceIcon = (deviceStr: string) => {
                 >
                     <Download class="h-4 w-4" />
                 </a>
+
+                <!-- Live Auto-Refresh Toggle -->
+                <button
+                    type="button"
+                    @click="toggleLive"
+                    :title="isLive ? 'Live Auto-Refresh Active (30s)' : 'Turn On Live Auto-Refresh'"
+                    :class="[
+                        'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ml-1',
+                        isLive
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-xs'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    ]"
+                >
+                    <span :class="['h-2 w-2 rounded-full', isLive ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/50']"></span>
+                    <span>{{ isLive ? 'Live 30s' : 'Live Off' }}</span>
+                </button>
 
                 <!-- Refresh Data Button -->
                 <button
