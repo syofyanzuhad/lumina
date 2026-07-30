@@ -101,6 +101,8 @@ class CollectController extends Controller
             deviceType: $deviceType,
             country: $country,
             metadata: $metadata,
+            userAgent: $request->userAgent(),
+            ip: $request->ip(),
         );
 
         return response()->json(null, 204, $corsHeaders);
