@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { Eye, Users, Globe, Calendar, Sparkles, Smartphone, Laptop, Monitor, Lock, ArrowRight, ShieldCheck } from '@lucide/vue';
+import { Eye, Users, Globe, Calendar, Sparkles, Smartphone, Laptop, Monitor, Lock, ArrowRight, ShieldCheck, Copy, Check } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import CustomEventsTab from '@/components/CustomEventsTab.vue';
 
@@ -155,6 +155,23 @@ const formatNumber = (num: number) => {
     return new Intl.NumberFormat().format(num);
 };
 
+const windowOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+const copiedPublicUrl = ref(false);
+
+const copyPublicShareUrl = async () => {
+    if (!props.site.share_token) return;
+    const url = `${windowOrigin}/share/${props.site.share_token}`;
+    try {
+        await navigator.clipboard.writeText(url);
+        copiedPublicUrl.value = true;
+        setTimeout(() => {
+            copiedPublicUrl.value = false;
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy share link', err);
+    }
+};
+
 const getDeviceIcon = (deviceStr: string) => {
     const lower = (deviceStr || '').toLowerCase();
     if (lower.includes('mobile')) return Smartphone;
@@ -233,7 +250,22 @@ const getDeviceIcon = (deviceStr: string) => {
                                 Public
                             </span>
                         </div>
-                        <p class="text-xs text-muted-foreground mt-0.5">Read-only live website analytics</p>
+                        <!-- Share URL display -->
+                        <div v-if="site.share_token" class="flex items-center gap-2 mt-1.5">
+                            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-muted text-muted-foreground border border-sidebar-border/60 select-all max-w-xs truncate">
+                                {{ `${windowOrigin}/share/${site.share_token}` }}
+                            </span>
+                            <button
+                                type="button"
+                                @click="copyPublicShareUrl"
+                                class="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors cursor-pointer"
+                                title="Copy public share link"
+                            >
+                                <Check v-if="copiedPublicUrl" class="h-3.5 w-3.5 text-emerald-500" />
+                                <Copy v-else class="h-3.5 w-3.5" />
+                                <span>{{ copiedPublicUrl ? 'Copied' : 'Copy Link' }}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
