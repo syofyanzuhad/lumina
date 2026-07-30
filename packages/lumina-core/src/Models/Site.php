@@ -48,6 +48,16 @@ class Site extends Model
     }
 
     /**
+     * Get the goals for the site.
+     *
+     * @return HasMany<Goal, $this>
+     */
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
+    }
+
+    /**
      * Interact with the site's domain.
      */
     protected function domain(): Attribute

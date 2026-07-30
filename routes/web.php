@@ -19,6 +19,12 @@ Route::middleware(['auth', 'verified', 'lumina.track'])->group(function () {
     Route::get('/sites/{site}', [SiteController::class, 'show'])->name('sites.show');
     Route::get('/sites/{site}/export', [SiteController::class, 'export'])->name('sites.export');
     Route::delete('/sites/{site}', [SiteController::class, 'destroy'])->name('sites.destroy');
+    
+    // Goals
+    Route::get('/sites/{site}/goals', [\App\Http\Controllers\GoalController::class, 'index'])->name('sites.goals.index');
+    Route::post('/sites/{site}/goals', [\App\Http\Controllers\GoalController::class, 'store'])->name('sites.goals.store');
+    Route::put('/sites/{site}/goals/{goal}', [\App\Http\Controllers\GoalController::class, 'update'])->name('sites.goals.update');
+    Route::delete('/sites/{site}/goals/{goal}', [\App\Http\Controllers\GoalController::class, 'destroy'])->name('sites.goals.destroy');
 });
 
 require __DIR__.'/settings.php';
