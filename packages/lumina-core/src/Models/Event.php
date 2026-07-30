@@ -3,7 +3,9 @@
 namespace Lumina\Core\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Lumina\Core\Database\Factories\EventFactory;
@@ -12,7 +14,7 @@ use Lumina\Core\Enums\DeviceType;
 #[Fillable(['site_id', 'path', 'referrer', 'visitor_hash', 'device_type', 'country', 'metadata', 'created_at'])]
 class Event extends Model
 {
-    use HasFactory;
+    use HasFactory, MassPrunable;
 
     protected $table = 'events';
 
@@ -49,5 +51,13 @@ class Event extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
+    }
+
+    /**
+     * Get the prunable model query.
+     */
+    public function prunable(): Builder
+    {
+        return static::where('created_at', '<=', now()->subDays(config('lumina.retention_days', 90)));
     }
 }
