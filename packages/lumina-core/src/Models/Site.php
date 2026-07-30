@@ -29,6 +29,15 @@ class Site extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'has_password',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -94,6 +103,14 @@ class Site extends Model
     public function hasSharePassword(): bool
     {
         return ! empty($this->share_password);
+    }
+
+    /**
+     * Accessor for has_password attribute.
+     */
+    public function getHasPasswordAttribute(): bool
+    {
+        return $this->hasSharePassword();
     }
 
     /**
