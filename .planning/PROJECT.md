@@ -30,20 +30,21 @@ Developers on Laravel stacks get Plausible-class analytics without leaving the L
 - ✓ Standalone Inertia + Vue 3 dashboard (KPI cards, charts, site switcher, date filters) — v1.0
 - ✓ End-to-end verification test suite (107/107 tests passing) — v1.0
 
-### Active
+### Active (Milestone v1.1)
 
-- [ ] Custom event tracking UI in dashboard — surface custom event counts in Vue/Livewire UI
-- [ ] Data export — export pageview and event data to CSV/JSON for a date range
-- [ ] Public / shareable dashboard link — read-only shareable analytics dashboard
-- [ ] Goal / conversion tracking — define target paths or events as conversion goals
+- [ ] Enhanced Data Detection — parse User-Agent for detailed Browser & OS versions, IP Geolocation / country code detection
+- [ ] Custom Event Tracking UI — surface custom event counts, property breakdowns, and timeline in Vue & Livewire dashboards
+- [ ] Goal & Conversion Tracking — define target URL paths or custom events as goals and compute conversion rates
+- [ ] Data Export — export pageview and event data to CSV and JSON formats for filtered date ranges
+- [ ] Public / Shareable Dashboard — generated read-only tokenized dashboard links for client/team sharing
 
 ### Out of Scope
 
-- Real-time live dashboard (WebSocket/Reverb) — v1 polling/manual refresh is sufficient; websockets add complexity before scale is proven
-- Multi-tenant SaaS billing — v1 is single-owner self-hosted
-- Teams / `team_id` scoping — no validated need; `owner_id` per user; refactor later if proven necessary
+- Real-time live dashboard (WebSocket/Reverb) — polling/manual refresh remains sufficient
+- Multi-tenant SaaS billing — single-owner self-hosted focus
+- Teams / `team_id` scoping — deferred to v2.0
 - Mobile SDK, session replay, feature flags, A/B testing — outside basic analytics scope
-- ClickHouse / columnar storage — only if Postgres is a proven bottleneck under real load
+- ClickHouse / columnar storage — only if Postgres aggregations degrade at real scale
 
 ## Context
 
