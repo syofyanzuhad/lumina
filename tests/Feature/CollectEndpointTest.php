@@ -133,4 +133,15 @@ class CollectEndpointTest extends TestCase
             return $job->deviceType === DeviceType::Tablet;
         });
     }
+
+    public function test_cors_headers_reflect_requesting_origin(): void
+    {
+        $response = $this->call('OPTIONS', '/api/collect', [], [], [], [
+            'HTTP_ORIGIN' => 'https://syofyanzuhad.dev',
+        ]);
+
+        $response->assertStatus(204);
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://syofyanzuhad.dev');
+        $response->assertHeader('Access-Control-Allow-Credentials', 'true');
+    }
 }
