@@ -88,14 +88,21 @@ import { dashboard, login, register } from '@/routes';
                     Launch Dashboard
                     <ArrowRight class="h-5 w-5" />
                 </Link>
+                <Link
+                    href="/demo"
+                    class="w-full sm:w-auto px-7 py-4 rounded-xl bg-slate-900/90 border border-indigo-500/30 hover:border-indigo-500/60 text-white font-semibold text-base backdrop-blur-md transition-all flex items-center justify-center gap-2 shadow-lg"
+                >
+                    <BarChart3 class="h-5 w-5 text-indigo-400" />
+                    View Live Demo
+                </Link>
                 <a
                     href="https://github.com/syofyanzuhad/lumina"
                     target="_blank"
                     rel="noopener"
                     class="w-full sm:w-auto px-7 py-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-semibold text-base backdrop-blur-md transition-all flex items-center justify-center gap-2"
                 >
-                    <Code class="h-5 w-5 text-indigo-400" />
-                    View Source Code
+                    <Code class="h-5 w-5 text-slate-400" />
+                    Source Code
                 </a>
             </div>
 
