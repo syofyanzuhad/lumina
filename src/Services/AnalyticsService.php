@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Lumina\Core\Models\Event;
 use Lumina\Core\Models\Site;
+use Lumina\Core\Support\CountryHelper;
+use Lumina\Core\Support\ReferrerHelper;
 
 class AnalyticsService
 {
@@ -87,6 +89,7 @@ class AnalyticsService
             $grouped = $events->groupBy(function ($e) {
                 $rawPath = (string) $e->path;
                 $pos = strpos($rawPath, '?');
+
                 return $pos !== false ? substr($rawPath, 0, $pos) : $rawPath;
             });
 
@@ -100,6 +103,7 @@ class AnalyticsService
                     if ($a['count'] === $b['count']) {
                         return strcmp($a['path'], $b['path']);
                     }
+
                     return $b['count'] <=> $a['count'];
                 })
                 ->take($limit)
@@ -120,26 +124,33 @@ class AnalyticsService
         $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
-            $results = Event::where('site_id', $site->id)
+            $events = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->whereNotNull('referrer')
                 ->where('referrer', '!=', '')
-                ->select('referrer', DB::raw('count(*) as count'))
-                ->groupBy('referrer')
-                ->orderByDesc('count')
-                ->orderBy('referrer')
-                ->limit($limit)
+                ->select('referrer')
                 ->get();
 
-            return $results->map(function ($row) use ($totalPageviews) {
-                $count = (int) $row->count;
+            $grouped = $events->groupBy(function ($e) {
+                return ReferrerHelper::parseName($e->referrer);
+            });
 
-                return [
-                    'referrer' => (string) $row->referrer,
-                    'count' => $count,
-                    'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
-                ];
-            })->toArray();
+            return $grouped
+                ->map(fn ($group, $platform) => [
+                    'referrer' => (string) $platform,
+                    'count' => $group->count(),
+                    'percentage' => $totalPageviews > 0 ? round(($group->count() / $totalPageviews) * 100, 1) : 0.0,
+                ])
+                ->sort(function ($a, $b) {
+                    if ($a['count'] === $b['count']) {
+                        return strcmp($a['referrer'], $b['referrer']);
+                    }
+
+                    return $b['count'] <=> $a['count'];
+                })
+                ->take($limit)
+                ->values()
+                ->toArray();
         });
 
         return collect($data ?? []);
@@ -301,6 +312,7 @@ class AnalyticsService
 
             $grouped = $events->groupBy(function ($e) {
                 $code = $e->country_code ?: $e->country;
+
                 return strtoupper(trim((string) $code));
             });
 
@@ -323,6 +335,7 @@ class AnalyticsService
                     if ($a['count'] === $b['count']) {
                         return strcmp($a['name'], $b['name']);
                     }
+
                     return $b['count'] <=> $a['count'];
                 })
                 ->take($limit)
