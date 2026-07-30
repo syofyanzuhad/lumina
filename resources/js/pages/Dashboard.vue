@@ -58,6 +58,21 @@ interface TopCountry {
     percentage: number;
 }
 
+interface GoalTrendItem {
+    date: string;
+    completions: number;
+}
+
+interface GoalItem {
+    id: number;
+    name: string;
+    target_type: string;
+    target_value: string;
+    completions: number;
+    conversion_rate: number;
+    trend: GoalTrendItem[];
+}
+
 interface Overview {
     total_pageviews: number;
     unique_visitors: number;
@@ -69,6 +84,7 @@ interface Overview {
     top_os?: TopOS[];
     top_countries?: TopCountry[];
     custom_events: CustomEventItem[];
+    goals?: GoalItem[];
 }
 
 const props = defineProps<{
@@ -534,6 +550,31 @@ const getDeviceIcon = (deviceStr: string) => {
                         </div>
 
                         <p v-if="!overview.top_countries || overview.top_countries.length === 0" class="text-xs text-muted-foreground">No location data available.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals Performance -->
+            <div v-if="overview.goals && overview.goals.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div v-for="goal in overview.goals" :key="goal.id" class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-foreground truncate" :title="goal.name">{{ goal.name }}</h3>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase">{{ goal.target_type === 'path' ? 'Path' : 'Event' }}</span>
+                    </div>
+
+                    <div class="flex items-baseline justify-between mb-6">
+                        <div class="text-3xl font-black tracking-tight text-foreground">{{ formatNumber(goal.completions) }}</div>
+                        <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ goal.conversion_rate }}% CV</div>
+                    </div>
+
+                    <div class="mt-auto h-16 flex items-end gap-1 w-full relative">
+                        <div
+                            v-for="(day, idx) in goal.trend"
+                            :key="idx"
+                            class="flex-1 rounded-t-sm bg-indigo-500/80 dark:bg-indigo-400/80 hover:bg-indigo-600 transition-colors min-h-[2px]"
+                            :style="{ height: `${Math.max(Math.round((day.completions / Math.max(1, ...goal.trend.map(t => t.completions))) * 100), 2)}%` }"
+                            :title="`${day.date}: ${day.completions}`"
+                        ></div>
                     </div>
                 </div>
             </div>
