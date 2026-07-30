@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { Eye, Users, Globe, Code, ArrowUpRight, Calendar, Sparkles } from '@lucide/vue';
+import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor } from '@lucide/vue';
 
 interface SiteItem {
     id: number;
@@ -26,6 +26,12 @@ interface DailyItem {
     visitors: number;
 }
 
+interface DeviceItem {
+    device: string;
+    count: number;
+    percentage: number;
+}
+
 interface CustomEventItem {
     name: string;
     count: number;
@@ -37,6 +43,7 @@ interface Overview {
     top_pages: TopPage[];
     top_referrers: TopReferrer[];
     daily_pageviews: DailyItem[];
+    device_breakdown?: DeviceItem[];
     custom_events: CustomEventItem[];
 }
 
@@ -58,6 +65,7 @@ defineOptions({
     },
 });
 
+const isRefreshing = ref(false);
 const hoveredDay = ref<DailyItem | null>(null);
 
 const maxDaily = computed(() => {
@@ -78,8 +86,24 @@ const setPeriod = (newPeriod: string) => {
     router.get('/dashboard', { site_id: props.activeSite.id, period: newPeriod }, { preserveState: true, preserveScroll: true });
 };
 
+const refreshData = () => {
+    isRefreshing.value = true;
+    router.reload({
+        onFinish: () => {
+            isRefreshing.value = false;
+        },
+    });
+};
+
 const formatNumber = (num: number) => {
     return new Intl.NumberFormat().format(num);
+};
+
+const getDeviceIcon = (deviceStr: string) => {
+    const lower = (deviceStr || '').toLowerCase();
+    if (lower.includes('mobile')) return Smartphone;
+    if (lower.includes('tablet')) return Laptop;
+    return Monitor;
 };
 </script>
 
@@ -109,7 +133,7 @@ const formatNumber = (num: number) => {
                 </div>
             </div>
 
-            <!-- Date Period Selector -->
+            <!-- Date Period & Refresh Controls -->
             <div class="flex items-center gap-2">
                 <button
                     type="button"
@@ -134,6 +158,16 @@ const formatNumber = (num: number) => {
                     ]"
                 >
                     Last 30 Days
+                </button>
+
+                <!-- Refresh Data Button -->
+                <button
+                    type="button"
+                    @click="refreshData"
+                    title="Refresh Data"
+                    class="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80 ml-1"
+                >
+                    <RefreshCw :class="['h-4 w-4', { 'animate-spin': isRefreshing }]" />
                 </button>
             </div>
         </div>
@@ -224,8 +258,8 @@ const formatNumber = (num: number) => {
                 </div>
             </div>
 
-            <!-- Details Section: Top Pages & Referrers -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Details Section: Top Pages, Referrers, and Devices -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Top Pages Card -->
                 <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
@@ -267,6 +301,31 @@ const formatNumber = (num: number) => {
                         </div>
 
                         <p v-if="overview.top_referrers.length === 0" class="text-xs text-muted-foreground">No external referrers.</p>
+                    </div>
+                </div>
+
+                <!-- Device Breakdown Card -->
+                <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-foreground">Device Types</h3>
+                        <span v-if="overview.device_breakdown" class="text-xs text-muted-foreground">{{ overview.device_breakdown.length }} devices</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div v-for="dev in overview.device_breakdown" :key="dev.device" class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="flex items-center gap-1.5 capitalize font-mono text-foreground">
+                                    <component :is="getDeviceIcon(dev.device)" class="h-3.5 w-3.5 text-indigo-500" />
+                                    {{ dev.device }}
+                                </span>
+                                <span class="text-muted-foreground font-mono">{{ formatNumber(dev.count) }} ({{ dev.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-amber-500 dark:bg-amber-400 h-2 rounded-full transition-all duration-500" :style="{ width: `${dev.percentage}%` }"></div>
+                            </div>
+                        </div>
+
+                        <p v-if="!overview.device_breakdown || overview.device_breakdown.length === 0" class="text-xs text-muted-foreground">No device data available.</p>
                     </div>
                 </div>
             </div>

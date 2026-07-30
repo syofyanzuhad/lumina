@@ -13,8 +13,18 @@ use Lumina\Core\Models\Site;
 
 class CollectController extends Controller
 {
+    protected array $corsHeaders = [
+        'Access-Control-Allow-Origin' => '*',
+        'Access-Control-Allow-Methods' => 'POST, OPTIONS',
+        'Access-Control-Allow-Headers' => 'Content-Type, X-Requested-With',
+    ];
+
     public function __invoke(Request $request): JsonResponse
     {
+        if ($request->isMethod('OPTIONS')) {
+            return response()->json(null, 204, $this->corsHeaders);
+        }
+
         $validated = $request->validate([
             'domain' => ['required', 'string'],
             'path' => ['required', 'string'],
@@ -30,7 +40,7 @@ class CollectController extends Controller
         if (! $site) {
             return response()->json([
                 'message' => 'Unregistered domain.',
-            ], 422);
+            ], 422, $this->corsHeaders);
         }
 
         $dailySalt = Cache::remember(
@@ -75,6 +85,6 @@ class CollectController extends Controller
             metadata: $metadata,
         );
 
-        return response()->json(null, 204);
+        return response()->json(null, 204, $this->corsHeaders);
     }
 }
