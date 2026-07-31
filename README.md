@@ -7,10 +7,7 @@
 
 ## 📸 Screenshots
 
-<!-- Add your screenshots below -->
-
-![Dashboard Overview](path/to/screenshot-dashboard.png)
-*Dashboard Overview*
+<img width="2880" height="3856" alt="lumina test_demo" src="https://github.com/user-attachments/assets/09f745ab-5bca-4017-bf93-3014bc58491d" />
 
 ---
 
