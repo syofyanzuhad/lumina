@@ -5,18 +5,24 @@
 
 ---
 
-## 🌟 Core Architecture & Milestone v1.1 Features
+## 📸 Screenshots
 
-Lumina is architected as a **monorepo**:
-- **`packages/lumina-core`**: High-performance core package containing models (`Site`, `Event`, `Goal`), migrations, visitor hashing (`sha256(IP + UserAgent + dailySalt)`), server-side tracking middleware (Path A), public script ingest controller (Path B), `AnalyticsService` query engine with 60s caching, and the embedded `lumina-dashboard` Livewire component.
-- **Standalone App**: Modern Vue 3 + Inertia.js web dashboard with multi-site switcher, date range filters, interactive daily trend charts, top pages/referrers, custom events breakdown, goal conversion tracking, streaming exports, and public shareable links.
+<!-- Add your screenshots below -->
 
-### What's New in Milestone v1.1
-- **Enhanced Data Detection**: Automatic User-Agent resolution (Browser & Operating System) via `whichbrowser/parser` and GeoIP country code/name resolution.
-- **Custom Event Tracking & UI**: Track custom JavaScript events via `lumina('event_name', metadata)` with UI breakdown by event name and custom JSON properties.
-- **Goal & Conversion Tracking**: Define conversion goals by target path or custom event, with conversion count and rate calculations.
-- **Streaming Data Export Engine**: Export pageviews, custom events, or summary reports in CSV or JSON formats via memory-efficient streaming HTTP responses (`GET /sites/{site}/export`).
-- **Public & Shareable Dashboards**: Share public analytics dashboards via unique share tokens (`/share/{token}`) with optional bcrypt password protection.
+![Dashboard Overview](path/to/screenshot-dashboard.png)
+*Dashboard Overview*
+
+---
+
+## 🌟 Key Features
+
+- **Privacy-First & Cookie-Free**: 100% cookie-free operating mode. IP addresses are hashed using irreversible daily salts (`sha256(IP + UserAgent + dailySalt)`). No persistent cross-site tracking or fingerprinting.
+- **Flexible Tracking**: Supports both server-side middleware tracking (Path A) and lightweight client-side JS script tracking (< 2KB, Path B).
+- **Enhanced Data Detection**: Automatic User-Agent resolution (Browser & Operating System) and GeoIP country resolution.
+- **Custom Event & Goal Tracking**: Track custom JavaScript events and set up conversion goals based on paths or events with real-time conversion rates.
+- **Shareable & Public Dashboards**: Easily share dashboard access via share links with optional password protection.
+- **Streaming Data Exports**: Export raw pageviews, custom events, and summary data directly as CSV or JSON.
+- **Monorepo Architecture**: Includes `packages/lumina-core` for embedded analytics in host Laravel apps, as well as a standalone Vue 3 + Inertia.js web application.
 
 ---
 
@@ -102,7 +108,7 @@ window.lumina('checkout_completed', { plan: 'pro', price: 29.99 });
 
 ---
 
-## 📊 Milestone v1.1 APIs & Usage
+## 📊 Features & API Usage
 
 ### 1. Goal Conversion Tracking
 Create and manage conversion goals via REST endpoints:
@@ -134,16 +140,13 @@ Access public share links at `/share/{token}` (with password challenge if enable
 
 ---
 
-## 🧪 Testing & Verification
+## 🧪 Testing
 
-Run the comprehensive Pest test suite across all 16 phases including the master E2E integration test:
+Run the test suite:
 
 ```bash
-# Run full application test suite (138+ tests)
+# Run full application test suite
 php artisan test
-
-# Run master Milestone v1.1 E2E feature verification test
-php artisan test --compact --filter=MilestoneV11Test
 
 # Run package-core tests
 vendor/bin/pest packages/lumina-core/tests/
@@ -162,3 +165,4 @@ vendor/bin/pest packages/lumina-core/tests/
 ## 📄 License
 
 MIT License. Built for the Laravel Community.
+
