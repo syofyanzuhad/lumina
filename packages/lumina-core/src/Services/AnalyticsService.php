@@ -212,16 +212,25 @@ class AnalyticsService
     }
 
     /**
-     * Get daily pageview timeseries for site and date range.
+     * Get pageview timeseries for site and date range (hourly if range <= 2 days, daily otherwise).
      */
     public function getDailyPageviews(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, 'daily_pageviews', $start, $end, $filters);
+        $isHourly = $start->diffInHours($end) <= 48;
+        $cacheKey = $this->cacheKey($site->id, $isHourly ? 'hourly_pageviews' : 'daily_pageviews', $start, $end, $filters);
 
-        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
-            $dateExpr = DB::getDriverName() === 'sqlite'
-                ? DB::raw("strftime('%Y-%m-%d', created_at) as date")
-                : DB::raw('DATE(created_at) as date');
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters, $isHourly) {
+            $isSqlite = DB::getDriverName() === 'sqlite';
+
+            if ($isHourly) {
+                $dateExpr = $isSqlite
+                    ? DB::raw("strftime('%Y-%m-%d %H:00', created_at) as date")
+                    : DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d %H:00') as date");
+            } else {
+                $dateExpr = $isSqlite
+                    ? DB::raw("strftime('%Y-%m-%d', created_at) as date")
+                    : DB::raw('DATE(created_at) as date');
+            }
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
@@ -236,19 +245,37 @@ class AnalyticsService
                 ->keyBy('date');
 
             $series = [];
-            $curr = $start->copy()->startOfDay();
-            $last = $end->copy()->startOfDay();
 
-            while ($curr->lte($last)) {
-                $dateStr = $curr->format('Y-m-d');
-                $dayRow = $results->get($dateStr);
+            if ($isHourly) {
+                $curr = $start->copy()->startOfHour();
+                $last = $end->copy()->startOfHour();
 
-                $series[] = [
-                    'date' => $dateStr,
-                    'pageviews' => $dayRow ? (int) $dayRow->pageviews : 0,
-                    'visitors' => $dayRow ? (int) $dayRow->visitors : 0,
-                ];
-                $curr = $curr->addDay();
+                while ($curr->lte($last)) {
+                    $dateStr = $curr->format('Y-m-d H:00');
+                    $row = $results->get($dateStr);
+
+                    $series[] = [
+                        'date' => $dateStr,
+                        'pageviews' => $row ? (int) $row->pageviews : 0,
+                        'visitors' => $row ? (int) $row->visitors : 0,
+                    ];
+                    $curr = $curr->addHour();
+                }
+            } else {
+                $curr = $start->copy()->startOfDay();
+                $last = $end->copy()->startOfDay();
+
+                while ($curr->lte($last)) {
+                    $dateStr = $curr->format('Y-m-d');
+                    $row = $results->get($dateStr);
+
+                    $series[] = [
+                        'date' => $dateStr,
+                        'pageviews' => $row ? (int) $row->pageviews : 0,
+                        'visitors' => $row ? (int) $row->visitors : 0,
+                    ];
+                    $curr = $curr->addDay();
+                }
             }
 
             return $series;

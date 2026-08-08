@@ -636,7 +636,9 @@ const applyCustomDateRange = () => {
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
                             <div class="flex items-center gap-2">
                                 <Calendar class="h-4 w-4 text-indigo-500 shrink-0" />
-                                <h3 class="text-sm font-bold text-foreground">Daily Pageview Trends</h3>
+                                <h3 class="text-sm font-bold text-foreground">
+                                    {{ (overview.daily_pageviews && overview.daily_pageviews.length > 0 && overview.daily_pageviews[0].date.includes(' ')) ? 'Hourly Pageview Trends' : 'Daily Pageview Trends' }}
+                                </h3>
                             </div>
 
                             <!-- Interactive Legend Pills -->
