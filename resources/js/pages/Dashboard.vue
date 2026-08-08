@@ -1129,234 +1129,186 @@ const applyCustomDateRange = () => {
 
         <!-- Side Drawer Modal for Detailed Breakdown -->
         <Sheet :open="!!activeModal" @update:open="(val) => { if (!val) activeModal = null; }">
-            <SheetContent side="right" class="w-full sm:max-w-lg overflow-y-auto">
-                <SheetHeader>
-                    <SheetTitle>{{ modalTitle }}</SheetTitle>
-                    <SheetDescription>
-                        Complete detailed breakdown for {{ activeSite.domain }}
+            <SheetContent side="right" class="w-full sm:max-w-lg overflow-y-auto p-4 sm:p-5">
+                <SheetHeader class="pb-2 border-b border-sidebar-border/50">
+                    <SheetTitle class="text-base font-bold">{{ modalTitle }}</SheetTitle>
+                    <SheetDescription class="text-xs text-muted-foreground">
+                        Complete detailed breakdown for <strong class="text-foreground">{{ activeSite.domain }}</strong>
                     </SheetDescription>
                 </SheetHeader>
 
-                <div class="mt-6 space-y-3">
+                <div class="mt-4 space-y-2 pb-4">
                     <!-- Top Pages Modal -->
                     <template v-if="activeModal === 'pages' && overview?.top_pages">
                         <div
-                            v-for="(page, idx) in overview.top_pages"
+                            v-for="page in overview.top_pages"
                             :key="page.path"
-                            class="rounded-xl border border-sidebar-border/60 bg-card p-4 space-y-3 hover:border-indigo-500/40 transition-colors"
+                            @click="addFilter('path', page.path); activeModal = null"
+                            :title="`Click to filter by path: ${page.path}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
                         >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[11px] font-black">#{{ idx + 1 }}</span>
-                                    <span class="font-mono font-bold text-foreground text-xs truncate">{{ page.path }}</span>
-                                </div>
-                                <span class="shrink-0 text-[13px] font-black text-indigo-600 dark:text-indigo-400">{{ page.percentage }}%</span>
-                            </div>
-                            <div class="w-full bg-muted h-2.5 rounded-full overflow-hidden">
-                                <div class="bg-indigo-500 h-2.5 rounded-full transition-all duration-700" :style="{ width: `${page.percentage}%` }"></div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md font-semibold">{{ formatNumber(page.count) }} views</span>
-                                <button
-                                    @click="addFilter('path', page.path); activeModal = null"
-                                    class="text-[11px] font-semibold flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline transition-colors"
-                                >
-                                    <Filter class="h-3 w-3" /> Filter to this
-                                </button>
-                            </div>
+                            <div
+                                class="absolute inset-y-0 left-0 bg-indigo-100/70 dark:bg-indigo-500/15 rounded-lg transition-all duration-500 group-hover:bg-indigo-200/80 dark:group-hover:bg-indigo-500/25"
+                                :style="{ width: `${page.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mr-2 flex items-center gap-1.5">
+                                <span class="truncate">{{ page.path }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(page.count) }} views <span class="text-muted-foreground/70">({{ page.percentage }}%)</span></span>
                         </div>
                     </template>
 
                     <!-- Top Referrers Modal -->
                     <template v-if="activeModal === 'referrers' && overview?.top_referrers">
                         <div
-                            v-for="(refItem, idx) in overview.top_referrers"
+                            v-for="refItem in overview.top_referrers"
                             :key="refItem.referrer"
-                            class="rounded-xl border border-sidebar-border/60 bg-card p-4 space-y-3 hover:border-emerald-500/40 transition-colors"
+                            @click="addFilter('referrer', refItem.referrer); activeModal = null"
+                            :title="`Click to filter by referrer: ${refItem.referrer}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
                         >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-black">#{{ idx + 1 }}</span>
-                                    <span class="font-mono font-bold text-foreground text-xs truncate">{{ refItem.referrer }}</span>
-                                </div>
-                                <span class="shrink-0 text-[13px] font-black text-emerald-600 dark:text-emerald-400">{{ refItem.percentage }}%</span>
-                            </div>
-                            <div class="w-full bg-muted h-2.5 rounded-full overflow-hidden">
-                                <div class="bg-emerald-500 h-2.5 rounded-full transition-all duration-700" :style="{ width: `${refItem.percentage}%` }"></div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md font-semibold">{{ formatNumber(refItem.count) }} visits</span>
-                                <button
-                                    @click="addFilter('referrer', refItem.referrer); activeModal = null"
-                                    class="text-[11px] font-semibold flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
-                                >
-                                    <Filter class="h-3 w-3" /> Filter to this
-                                </button>
-                            </div>
+                            <div
+                                class="absolute inset-y-0 left-0 bg-emerald-100/70 dark:bg-emerald-500/15 rounded-lg transition-all duration-500 group-hover:bg-emerald-200/80 dark:group-hover:bg-emerald-500/25"
+                                :style="{ width: `${refItem.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors mr-2 flex items-center gap-2">
+                                <img
+                                    v-if="getReferrerFavicon(refItem.referrer)"
+                                    :src="getReferrerFavicon(refItem.referrer)!"
+                                    :alt="refItem.referrer"
+                                    class="h-4 w-4 rounded-sm shrink-0 object-contain"
+                                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                />
+                                <Globe v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                                <span class="truncate">{{ refItem.referrer }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(refItem.count) }} visits <span class="text-muted-foreground/70">({{ refItem.percentage }}%)</span></span>
                         </div>
                     </template>
 
                     <!-- Device Breakdown Modal -->
                     <template v-if="activeModal === 'devices' && overview?.device_breakdown">
                         <div
-                            v-for="(dev, idx) in overview.device_breakdown"
+                            v-for="dev in overview.device_breakdown"
                             :key="dev.device"
-                            class="rounded-xl border border-sidebar-border/60 bg-card p-4 space-y-3 hover:border-amber-500/40 transition-colors"
+                            @click="addFilter('device', dev.device); activeModal = null"
+                            :title="`Click to filter by device: ${dev.device}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
                         >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-black">#{{ idx + 1 }}</span>
-                                    <component :is="getDeviceIcon(dev.device)" class="h-4 w-4 text-amber-500 shrink-0" />
-                                    <span class="font-mono font-bold text-foreground text-xs capitalize truncate">{{ dev.device }}</span>
-                                </div>
-                                <span class="shrink-0 text-[13px] font-black text-amber-600 dark:text-amber-400">{{ dev.percentage }}%</span>
-                            </div>
-                            <div class="w-full bg-muted h-2.5 rounded-full overflow-hidden">
-                                <div class="bg-amber-500 h-2.5 rounded-full transition-all duration-700" :style="{ width: `${dev.percentage}%` }"></div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md font-semibold">{{ formatNumber(dev.count) }} sessions</span>
-                                <button
-                                    @click="addFilter('device', dev.device); activeModal = null"
-                                    class="text-[11px] font-semibold flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:underline transition-colors"
-                                >
-                                    <Filter class="h-3 w-3" /> Filter to this
-                                </button>
-                            </div>
+                            <div
+                                class="absolute inset-y-0 left-0 bg-amber-100/70 dark:bg-amber-500/15 rounded-lg transition-all duration-500 group-hover:bg-amber-200/80 dark:group-hover:bg-amber-500/25"
+                                :style="{ width: `${dev.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 flex items-center gap-2 capitalize font-mono text-foreground font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors mr-2">
+                                <component :is="getDeviceIcon(dev.device)" class="h-4 w-4 text-amber-500 shrink-0" />
+                                <span>{{ dev.device }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(dev.count) }} sessions <span class="text-muted-foreground/70">({{ dev.percentage }}%)</span></span>
                         </div>
                     </template>
 
                     <!-- Top Browsers Modal -->
                     <template v-if="activeModal === 'browsers' && overview?.top_browsers">
                         <div
-                            v-for="(item, idx) in overview.top_browsers"
+                            v-for="item in overview.top_browsers"
                             :key="item.browser"
-                            class="rounded-xl border border-sidebar-border/60 bg-card p-4 space-y-3 hover:border-sky-500/40 transition-colors"
+                            @click="addFilter('browser', item.browser); activeModal = null"
+                            :title="`Click to filter by browser: ${item.browser}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
                         >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 text-[11px] font-black">#{{ idx + 1 }}</span>
-                                    <img
-                                        v-if="getBrowserIcon(item.browser)"
-                                        :src="getBrowserIcon(item.browser)!"
-                                        :alt="item.browser"
-                                        class="h-4 w-4 shrink-0 object-contain dark:invert dark:brightness-200"
-                                        @error="($event.target as HTMLImageElement).style.display = 'none'"
-                                    />
-                                    <Globe v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
-                                    <span class="font-mono font-bold text-foreground text-xs truncate">{{ item.browser }}</span>
-                                </div>
-                                <span class="shrink-0 text-[13px] font-black text-sky-600 dark:text-sky-400">{{ item.percentage }}%</span>
-                            </div>
-                            <div class="w-full bg-muted h-2.5 rounded-full overflow-hidden">
-                                <div class="bg-sky-500 h-2.5 rounded-full transition-all duration-700" :style="{ width: `${item.percentage}%` }"></div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md font-semibold">{{ formatNumber(item.count) }} sessions</span>
-                                <button
-                                    @click="addFilter('browser', item.browser); activeModal = null"
-                                    class="text-[11px] font-semibold flex items-center gap-1 text-sky-600 dark:text-sky-400 hover:underline transition-colors"
-                                >
-                                    <Filter class="h-3 w-3" /> Filter to this
-                                </button>
-                            </div>
+                            <div
+                                class="absolute inset-y-0 left-0 bg-sky-100/70 dark:bg-sky-500/15 rounded-lg transition-all duration-500 group-hover:bg-sky-200/80 dark:group-hover:bg-sky-500/25"
+                                :style="{ width: `${item.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mr-2 flex items-center gap-2">
+                                <img
+                                    v-if="getBrowserIcon(item.browser)"
+                                    :src="getBrowserIcon(item.browser)!"
+                                    :alt="item.browser"
+                                    class="h-4 w-4 shrink-0 object-contain dark:invert dark:brightness-200"
+                                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                />
+                                <Globe v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                                <span class="truncate">{{ item.browser }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} sessions <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
                         </div>
                     </template>
 
                     <!-- Top OS Modal -->
                     <template v-if="activeModal === 'os' && overview?.top_os">
                         <div
-                            v-for="(item, idx) in overview.top_os"
+                            v-for="item in overview.top_os"
                             :key="item.os"
-                            class="rounded-xl border border-sidebar-border/60 bg-card p-4 space-y-3 hover:border-purple-500/40 transition-colors"
+                            @click="addFilter('os', item.os); activeModal = null"
+                            :title="`Click to filter by OS: ${item.os}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
                         >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-black">#{{ idx + 1 }}</span>
-                                    <img
-                                        v-if="getOsIcon(item.os)"
-                                        :src="getOsIcon(item.os)!"
-                                        :alt="item.os"
-                                        class="h-4 w-4 shrink-0 object-contain dark:invert dark:brightness-200"
-                                        @error="($event.target as HTMLImageElement).style.display = 'none'"
-                                    />
-                                    <Laptop v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
-                                    <span class="font-mono font-bold text-foreground text-xs truncate">{{ item.os }}</span>
-                                </div>
-                                <span class="shrink-0 text-[13px] font-black text-purple-600 dark:text-purple-400">{{ item.percentage }}%</span>
-                            </div>
-                            <div class="w-full bg-muted h-2.5 rounded-full overflow-hidden">
-                                <div class="bg-purple-500 h-2.5 rounded-full transition-all duration-700" :style="{ width: `${item.percentage}%` }"></div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md font-semibold">{{ formatNumber(item.count) }} sessions</span>
-                                <button
-                                    @click="addFilter('os', item.os); activeModal = null"
-                                    class="text-[11px] font-semibold flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline transition-colors"
-                                >
-                                    <Filter class="h-3 w-3" /> Filter to this
-                                </button>
-                            </div>
+                            <div
+                                class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
+                                :style="{ width: `${item.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-2">
+                                <img
+                                    v-if="getOsIcon(item.os)"
+                                    :src="getOsIcon(item.os)!"
+                                    :alt="item.os"
+                                    class="h-4 w-4 shrink-0 object-contain dark:invert dark:brightness-200"
+                                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                />
+                                <Laptop v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                                <span class="truncate">{{ item.os }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} sessions <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
                         </div>
                     </template>
 
                     <!-- Top Locations Modal -->
                     <template v-if="activeModal === 'locations' && overview?.top_countries">
                         <div
-                            v-for="(item, idx) in overview.top_countries"
+                            v-for="item in overview.top_countries"
                             :key="item.code || item.name"
-                            class="rounded-xl border border-sidebar-border/60 bg-card p-4 space-y-3 hover:border-rose-500/40 transition-colors"
+                            @click="addFilter('country', item.code || item.name); activeModal = null"
+                            :title="`Click to filter by country: ${item.name || item.code}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
                         >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[11px] font-black">#{{ idx + 1 }}</span>
-                                    <span class="text-xl leading-none select-none shrink-0">{{ getCountryFlag(item.code) }}</span>
-                                    <span v-if="item.code" class="text-[10px] font-black px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase shrink-0">{{ item.code }}</span>
-                                    <span class="font-mono font-bold text-foreground text-xs truncate">{{ item.name || item.code }}</span>
-                                </div>
-                                <span class="shrink-0 text-[13px] font-black text-rose-600 dark:text-rose-400">{{ item.percentage }}%</span>
-                            </div>
-                            <div class="w-full bg-muted h-2.5 rounded-full overflow-hidden">
-                                <div class="bg-rose-500 h-2.5 rounded-full transition-all duration-700" :style="{ width: `${item.percentage}%` }"></div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md font-semibold">{{ formatNumber(item.count) }} visitors</span>
-                                <button
-                                    @click="addFilter('country', item.code || item.name); activeModal = null"
-                                    class="text-[11px] font-semibold flex items-center gap-1 text-rose-600 dark:text-rose-400 hover:underline transition-colors"
-                                >
-                                    <Filter class="h-3 w-3" /> Filter to this
-                                </button>
-                            </div>
+                            <div
+                                class="absolute inset-y-0 left-0 bg-rose-100/70 dark:bg-rose-500/15 rounded-lg transition-all duration-500 group-hover:bg-rose-200/80 dark:group-hover:bg-rose-500/25"
+                                :style="{ width: `${item.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors mr-2 flex items-center gap-2">
+                                <span class="text-base leading-none select-none shrink-0">{{ getCountryFlag(item.code) }}</span>
+                                <span v-if="item.code" class="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase shrink-0">{{ item.code }}</span>
+                                <span class="truncate">{{ item.name || item.code }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} visitors <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
                         </div>
                     </template>
 
                     <!-- UTM Campaigns Modal -->
                     <template v-if="activeModal === 'utm' && overview?.utm_campaigns">
                         <div
-                            v-for="(campaign, idx) in overview.utm_campaigns"
+                            v-for="campaign in overview.utm_campaigns"
                             :key="campaign.campaign"
-                            class="rounded-xl border border-sidebar-border/60 bg-card p-4 space-y-3 hover:border-purple-500/40 transition-colors"
+                            @click="addFilter('utm_campaign', campaign.campaign); activeModal = null"
+                            :title="`Click to filter by UTM campaign: ${campaign.campaign}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
                         >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-black">#{{ idx + 1 }}</span>
-                                    <span class="font-mono font-bold text-purple-600 dark:text-purple-400 text-xs truncate">{{ campaign.campaign }}</span>
-                                </div>
-                                <span class="shrink-0 text-[13px] font-black text-purple-600 dark:text-purple-400">{{ campaign.percentage }}%</span>
-                            </div>
-                            <div class="w-full bg-muted h-2.5 rounded-full overflow-hidden">
-                                <div class="bg-purple-500 h-2.5 rounded-full transition-all duration-700" :style="{ width: `${campaign.percentage}%` }"></div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md font-semibold">{{ formatNumber(campaign.count) }} visits</span>
-                                <button
-                                    @click="addFilter('utm_campaign', campaign.campaign); activeModal = null"
-                                    class="text-[11px] font-semibold flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline transition-colors"
-                                >
-                                    <Filter class="h-3 w-3" /> Filter to this
-                                </button>
-                            </div>
+                            <div
+                                class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
+                                :style="{ width: `${campaign.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1.5">
+                                <span class="truncate">{{ campaign.campaign }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(campaign.count) }} visits <span class="text-muted-foreground/70">({{ campaign.percentage }}%)</span></span>
                         </div>
                     </template>
                 </div>
