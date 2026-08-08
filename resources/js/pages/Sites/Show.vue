@@ -318,7 +318,7 @@ const deleteGoal = async () => {
                             <div class="flex gap-2">
                                 <Input
                                     id="share-url"
-                                    :value="shareUrl"
+                                    :model-value="shareUrl"
                                     readonly
                                     class="font-mono text-sm bg-muted/80 text-foreground font-semibold flex-1 select-all"
                                 />
@@ -416,7 +416,7 @@ const deleteGoal = async () => {
                     <div v-if="props.site.api_token" class="space-y-4">
                         <div class="flex gap-2">
                             <Input
-                                :value="props.site.api_token"
+                                :model-value="props.site.api_token"
                                 readonly
                                 class="font-mono text-sm bg-muted/80 text-foreground font-semibold flex-1 select-all"
                             />
