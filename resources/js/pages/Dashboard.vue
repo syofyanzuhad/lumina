@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, Link } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download } from '@lucide/vue';
+import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download, Maximize2 } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import CustomEventsTab from '@/components/CustomEventsTab.vue';
 import {
@@ -12,6 +12,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 
 interface SiteItem {
     id: number;
@@ -244,6 +251,14 @@ const getDeviceIcon = (deviceStr: string) => {
     if (lower.includes('tablet')) return Laptop;
     return Monitor;
 };
+
+const activeModal = ref<string | null>(null);
+const modalTitle = ref<string>('');
+
+const openModal = (type: string, title: string) => {
+    activeModal.value = type;
+    modalTitle.value = title;
+};
 </script>
 
 <template>
@@ -252,23 +267,48 @@ const getDeviceIcon = (deviceStr: string) => {
     <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 sm:p-6">
         <!-- Top Control Bar -->
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-xl p-4 shadow-sm">
-            <!-- Active Site Switcher -->
-            <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                    <Globe class="h-5 w-5" />
-                </div>
-                <div>
-                    <label for="site-select" class="block text-xs font-medium text-muted-foreground">Active Site</label>
+            <!-- Active Site Switcher & Tab Pill -->
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                        <Globe class="h-4 w-4" />
+                    </div>
                     <select
                         id="site-select"
                         :value="activeSite.id"
                         @change="changeSite"
-                        class="mt-0.5 block w-full rounded-md border-0 py-1 pl-2 pr-8 text-sm font-semibold ring-1 ring-inset ring-sidebar-border focus:ring-2 focus:ring-indigo-600 dark:bg-slate-900 dark:text-slate-100"
+                        class="block rounded-lg border-0 py-1.5 pl-3 pr-8 text-sm font-bold ring-1 ring-inset ring-sidebar-border focus:ring-2 focus:ring-indigo-600 dark:bg-slate-900 dark:text-slate-100 shadow-xs"
                     >
                         <option v-for="site in sites" :key="site.id" :value="site.id">
                             {{ site.domain }}
                         </option>
                     </select>
+                </div>
+
+                <!-- Consolidated Tab Switcher -->
+                <div class="flex items-center gap-1 p-1 bg-muted rounded-lg border border-sidebar-border/50">
+                    <button
+                        @click="setTab('overview')"
+                        :class="[
+                            'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                            (!activeTab || activeTab === 'overview')
+                                ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                : 'bg-transparent text-muted-foreground hover:text-foreground'
+                        ]"
+                    >
+                        Overview
+                    </button>
+                    <button
+                        @click="setTab('events')"
+                        :class="[
+                            'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                            activeTab === 'events'
+                                ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                : 'bg-transparent text-muted-foreground hover:text-foreground'
+                        ]"
+                    >
+                        Custom Events
+                    </button>
                 </div>
             </div>
 
@@ -391,32 +431,6 @@ const getDeviceIcon = (deviceStr: string) => {
                     <RefreshCw :class="['h-4 w-4', { 'animate-spin': isRefreshing }]" />
                 </button>
             </div>
-        </div>
-
-        <!-- Tab Header Controls -->
-        <div class="flex items-center gap-1.5 p-1 bg-muted rounded-xl border border-sidebar-border/50 self-start">
-            <button
-                @click="setTab('overview')"
-                :class="[
-                    'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all',
-                    (!activeTab || activeTab === 'overview')
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
-                        : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80'
-                ]"
-            >
-                Overview
-            </button>
-            <button
-                @click="setTab('events')"
-                :class="[
-                    'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all',
-                    activeTab === 'events'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
-                        : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80'
-                ]"
-            >
-                Custom Events
-            </button>
         </div>
 
         <template v-if="!activeTab || activeTab === 'overview'">
@@ -554,7 +568,16 @@ const getDeviceIcon = (deviceStr: string) => {
                 <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Pages</h3>
-                        <span class="text-xs text-muted-foreground">{{ overview.top_pages.length }} entries</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-muted-foreground">{{ overview.top_pages.length }} entries</span>
+                            <button
+                                @click="openModal('pages', 'Top Pages Breakdown')"
+                                title="Expand Details"
+                                class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                            >
+                                <Maximize2 class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
                     </div>
 
                     <div class="space-y-4">
@@ -576,7 +599,16 @@ const getDeviceIcon = (deviceStr: string) => {
                 <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Referrers</h3>
-                        <span class="text-xs text-muted-foreground">{{ overview.top_referrers.length }} entries</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-muted-foreground">{{ overview.top_referrers.length }} entries</span>
+                            <button
+                                @click="openModal('referrers', 'Top Referrers Breakdown')"
+                                title="Expand Details"
+                                class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                            >
+                                <Maximize2 class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
                     </div>
 
                     <div class="space-y-4">
@@ -598,7 +630,16 @@ const getDeviceIcon = (deviceStr: string) => {
                 <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Device Types</h3>
-                        <span v-if="overview.device_breakdown" class="text-xs text-muted-foreground">{{ overview.device_breakdown.length }} devices</span>
+                        <div class="flex items-center gap-2">
+                            <span v-if="overview.device_breakdown" class="text-xs text-muted-foreground">{{ overview.device_breakdown.length }} devices</span>
+                            <button
+                                @click="openModal('devices', 'Device Breakdown')"
+                                title="Expand Details"
+                                class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                            >
+                                <Maximize2 class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
                     </div>
 
                     <div class="space-y-4">
@@ -626,7 +667,16 @@ const getDeviceIcon = (deviceStr: string) => {
                 <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Browsers</h3>
-                        <span v-if="overview.top_browsers" class="text-xs text-muted-foreground">{{ overview.top_browsers.length }} browsers</span>
+                        <div class="flex items-center gap-2">
+                            <span v-if="overview.top_browsers" class="text-xs text-muted-foreground">{{ overview.top_browsers.length }} browsers</span>
+                            <button
+                                @click="openModal('browsers', 'Top Browsers Breakdown')"
+                                title="Expand Details"
+                                class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                            >
+                                <Maximize2 class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
                     </div>
 
                     <div class="space-y-4">
@@ -648,7 +698,16 @@ const getDeviceIcon = (deviceStr: string) => {
                 <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Operating Systems</h3>
-                        <span v-if="overview.top_os" class="text-xs text-muted-foreground">{{ overview.top_os.length }} operating systems</span>
+                        <div class="flex items-center gap-2">
+                            <span v-if="overview.top_os" class="text-xs text-muted-foreground">{{ overview.top_os.length }} OS</span>
+                            <button
+                                @click="openModal('os', 'Operating Systems Breakdown')"
+                                title="Expand Details"
+                                class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                            >
+                                <Maximize2 class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
                     </div>
 
                     <div class="space-y-4">
@@ -670,7 +729,16 @@ const getDeviceIcon = (deviceStr: string) => {
                 <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Locations</h3>
-                        <span v-if="overview.top_countries" class="text-xs text-muted-foreground">{{ overview.top_countries.length }} countries</span>
+                        <div class="flex items-center gap-2">
+                            <span v-if="overview.top_countries" class="text-xs text-muted-foreground">{{ overview.top_countries.length }} countries</span>
+                            <button
+                                @click="openModal('locations', 'Geographic Locations Breakdown')"
+                                title="Expand Details"
+                                class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                            >
+                                <Maximize2 class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
                     </div>
 
                     <div class="space-y-4">
@@ -697,7 +765,16 @@ const getDeviceIcon = (deviceStr: string) => {
             <div v-if="overview.utm_campaigns && overview.utm_campaigns.length > 0" class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-bold text-foreground">UTM Campaigns</h3>
-                    <span class="text-xs text-muted-foreground">{{ overview.utm_campaigns.length }} campaigns</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-muted-foreground">{{ overview.utm_campaigns.length }} campaigns</span>
+                        <button
+                            @click="openModal('utm', 'UTM Campaigns Breakdown')"
+                            title="Expand Details"
+                            class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                        >
+                            <Maximize2 class="h-3.5 w-3.5" />
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -769,5 +846,116 @@ const getDeviceIcon = (deviceStr: string) => {
                 :logs="custom_event_logs"
             />
         </template>
+
+        <!-- Side Drawer Modal for Detailed Breakdown -->
+        <Sheet :open="!!activeModal" @update:open="(val) => { if (!val) activeModal = null; }">
+            <SheetContent side="right" class="w-full sm:max-w-lg overflow-y-auto">
+                <SheetHeader>
+                    <SheetTitle>{{ modalTitle }}</SheetTitle>
+                    <SheetDescription>
+                        Complete detailed breakdown for {{ activeSite.domain }}
+                    </SheetDescription>
+                </SheetHeader>
+
+                <div class="mt-6 space-y-4">
+                    <!-- Top Pages Modal -->
+                    <template v-if="activeModal === 'pages' && overview?.top_pages">
+                        <div v-for="page in overview.top_pages" :key="page.path" class="p-3 rounded-lg border border-sidebar-border/50 bg-muted/30 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-mono font-bold text-foreground truncate pr-2">{{ page.path }}</span>
+                                <span class="font-mono text-muted-foreground shrink-0">{{ formatNumber(page.count) }} views ({{ page.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full" :style="{ width: `${page.percentage}%` }"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Top Referrers Modal -->
+                    <template v-if="activeModal === 'referrers' && overview?.top_referrers">
+                        <div v-for="refItem in overview.top_referrers" :key="refItem.referrer" class="p-3 rounded-lg border border-sidebar-border/50 bg-muted/30 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-mono font-bold text-foreground truncate pr-2">{{ refItem.referrer }}</span>
+                                <span class="font-mono text-muted-foreground shrink-0">{{ formatNumber(refItem.count) }} visits ({{ refItem.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-emerald-600 dark:bg-emerald-500 h-2 rounded-full" :style="{ width: `${refItem.percentage}%` }"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Device Breakdown Modal -->
+                    <template v-if="activeModal === 'devices' && overview?.device_breakdown">
+                        <div v-for="dev in overview.device_breakdown" :key="dev.device" class="p-3 rounded-lg border border-sidebar-border/50 bg-muted/30 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-mono font-bold text-foreground capitalize flex items-center gap-2">
+                                    <component :is="getDeviceIcon(dev.device)" class="h-4 w-4 text-indigo-500" />
+                                    {{ dev.device }}
+                                </span>
+                                <span class="font-mono text-muted-foreground">{{ formatNumber(dev.count) }} ({{ dev.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-amber-500 dark:bg-amber-400 h-2 rounded-full" :style="{ width: `${dev.percentage}%` }"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Top Browsers Modal -->
+                    <template v-if="activeModal === 'browsers' && overview?.top_browsers">
+                        <div v-for="item in overview.top_browsers" :key="item.browser" class="p-3 rounded-lg border border-sidebar-border/50 bg-muted/30 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-mono font-bold text-foreground">{{ item.browser }}</span>
+                                <span class="font-mono text-muted-foreground">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-sky-600 dark:bg-sky-500 h-2 rounded-full" :style="{ width: `${item.percentage}%` }"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Top OS Modal -->
+                    <template v-if="activeModal === 'os' && overview?.top_os">
+                        <div v-for="item in overview.top_os" :key="item.os" class="p-3 rounded-lg border border-sidebar-border/50 bg-muted/30 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-mono font-bold text-foreground">{{ item.os }}</span>
+                                <span class="font-mono text-muted-foreground">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-purple-600 dark:bg-purple-500 h-2 rounded-full" :style="{ width: `${item.percentage}%` }"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Top Locations Modal -->
+                    <template v-if="activeModal === 'locations' && overview?.top_countries">
+                        <div v-for="item in overview.top_countries" :key="item.code || item.name" class="p-3 rounded-lg border border-sidebar-border/50 bg-muted/30 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-mono font-bold text-foreground flex items-center gap-2">
+                                    <span class="text-lg leading-none select-none">{{ getCountryFlag(item.code) }}</span>
+                                    {{ item.name || item.code }}
+                                </span>
+                                <span class="font-mono text-muted-foreground">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-rose-600 dark:bg-rose-500 h-2 rounded-full" :style="{ width: `${item.percentage}%` }"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- UTM Campaigns Modal -->
+                    <template v-if="activeModal === 'utm' && overview?.utm_campaigns">
+                        <div v-for="campaign in overview.utm_campaigns" :key="campaign.campaign" class="p-3 rounded-lg border border-sidebar-border/50 bg-muted/30 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ campaign.campaign }}</span>
+                                <span class="font-mono text-muted-foreground">{{ formatNumber(campaign.count) }} ({{ campaign.percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                                <div class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full" :style="{ width: `${campaign.percentage}%` }"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </SheetContent>
+        </Sheet>
     </div>
 </template>
