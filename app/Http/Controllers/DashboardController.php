@@ -35,15 +35,21 @@ class DashboardController extends Controller
 
         $activeTab = $request->query('tab', 'overview');
 
+        $filters = $request->only([
+            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_campaign'
+        ]);
+        $filters = array_filter($filters, fn ($val) => ! is_null($val) && $val !== '');
+
         $data = [
             'sites' => $sites,
             'activeSite' => $activeSite,
             'period' => $period,
             'activeTab' => $activeTab,
+            'filters' => $filters,
         ];
 
         if ($activeTab === 'overview') {
-            $data['overview'] = $analytics->getOverview($activeSite, $start, $end);
+            $data['overview'] = $analytics->getOverview($activeSite, $start, $end, $filters);
         } elseif ($activeTab === 'events') {
             $selectedEvent = $request->query('event');
             $selectedPropertyKey = $request->query('property');

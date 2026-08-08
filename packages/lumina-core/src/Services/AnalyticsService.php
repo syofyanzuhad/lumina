@@ -14,6 +14,36 @@ use Lumina\Core\Support\ReferrerHelper;
 
 class AnalyticsService
 {
+    protected function applyFilters($query, array $filters)
+    {
+        if (! empty($filters['path'])) {
+            if (DB::getDriverName() === 'sqlite') {
+                $query->whereRaw("COALESCE(clean_path, CASE WHEN instr(path, '?') > 0 THEN substr(path, 1, instr(path, '?') - 1) ELSE path END) = ?", [$filters['path']]);
+            } else {
+                $query->whereRaw("COALESCE(clean_path, SUBSTRING_INDEX(path, '?', 1)) = ?", [$filters['path']]);
+            }
+        }
+        if (! empty($filters['referrer'])) {
+            $query->where('referrer', $filters['referrer']);
+        }
+        if (! empty($filters['country'])) {
+            $query->where('country_code', $filters['country']);
+        }
+        if (! empty($filters['browser'])) {
+            $query->where('browser', $filters['browser']);
+        }
+        if (! empty($filters['os'])) {
+            $query->where('os', $filters['os']);
+        }
+        if (! empty($filters['device'])) {
+            $query->where('device', $filters['device']);
+        }
+        if (! empty($filters['utm_campaign'])) {
+            $query->where('utm_campaign', $filters['utm_campaign']);
+        }
+        return $query;
+    }
+
     /**
      * Cache TTL in seconds (default: 60).
      */
@@ -65,13 +95,14 @@ class AnalyticsService
     /**
      * Get total pageviews for site and date range.
      */
-    public function getPageviews(Site $site, CarbonInterface $start, CarbonInterface $end): int
+    public function getPageviews(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): int
     {
-        $cacheKey = $this->cacheKey($site->id, 'pageviews', $start, $end);
+        $cacheKey = $this->cacheKey($site->id, 'pageviews', $start, $end, $filters);
 
-        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
+        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
             return Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->count();
         });
     }
@@ -79,13 +110,14 @@ class AnalyticsService
     /**
      * Get unique visitors count for site and date range.
      */
-    public function getUniqueVisitors(Site $site, CarbonInterface $start, CarbonInterface $end): int
+    public function getUniqueVisitors(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): int
     {
-        $cacheKey = $this->cacheKey($site->id, 'unique_visitors', $start, $end);
+        $cacheKey = $this->cacheKey($site->id, 'unique_visitors', $start, $end, $filters);
 
-        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
+        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
             return Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->distinct('visitor_hash')
                 ->count('visitor_hash');
         });
@@ -94,12 +126,12 @@ class AnalyticsService
     /**
      * Get top pages for site and date range.
      */
-    public function getTopPages(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    public function getTopPages(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, "top_pages_{$limit}", $start, $end);
+        $cacheKey = $this->cacheKey($site->id, "top_pages_{$limit}", $start, $end, $filters);
 
-        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
-            $totalPageviews = $this->getPageviews($site, $start, $end);
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
+            $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
             $pathExpr = DB::getDriverName() === 'sqlite'
                 ? DB::raw("COALESCE(clean_path, CASE WHEN instr(path, '?') > 0 THEN substr(path, 1, instr(path, '?') - 1) ELSE path END) as target_path")
@@ -107,6 +139,7 @@ class AnalyticsService
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->select($pathExpr, DB::raw('count(*) as count'))
                 ->groupBy('target_path')
                 ->orderByDesc('count')
@@ -131,15 +164,16 @@ class AnalyticsService
     /**
      * Get top referrers for site and date range.
      */
-    public function getTopReferrers(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    public function getTopReferrers(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, "top_referrers_{$limit}", $start, $end);
+        $cacheKey = $this->cacheKey($site->id, "top_referrers_{$limit}", $start, $end, $filters);
 
-        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
-            $totalPageviews = $this->getPageviews($site, $start, $end);
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
+            $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->whereNotNull('referrer')
                 ->where('referrer', '!=', '')
                 ->select('referrer', DB::raw('count(*) as count'))
@@ -179,17 +213,18 @@ class AnalyticsService
     /**
      * Get daily pageview timeseries for site and date range.
      */
-    public function getDailyPageviews(Site $site, CarbonInterface $start, CarbonInterface $end): Collection
+    public function getDailyPageviews(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, 'daily_pageviews', $start, $end);
+        $cacheKey = $this->cacheKey($site->id, 'daily_pageviews', $start, $end, $filters);
 
-        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
             $dateExpr = DB::getDriverName() === 'sqlite'
                 ? DB::raw("strftime('%Y-%m-%d', created_at) as date")
                 : DB::raw('DATE(created_at) as date');
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->select(
                     $dateExpr,
                     DB::raw('count(*) as pageviews'),
@@ -224,15 +259,16 @@ class AnalyticsService
     /**
      * Get device breakdown (desktop, mobile, tablet, etc.).
      */
-    public function getDeviceBreakdown(Site $site, CarbonInterface $start, CarbonInterface $end): Collection
+    public function getDeviceBreakdown(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, 'device_breakdown', $start, $end);
+        $cacheKey = $this->cacheKey($site->id, 'device_breakdown', $start, $end, $filters);
 
-        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
-            $totalPageviews = $this->getPageviews($site, $start, $end);
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
+            $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->select('device_type', DB::raw('count(*) as count'))
                 ->groupBy('device_type')
                 ->orderByDesc('count')
@@ -255,15 +291,16 @@ class AnalyticsService
     /**
      * Get top browsers for site and date range.
      */
-    public function getTopBrowsers(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    public function getTopBrowsers(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, "top_browsers_{$limit}", $start, $end);
+        $cacheKey = $this->cacheKey($site->id, "top_browsers_{$limit}", $start, $end, $filters);
 
-        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
-            $totalPageviews = $this->getPageviews($site, $start, $end);
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
+            $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->whereNotNull('browser')
                 ->where('browser', '!=', '')
                 ->select('browser', DB::raw('count(*) as count'))
@@ -290,15 +327,16 @@ class AnalyticsService
     /**
      * Get top operating systems for site and date range.
      */
-    public function getTopOperatingSystems(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    public function getTopOperatingSystems(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, "top_os_{$limit}", $start, $end);
+        $cacheKey = $this->cacheKey($site->id, "top_os_{$limit}", $start, $end, $filters);
 
-        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
-            $totalPageviews = $this->getPageviews($site, $start, $end);
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
+            $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->whereNotNull('os')
                 ->where('os', '!=', '')
                 ->select('os', DB::raw('count(*) as count'))
@@ -325,17 +363,18 @@ class AnalyticsService
     /**
      * Get top countries for site and date range.
      */
-    public function getTopCountries(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    public function getTopCountries(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, "top_countries_{$limit}", $start, $end);
+        $cacheKey = $this->cacheKey($site->id, "top_countries_{$limit}", $start, $end, $filters);
 
-        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
-            $totalPageviews = $this->getPageviews($site, $start, $end);
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
+            $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
             $countryExpr = DB::raw('UPPER(TRIM(COALESCE(country_code, country))) as code');
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->where(function ($q) {
                     $q->whereNotNull('country_code')->orWhereNotNull('country');
                 })
@@ -379,13 +418,14 @@ class AnalyticsService
     /**
      * Get custom event breakdown from metadata column.
      */
-    public function getCustomEvents(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    public function getCustomEvents(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, "custom_events_{$limit}", $start, $end);
+        $cacheKey = $this->cacheKey($site->id, "custom_events_{$limit}", $start, $end, $filters);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit, $filters) {
             $events = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->whereNotNull('metadata')
                 ->get();
 
@@ -419,13 +459,14 @@ class AnalyticsService
     /**
      * Get bounce rate (percentage of single-pageview visitor sessions).
      */
-    public function getBounceRate(Site $site, CarbonInterface $start, CarbonInterface $end): float
+    public function getBounceRate(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): float
     {
-        $cacheKey = $this->cacheKey($site->id, 'bounce_rate', $start, $end);
+        $cacheKey = $this->cacheKey($site->id, 'bounce_rate', $start, $end, $filters);
 
-        return (float) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
+        return (float) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
             $visitorCounts = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->select('visitor_hash', DB::raw('count(*) as views'))
                 ->groupBy('visitor_hash')
                 ->get();
@@ -474,15 +515,16 @@ class AnalyticsService
     /**
      * Get UTM campaign breakdown for site and date range.
      */
-    public function getUtmCampaigns(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    public function getUtmCampaigns(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, "utm_campaigns_{$limit}", $start, $end);
+        $cacheKey = $this->cacheKey($site->id, "utm_campaigns_{$limit}", $start, $end, $filters);
 
-        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
-            $totalPageviews = $this->getPageviews($site, $start, $end);
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
+            $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->whereNotNull('utm_campaign')
                 ->where('utm_campaign', '!=', '')
                 ->select('utm_campaign', 'utm_source', 'utm_medium', DB::raw('count(*) as count'))
@@ -510,36 +552,41 @@ class AnalyticsService
     /**
      * Get complete dashboard overview payload.
      */
-    public function getOverview(Site $site, CarbonInterface $start, CarbonInterface $end): array
+    public function getOverview(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): array
     {
         return [
-            'total_pageviews' => $this->getPageviews($site, $start, $end),
-            'unique_visitors' => $this->getUniqueVisitors($site, $start, $end),
+            'total_pageviews' => $this->getPageviews($site, $start, $end, $filters),
+            'unique_visitors' => $this->getUniqueVisitors($site, $start, $end, $filters),
             'current_visitors' => $this->getCurrentVisitors($site),
-            'bounce_rate' => $this->getBounceRate($site, $start, $end),
-            'avg_duration' => $this->getAvgVisitDuration($site, $start, $end),
-            'top_pages' => $this->getTopPages($site, $start, $end),
-            'top_referrers' => $this->getTopReferrers($site, $start, $end),
-            'daily_pageviews' => $this->getDailyPageviews($site, $start, $end),
-            'device_breakdown' => $this->getDeviceBreakdown($site, $start, $end),
-            'top_browsers' => $this->getTopBrowsers($site, $start, $end),
-            'top_os' => $this->getTopOperatingSystems($site, $start, $end),
-            'top_countries' => $this->getTopCountries($site, $start, $end),
-            'utm_campaigns' => $this->getUtmCampaigns($site, $start, $end),
-            'custom_events' => $this->getCustomEvents($site, $start, $end),
-            'goals' => $this->getGoals($site, $start, $end),
+            'bounce_rate' => $this->getBounceRate($site, $start, $end, $filters),
+            'avg_duration' => $this->getAvgVisitDuration($site, $start, $end, $filters),
+            'top_pages' => $this->getTopPages($site, $start, $end, 10, $filters),
+            'top_referrers' => $this->getTopReferrers($site, $start, $end, 10, $filters),
+            'daily_pageviews' => $this->getDailyPageviews($site, $start, $end, $filters),
+            'device_breakdown' => $this->getDeviceBreakdown($site, $start, $end, $filters),
+            'top_browsers' => $this->getTopBrowsers($site, $start, $end, 10, $filters),
+            'top_os' => $this->getTopOperatingSystems($site, $start, $end, 10, $filters),
+            'top_countries' => $this->getTopCountries($site, $start, $end, 10, $filters),
+            'utm_campaigns' => $this->getUtmCampaigns($site, $start, $end, 10, $filters),
+            'custom_events' => $this->getCustomEvents($site, $start, $end, 10, $filters),
+            'goals' => $this->getGoals($site, $start, $end, $filters),
         ];
     }
 
     /**
      * Generate deterministic cache key.
      */
-    protected function cacheKey(int $siteId, string $metric, CarbonInterface $start, CarbonInterface $end, array $extra = []): string
+    protected function cacheKey(int $siteId, string $metric, CarbonInterface $start, CarbonInterface $end, array $filters = [], array $extra = []): string
     {
         $sStr = $start->format('Y-m-d');
         $eStr = $end->format('Y-m-d');
 
         $key = "lumina:analytics:{$siteId}:{$metric}:{$sStr}:{$eStr}";
+
+        if (! empty($filters)) {
+            ksort($filters);
+            $key .= ':f_'.md5(json_encode($filters));
+        }
 
         if (! empty($extra)) {
             $key .= ':'.implode(':', $extra);
@@ -553,7 +600,7 @@ class AnalyticsService
      */
     public function getCustomEventSummary(Site $site, CarbonInterface $start, CarbonInterface $end, ?string $selectedEvent = null): array
     {
-        $cacheKey = $this->cacheKey($site->id, 'custom_event_summary', $start, $end, [$selectedEvent ?? 'all']);
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_summary', $start, $end, [], [$selectedEvent ?? 'all']);
 
         return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $selectedEvent) {
             $query = Event::where('site_id', $site->id)
@@ -624,7 +671,7 @@ class AnalyticsService
      */
     public function getCustomEventTimeline(Site $site, CarbonInterface $start, CarbonInterface $end, ?string $eventName = null): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, 'custom_event_timeline', $start, $end, [$eventName ?? 'all']);
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_timeline', $start, $end, [], [$eventName ?? 'all']);
 
         $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName) {
             $events = Event::where('site_id', $site->id)
@@ -664,7 +711,7 @@ class AnalyticsService
      */
     public function getCustomEventPropertyKeys(Site $site, string $eventName, CarbonInterface $start, CarbonInterface $end): array
     {
-        $cacheKey = $this->cacheKey($site->id, 'custom_event_property_keys', $start, $end, [$eventName]);
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_property_keys', $start, $end, [], [$eventName]);
 
         return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName) {
             $events = Event::where('site_id', $site->id)
@@ -690,7 +737,7 @@ class AnalyticsService
      */
     public function getCustomEventPropertyBreakdown(Site $site, string $eventName, string $propertyKey, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, 'custom_event_property_breakdown', $start, $end, [$eventName, $propertyKey, $limit]);
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_property_breakdown', $start, $end, [], [$eventName, $propertyKey, $limit]);
 
         $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName, $propertyKey, $limit) {
             $events = Event::where('site_id', $site->id)
@@ -734,7 +781,7 @@ class AnalyticsService
      */
     public function getCustomEventLogs(Site $site, CarbonInterface $start, CarbonInterface $end, ?string $eventName = null, int $limit = 50): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, 'custom_event_logs', $start, $end, [$eventName ?? 'all', $limit]);
+        $cacheKey = $this->cacheKey($site->id, 'custom_event_logs', $start, $end, [], [$eventName ?? 'all', $limit]);
 
         $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName, $limit) {
             $query = Event::where('site_id', $site->id)
@@ -773,11 +820,11 @@ class AnalyticsService
     /**
      * Get goals and conversion rates.
      */
-    public function getGoals(Site $site, CarbonInterface $start, CarbonInterface $end): Collection
+    public function getGoals(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): Collection
     {
-        $cacheKey = $this->cacheKey($site->id, 'goals', $start, $end);
+        $cacheKey = $this->cacheKey($site->id, 'goals', $start, $end, $filters);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $filters) {
             $goals = $site->goals;
 
             if ($goals->isEmpty()) {
@@ -789,7 +836,8 @@ class AnalyticsService
 
             foreach ($goals as $goal) {
                 $query = Event::where('site_id', $site->id)
-                    ->whereBetween('created_at', [$start, $end]);
+                    ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters));
 
                 if ($goal->target_type === 'path') {
                     if (str_contains($goal->target_value, '*')) {
