@@ -76,6 +76,13 @@ class DashboardController extends Controller
 
     protected function resolveDateRange(string $period, ?string $startDate, ?string $endDate): array
     {
+        if ($period === 'today') {
+            return [
+                now()->startOfDay(),
+                now()->endOfDay(),
+            ];
+        }
+
         if ($period === '7d') {
             return [
                 now()->subDays(6)->startOfDay(),

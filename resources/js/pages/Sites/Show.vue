@@ -17,6 +17,7 @@ const props = defineProps<{
         is_public?: boolean;
         share_token?: string | null;
         has_password?: boolean;
+        api_token?: string | null;
     };
 }>();
 
@@ -396,6 +397,37 @@ const deleteGoal = async () => {
                                 </Button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Token Card -->
+            <div class="bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-xl overflow-hidden">
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium">Public Stats API Token</h3>
+                            <p class="text-sm text-muted-foreground">
+                                Use this API token to fetch stats programmatically via <code>/api/v1/stats</code>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div v-if="props.site.api_token" class="space-y-4">
+                        <div class="flex gap-2">
+                            <Input
+                                :value="props.site.api_token"
+                                readonly
+                                class="font-mono text-sm bg-muted/80 text-foreground font-semibold flex-1 select-all"
+                            />
+                            <Button variant="secondary" @click="navigator.clipboard.writeText(props.site.api_token || ''); toast.success('API token copied to clipboard');">
+                                <Copy class="h-4 w-4 mr-2" />
+                                Copy
+                            </Button>
+                        </div>
+                    </div>
+                    <div v-else class="text-sm text-muted-foreground">
+                        No API token generated yet.
                     </div>
                 </div>
             </div>

@@ -81,6 +81,12 @@ interface GoalItem {
     trend: GoalTrendItem[];
 }
 
+interface UtmCampaignItem {
+    campaign: string;
+    count: number;
+    percentage: number;
+}
+
 interface Overview {
     total_pageviews: number;
     unique_visitors: number;
@@ -94,6 +100,7 @@ interface Overview {
     top_browsers?: TopBrowser[];
     top_os?: TopOS[];
     top_countries?: TopCountry[];
+    utm_campaigns?: UtmCampaignItem[];
     custom_events: CustomEventItem[];
     goals?: GoalItem[];
 }
@@ -267,6 +274,18 @@ const getDeviceIcon = (deviceStr: string) => {
 
             <!-- Date Period & Refresh Controls -->
             <div class="flex items-center gap-2">
+                <button
+                    type="button"
+                    @click="setPeriod('today')"
+                    :class="[
+                        'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all',
+                        period === 'today'
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    ]"
+                >
+                    Today
+                </button>
                 <button
                     type="button"
                     @click="setPeriod('7d')"
@@ -670,6 +689,26 @@ const getDeviceIcon = (deviceStr: string) => {
                         </div>
 
                         <p v-if="!overview.top_countries || overview.top_countries.length === 0" class="text-xs text-muted-foreground">No location data available.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UTM Campaigns Card (if present) -->
+            <div v-if="overview.utm_campaigns && overview.utm_campaigns.length > 0" class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold text-foreground">UTM Campaigns</h3>
+                    <span class="text-xs text-muted-foreground">{{ overview.utm_campaigns.length }} campaigns</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div v-for="campaign in overview.utm_campaigns" :key="campaign.campaign" class="space-y-1.5">
+                        <div class="flex justify-between text-xs font-medium">
+                            <span class="truncate font-mono text-indigo-600 dark:text-indigo-400 font-semibold">{{ campaign.campaign }}</span>
+                            <span class="text-muted-foreground font-mono">{{ formatNumber(campaign.count) }} ({{ campaign.percentage }}%)</span>
+                        </div>
+                        <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
+                            <div class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${campaign.percentage}%` }"></div>
+                        </div>
                     </div>
                 </div>
             </div>

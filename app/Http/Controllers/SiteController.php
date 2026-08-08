@@ -26,6 +26,9 @@ class SiteController extends Controller
     public function store(StoreSiteRequest $request): RedirectResponse
     {
         $site = $request->user()->sites()->create($request->validated());
+        if (! $site->api_token) {
+            $site->update(['api_token' => $site->generateApiToken()]);
+        }
 
         return redirect()->route('sites.show', $site);
     }
