@@ -581,11 +581,6 @@ const applyCustomDateRange = () => {
                             </div>
                         </div>
                     </div>
-
-                    <span v-if="hoveredDay" class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md">
-                        {{ hoveredDay.date }}: {{ formatNumber(hoveredDay.pageviews) }} views ({{ formatNumber(hoveredDay.visitors) }} visitors)
-                    </span>
-                    <span v-else class="text-xs text-muted-foreground">Hover bar to inspect</span>
                 </div>
 
                 <div class="flex items-end gap-1.5 h-44 pt-6 pb-2 relative">
