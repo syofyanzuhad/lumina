@@ -38,7 +38,26 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>Lumina — Lightweight Web Analytics for Laravel</title>
+            <meta name="description" content="Self-hosted, cookie-free web analytics for Laravel applications under 2KB script payload. Track pageviews, custom events, and conversion goals with zero infrastructure hassle.">
+            <meta name="keywords" content="Laravel analytics, web analytics, self-hosted analytics, cookie-free analytics, privacy friendly analytics, Plausible alternative, GDPR compliant analytics">
+            <link rel="canonical" href="https://uselumina.laravel.cloud">
+
+            <!-- Open Graph / Facebook -->
+            <meta property="og:type" content="website">
+            <meta property="og:title" content="Lumina — Lightweight Web Analytics for Laravel">
+            <meta property="og:description" content="Self-hosted web analytics native to Laravel. < 2KB tracker payload, 100% cookie-free GDPR privacy, and conversion goal tracking.">
+            <meta property="og:url" content="https://uselumina.laravel.cloud">
+            <meta property="og:site_name" content="Lumina Analytics">
+            <meta property="og:image" content="https://uselumina.laravel.cloud/og-image.jpg">
+            <meta property="og:image:width" content="1200">
+            <meta property="og:image:height" content="630">
+
+            <!-- Twitter -->
+            <meta name="twitter:card" content="summary_large_image">
+            <meta name="twitter:title" content="Lumina — Lightweight Web Analytics for Laravel">
+            <meta name="twitter:description" content="Self-hosted web analytics native to Laravel. < 2KB tracker payload, 100% cookie-free GDPR privacy, and conversion goal tracking.">
+            <meta name="twitter:image" content="https://uselumina.laravel.cloud/og-image.jpg">
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
