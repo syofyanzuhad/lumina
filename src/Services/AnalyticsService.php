@@ -41,6 +41,7 @@ class AnalyticsService
         if (! empty($filters['utm_campaign'])) {
             $query->where('utm_campaign', $filters['utm_campaign']);
         }
+
         return $query;
     }
 
@@ -837,7 +838,7 @@ class AnalyticsService
             foreach ($goals as $goal) {
                 $query = Event::where('site_id', $site->id)
                     ->whereBetween('created_at', [$start, $end])
-                ->tap(fn ($q) => $this->applyFilters($q, $filters));
+                    ->tap(fn ($q) => $this->applyFilters($q, $filters));
 
                 if ($goal->target_type === 'path') {
                     if (str_contains($goal->target_value, '*')) {
