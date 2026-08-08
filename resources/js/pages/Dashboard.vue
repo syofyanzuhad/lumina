@@ -729,15 +729,23 @@ const applyCustomDateRange = () => {
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <div v-for="page in overview.top_pages" :key="page.path" class="space-y-1.5">
-                            <div class="flex justify-between text-xs font-medium">
-                                <span class="truncate font-mono text-foreground">{{ page.path }}</span>
-                                <span class="text-muted-foreground font-mono">{{ formatNumber(page.count) }} ({{ page.percentage }}%)</span>
-                            </div>
-                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                <div class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${page.percentage}%` }"></div>
-                            </div>
+                    <div class="space-y-2">
+                        <div
+                            v-for="page in overview.top_pages"
+                            :key="page.path"
+                            @click="addFilter('path', page.path)"
+                            :title="`Click to filter dashboard by path: ${page.path}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-indigo-100/70 dark:bg-indigo-500/15 rounded-lg transition-all duration-500 group-hover:bg-indigo-200/80 dark:group-hover:bg-indigo-500/25"
+                                :style="{ width: `${getRelativePercentage(page.count, overview.top_pages)}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mr-2 flex items-center gap-1">
+                                <span class="truncate">{{ page.path }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(page.count) }} <span class="text-muted-foreground/70">({{ page.percentage }}%)</span></span>
                         </div>
 
                         <p v-if="overview.top_pages.length === 0" class="text-xs text-muted-foreground">No pageviews recorded yet.</p>
@@ -760,15 +768,23 @@ const applyCustomDateRange = () => {
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <div v-for="refItem in overview.top_referrers" :key="refItem.referrer" class="space-y-1.5">
-                            <div class="flex justify-between text-xs font-medium">
-                                <span class="truncate font-mono text-foreground">{{ refItem.referrer }}</span>
-                                <span class="text-muted-foreground font-mono">{{ formatNumber(refItem.count) }} ({{ refItem.percentage }}%)</span>
-                            </div>
-                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                <div class="bg-emerald-600 dark:bg-emerald-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${refItem.percentage}%` }"></div>
-                            </div>
+                    <div class="space-y-2">
+                        <div
+                            v-for="refItem in overview.top_referrers"
+                            :key="refItem.referrer"
+                            @click="addFilter('referrer', refItem.referrer)"
+                            :title="`Click to filter dashboard by referrer: ${refItem.referrer}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-emerald-100/70 dark:bg-emerald-500/15 rounded-lg transition-all duration-500 group-hover:bg-emerald-200/80 dark:group-hover:bg-emerald-500/25"
+                                :style="{ width: `${getRelativePercentage(refItem.count, overview.top_referrers)}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors mr-2 flex items-center gap-1">
+                                <span class="truncate">{{ refItem.referrer }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(refItem.count) }} <span class="text-muted-foreground/70">({{ refItem.percentage }}%)</span></span>
                         </div>
 
                         <p v-if="overview.top_referrers.length === 0" class="text-xs text-muted-foreground">No external referrers.</p>
@@ -791,18 +807,24 @@ const applyCustomDateRange = () => {
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <div v-for="dev in overview.device_breakdown" :key="dev.device" class="space-y-1.5">
-                            <div class="flex justify-between text-xs font-medium">
-                                <span class="flex items-center gap-1.5 capitalize font-mono text-foreground">
-                                    <component :is="getDeviceIcon(dev.device)" class="h-3.5 w-3.5 text-indigo-500" />
-                                    {{ dev.device }}
-                                </span>
-                                <span class="text-muted-foreground font-mono">{{ formatNumber(dev.count) }} ({{ dev.percentage }}%)</span>
-                            </div>
-                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                <div class="bg-amber-500 dark:bg-amber-400 h-2 rounded-full transition-all duration-500" :style="{ width: `${dev.percentage}%` }"></div>
-                            </div>
+                    <div class="space-y-2">
+                        <div
+                            v-for="dev in overview.device_breakdown"
+                            :key="dev.device"
+                            @click="addFilter('device', dev.device)"
+                            :title="`Click to filter dashboard by device: ${dev.device}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-amber-100/70 dark:bg-amber-500/15 rounded-lg transition-all duration-500 group-hover:bg-amber-200/80 dark:group-hover:bg-amber-500/25"
+                                :style="{ width: `${getRelativePercentage(dev.count, overview.device_breakdown)}%` }"
+                            ></div>
+                            <span class="relative z-10 flex items-center gap-1.5 capitalize font-mono text-foreground font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors mr-2">
+                                <component :is="getDeviceIcon(dev.device)" class="h-3.5 w-3.5 text-amber-500" />
+                                {{ dev.device }}
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(dev.count) }} <span class="text-muted-foreground/70">({{ dev.percentage }}%)</span></span>
                         </div>
 
                         <p v-if="!overview.device_breakdown || overview.device_breakdown.length === 0" class="text-xs text-muted-foreground">No device data available.</p>
@@ -828,15 +850,23 @@ const applyCustomDateRange = () => {
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <div v-for="item in overview.top_browsers" :key="item.browser" class="space-y-1.5">
-                            <div class="flex justify-between text-xs font-medium">
-                                <span class="truncate font-mono text-foreground">{{ item.browser }}</span>
-                                <span class="text-muted-foreground font-mono">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
-                            </div>
-                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                <div class="bg-sky-600 dark:bg-sky-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${item.percentage}%` }"></div>
-                            </div>
+                    <div class="space-y-2">
+                        <div
+                            v-for="item in overview.top_browsers"
+                            :key="item.browser"
+                            @click="addFilter('browser', item.browser)"
+                            :title="`Click to filter dashboard by browser: ${item.browser}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-sky-100/70 dark:bg-sky-500/15 rounded-lg transition-all duration-500 group-hover:bg-sky-200/80 dark:group-hover:bg-sky-500/25"
+                                :style="{ width: `${getRelativePercentage(item.count, overview.top_browsers)}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mr-2 flex items-center gap-1">
+                                <span class="truncate">{{ item.browser }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
                         </div>
 
                         <p v-if="!overview.top_browsers || overview.top_browsers.length === 0" class="text-xs text-muted-foreground">No browser data available.</p>
@@ -859,15 +889,23 @@ const applyCustomDateRange = () => {
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <div v-for="item in overview.top_os" :key="item.os" class="space-y-1.5">
-                            <div class="flex justify-between text-xs font-medium">
-                                <span class="truncate font-mono text-foreground">{{ item.os }}</span>
-                                <span class="text-muted-foreground font-mono">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
-                            </div>
-                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                <div class="bg-purple-600 dark:bg-purple-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${item.percentage}%` }"></div>
-                            </div>
+                    <div class="space-y-2">
+                        <div
+                            v-for="item in overview.top_os"
+                            :key="item.os"
+                            @click="addFilter('os', item.os)"
+                            :title="`Click to filter dashboard by OS: ${item.os}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
+                                :style="{ width: `${getRelativePercentage(item.count, overview.top_os)}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1">
+                                <span class="truncate">{{ item.os }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
                         </div>
 
                         <p v-if="!overview.top_os || overview.top_os.length === 0" class="text-xs text-muted-foreground">No OS data available.</p>
@@ -890,19 +928,25 @@ const applyCustomDateRange = () => {
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <div v-for="item in overview.top_countries" :key="item.code || item.name" class="space-y-1.5">
-                            <div class="flex justify-between text-xs font-medium">
-                                <span class="truncate font-mono text-foreground flex items-center gap-1.5">
-                                    <span class="text-base leading-none select-none">{{ getCountryFlag(item.code) }}</span>
-                                    <span v-if="item.code" class="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase">{{ item.code }}</span>
-                                    {{ item.name || item.code }}
-                                </span>
-                                <span class="text-muted-foreground font-mono">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
-                            </div>
-                            <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                <div class="bg-rose-600 dark:bg-rose-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${item.percentage}%` }"></div>
-                            </div>
+                    <div class="space-y-2">
+                        <div
+                            v-for="item in overview.top_countries"
+                            :key="item.code || item.name"
+                            @click="addFilter('country', item.code || item.name)"
+                            :title="`Click to filter dashboard by country: ${item.name || item.code}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-rose-100/70 dark:bg-rose-500/15 rounded-lg transition-all duration-500 group-hover:bg-rose-200/80 dark:group-hover:bg-rose-500/25"
+                                :style="{ width: `${getRelativePercentage(item.count, overview.top_countries)}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors mr-2 flex items-center gap-1.5">
+                                <span class="text-base leading-none select-none">{{ getCountryFlag(item.code) }}</span>
+                                <span v-if="item.code" class="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase">{{ item.code }}</span>
+                                <span class="truncate">{{ item.name || item.code }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
                         </div>
 
                         <p v-if="!overview.top_countries || overview.top_countries.length === 0" class="text-xs text-muted-foreground">No location data available.</p>
@@ -926,15 +970,23 @@ const applyCustomDateRange = () => {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div v-for="campaign in overview.utm_campaigns" :key="campaign.campaign" class="space-y-1.5">
-                        <div class="flex justify-between text-xs font-medium">
-                            <span class="truncate font-mono text-indigo-600 dark:text-indigo-400 font-semibold">{{ campaign.campaign }}</span>
-                            <span class="text-muted-foreground font-mono">{{ formatNumber(campaign.count) }} ({{ campaign.percentage }}%)</span>
-                        </div>
-                        <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                            <div class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${campaign.percentage}%` }"></div>
-                        </div>
+                <div class="space-y-2">
+                    <div
+                        v-for="campaign in overview.utm_campaigns"
+                        :key="campaign.campaign"
+                        @click="addFilter('utm_campaign', campaign.campaign)"
+                        :title="`Click to filter dashboard by campaign: ${campaign.campaign}`"
+                        class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                    >
+                        <div
+                            class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
+                            :style="{ width: `${getRelativePercentage(campaign.count, overview.utm_campaigns)}%` }"
+                        ></div>
+                        <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1">
+                            <span class="truncate">{{ campaign.campaign }}</span>
+                            <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                        </span>
+                        <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(campaign.count) }} <span class="text-muted-foreground/70">({{ campaign.percentage }}%)</span></span>
                     </div>
                 </div>
             </div>
