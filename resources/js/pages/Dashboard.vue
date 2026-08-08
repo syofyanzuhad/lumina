@@ -387,14 +387,14 @@ const applyCustomDateRange = () => {
 
     <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 sm:p-6">
         <!-- Top Control Bar -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-xl p-4 shadow-sm">
+        <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-xl p-2.5 sm:p-4 shadow-sm">
             <!-- Tab Switcher -->
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="flex items-center gap-1 p-1 bg-muted rounded-lg border border-sidebar-border/50">
+            <div class="flex items-center justify-between sm:justify-start gap-2">
+                <div class="flex items-center gap-0.5 p-0.5 sm:p-1 bg-muted rounded-lg border border-sidebar-border/50">
                     <button
                         @click="setTab('overview')"
                         :class="[
-                            'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                            'px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-md transition-all',
                             (!activeTab || activeTab === 'overview')
                                 ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
                                 : 'bg-transparent text-muted-foreground hover:text-foreground'
@@ -405,7 +405,7 @@ const applyCustomDateRange = () => {
                     <button
                         @click="setTab('events')"
                         :class="[
-                            'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                            'px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-md transition-all',
                             activeTab === 'events'
                                 ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
                                 : 'bg-transparent text-muted-foreground hover:text-foreground'
@@ -414,17 +414,21 @@ const applyCustomDateRange = () => {
                         Custom Events
                     </button>
                 </div>
+
+                <div class="block sm:hidden">
+                    <AppearanceTabs />
+                </div>
             </div>
 
             <!-- Date Period & Refresh Controls -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center justify-between sm:justify-end gap-1.5 overflow-x-auto pb-0.5 sm:pb-0">
                 <!-- Unified Date Period Segment -->
-                <div class="flex items-center gap-0.5 p-1 bg-muted rounded-lg border border-sidebar-border/50">
+                <div class="flex items-center gap-0.5 p-0.5 sm:p-1 bg-muted rounded-lg border border-sidebar-border/50 shrink-0">
                     <button
                         type="button"
                         @click="setPeriod('today')"
                         :class="[
-                            'px-2.5 py-1 text-xs font-semibold rounded-md transition-all',
+                            'px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-semibold rounded-md transition-all',
                             period === 'today'
                                 ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
                                 : 'text-muted-foreground hover:text-foreground'
@@ -436,7 +440,7 @@ const applyCustomDateRange = () => {
                         type="button"
                         @click="setPeriod('7d')"
                         :class="[
-                            'px-2.5 py-1 text-xs font-semibold rounded-md transition-all',
+                            'px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-semibold rounded-md transition-all',
                             period === '7d'
                                 ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
                                 : 'text-muted-foreground hover:text-foreground'
@@ -448,7 +452,7 @@ const applyCustomDateRange = () => {
                         type="button"
                         @click="setPeriod('30d')"
                         :class="[
-                            'px-2.5 py-1 text-xs font-semibold rounded-md transition-all',
+                            'px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-semibold rounded-md transition-all',
                             period === '30d'
                                 ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
                                 : 'text-muted-foreground hover:text-foreground'
@@ -461,14 +465,14 @@ const applyCustomDateRange = () => {
                         @click="isCustomDateModalOpen = true"
                         :title="period === 'custom' ? 'Custom Date Range Active' : 'Select Custom Date Range'"
                         :class="[
-                            'px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
+                            'px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
                             period === 'custom'
                                 ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
                                 : 'text-muted-foreground hover:text-foreground'
                         ]"
                     >
-                        <CalendarDays class="h-3.5 w-3.5" />
-                        <span>Custom</span>
+                        <CalendarDays class="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                        <span class="hidden xs:inline">Custom</span>
                     </button>
                 </div>
 
@@ -578,76 +582,76 @@ const applyCustomDateRange = () => {
             <!-- Analytics Overview Dashboard -->
             <div v-else-if="overview" class="space-y-6">
                 <!-- KPI Summary Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     <!-- Currently Online Card -->
-                    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+                    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm transition-all hover:shadow-md">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Currently Online</span>
-                            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 relative">
-                                <span class="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                            <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">Currently Online</span>
+                            <div class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 relative shrink-0">
+                                <span class="absolute -top-0.5 -right-0.5 flex h-2 w-2 sm:h-2.5 sm:w-2.5">
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500"></span>
                                 </span>
-                                <Users class="h-4 w-4" />
+                                <Users class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </div>
                         </div>
-                        <div class="mt-3 text-3xl font-black tracking-tight text-foreground">
+                        <div class="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                             {{ formatNumber(overview.current_visitors ?? 0) }}
                         </div>
-                        <div class="mt-2 flex items-center text-xs text-muted-foreground">
+                        <div class="mt-1 sm:mt-2 hidden sm:flex items-center text-xs text-muted-foreground">
                             <span>Active in last 5 minutes</span>
                         </div>
                     </div>
 
                     <!-- Pageviews Card -->
-                    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+                    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm transition-all hover:shadow-md">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Pageviews</span>
-                            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                                <Eye class="h-4 w-4" />
+                            <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">Total Pageviews</span>
+                            <div class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0">
+                                <Eye class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </div>
                         </div>
-                        <div class="mt-3 text-3xl font-black tracking-tight text-foreground">
+                        <div class="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                             {{ formatNumber(overview.total_pageviews) }}
                         </div>
-                        <div class="mt-2 flex items-center text-xs text-muted-foreground">
+                        <div class="mt-1 sm:mt-2 hidden sm:flex items-center text-xs text-muted-foreground">
                             <span>Total raw page visits recorded</span>
                         </div>
                     </div>
 
                     <!-- Unique Visitors Card -->
-                    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+                    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm transition-all hover:shadow-md">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Unique Visitors</span>
-                            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                                <Users class="h-4 w-4" />
+                            <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">Unique Visitors</span>
+                            <div class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0">
+                                <Users class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </div>
                         </div>
-                        <div class="mt-3 text-3xl font-black tracking-tight text-foreground">
+                        <div class="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                             {{ formatNumber(overview.unique_visitors) }}
                         </div>
-                        <div class="mt-2 flex items-center text-xs text-muted-foreground">
+                        <div class="mt-1 sm:mt-2 hidden sm:flex items-center text-xs text-muted-foreground">
                             <span>Distinct daily hashed visitors</span>
                         </div>
                     </div>
 
                     <!-- Bounce Rate & Avg Duration Card -->
-                    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+                    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm transition-all hover:shadow-md">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bounce / Duration</span>
-                            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                <Sparkles class="h-4 w-4" />
+                            <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">Bounce / Duration</span>
+                            <div class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                                <Sparkles class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </div>
                         </div>
-                        <div class="mt-3 flex items-baseline gap-3">
-                            <div class="text-3xl font-black tracking-tight text-foreground">
+                        <div class="mt-2 sm:mt-3 flex items-baseline gap-1.5 sm:gap-3 flex-wrap">
+                            <div class="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                                 {{ overview.bounce_rate ?? 0 }}%
                             </div>
-                            <div class="text-sm font-semibold text-muted-foreground font-mono">
+                            <div class="text-xs sm:text-sm font-semibold text-muted-foreground font-mono">
                                 {{ overview.avg_duration ?? 0 }}s avg
                             </div>
                         </div>
-                        <div class="mt-2 flex items-center text-xs text-muted-foreground">
+                        <div class="mt-1 sm:mt-2 hidden sm:flex items-center text-xs text-muted-foreground">
                             <span>Single-page visits & session duration</span>
                         </div>
                     </div>
@@ -671,55 +675,57 @@ const applyCustomDateRange = () => {
             </div>
 
             <!-- Interactive Daily Pageviews Bar Chart -->
-            <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-2">
-                            <Calendar class="h-4 w-4 text-indigo-500" />
-                            <h3 class="text-sm font-bold text-foreground">Daily Pageview Trends</h3>
-                        </div>
+            <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+                    <div class="flex items-center gap-2">
+                        <Calendar class="h-4 w-4 text-indigo-500 shrink-0" />
+                        <h3 class="text-sm font-bold text-foreground">Daily Pageview Trends</h3>
+                    </div>
 
-                        <!-- Interactive Legend Pills -->
-                        <div class="flex items-center gap-2 ml-2">
-                            <button
-                                @click="toggleViews"
-                                :class="[
-                                    'flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all',
-                                    showViews
-                                        ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30'
-                                        : 'bg-muted text-muted-foreground border-sidebar-border/50 opacity-60'
-                                ]"
-                            >
-                                <span class="h-2 w-2 rounded-sm bg-indigo-500"></span>
-                                Pageviews
-                            </button>
-                            <button
-                                @click="toggleVisitors"
-                                :class="[
-                                    'flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all',
-                                    showVisitors
-                                        ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
-                                        : 'bg-muted text-muted-foreground border-sidebar-border/50 opacity-60'
-                                ]"
-                            >
-                                <span class="h-2 w-2 rounded-sm bg-indigo-400/40"></span>
-                                Visitors
-                            </button>
-                        </div>
+                    <!-- Interactive Legend Pills -->
+                    <div class="flex items-center gap-1.5 sm:gap-2">
+                        <button
+                            @click="toggleViews"
+                            :class="[
+                                'flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border transition-all',
+                                showViews
+                                    ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30'
+                                    : 'bg-muted text-muted-foreground border-sidebar-border/50 opacity-60'
+                            ]"
+                        >
+                            <span class="h-2 w-2 rounded-sm bg-indigo-500 shrink-0"></span>
+                            Pageviews
+                        </button>
+                        <button
+                            @click="toggleVisitors"
+                            :class="[
+                                'flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border transition-all',
+                                showVisitors
+                                    ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                                    : 'bg-muted text-muted-foreground border-sidebar-border/50 opacity-60'
+                            ]"
+                        >
+                            <span class="h-2 w-2 rounded-sm bg-indigo-400/40 shrink-0"></span>
+                            Visitors
+                        </button>
                     </div>
                 </div>
 
-                <div class="flex items-end gap-1.5 h-44 pt-6 pb-2 relative">
+                <div class="flex items-end gap-0.5 sm:gap-1.5 h-36 sm:h-44 pt-6 pb-2 relative touch-pan-x">
                     <div
                         v-for="day in overview.daily_pageviews"
                         :key="day.date"
                         @mouseenter="hoveredDay = day"
                         @mouseleave="hoveredDay = null"
+                        @touchstart="hoveredDay = day"
                         class="flex-1 flex flex-col items-center group relative h-full justify-end cursor-pointer"
                     >
-                        <!-- Floating Tooltip Card on Hover -->
+                        <!-- Floating Tooltip Card on Hover / Touch -->
                         <div
-                            class="absolute -top-14 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center z-30 pointer-events-none"
+                            :class="[
+                                'absolute -top-14 left-1/2 -translate-x-1/2 flex-col items-center z-30 pointer-events-none transition-all',
+                                hoveredDay === day ? 'flex' : 'hidden group-hover:flex'
+                            ]"
                         >
                             <div class="bg-popover text-popover-foreground border border-sidebar-border/80 shadow-md rounded-lg px-2.5 py-1 text-[11px] font-mono font-medium whitespace-nowrap space-y-0.5 text-center">
                                 <div class="text-xs font-bold text-foreground">{{ day.date }}</div>
@@ -751,7 +757,7 @@ const applyCustomDateRange = () => {
                 </div>
 
                 <!-- X-Axis Date Range Labels -->
-                <div v-if="overview.daily_pageviews.length > 0" class="flex justify-between items-center text-[10px] font-mono text-muted-foreground pt-2 border-t border-sidebar-border/40">
+                <div v-if="overview.daily_pageviews.length > 0" class="flex justify-between items-center text-[9px] sm:text-[10px] font-mono text-muted-foreground pt-2 border-t border-sidebar-border/40">
                     <span>{{ overview.daily_pageviews[0].date }}</span>
                     <span v-if="overview.daily_pageviews.length > 2">
                         {{ overview.daily_pageviews[Math.floor(overview.daily_pageviews.length / 2)].date }}
