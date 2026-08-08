@@ -28,7 +28,7 @@ test('site model password protected factory state', function () {
 });
 
 test('generateShareToken generates 32 char random string', function () {
-    $site = new Site();
+    $site = new Site;
     $token = $site->generateShareToken();
 
     expect(strlen($token))->toBe(32);

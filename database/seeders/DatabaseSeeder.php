@@ -92,7 +92,7 @@ class DatabaseSeeder extends Seeder
                     'site_id' => $site->id,
                     'path' => $path,
                     'referrer' => $referrers[array_rand($referrers)],
-                    'visitor_hash' => hash('sha256', 'visitor_' . rand(1, 40) . '_' . $createdAt->format('Y-m-d')),
+                    'visitor_hash' => hash('sha256', 'visitor_'.rand(1, 40).'_'.$createdAt->format('Y-m-d')),
                     'browser' => $browsers[array_rand($browsers)],
                     'os' => $operatingSystems[array_rand($operatingSystems)],
                     'country_code' => $country['code'],

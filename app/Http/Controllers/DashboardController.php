@@ -36,7 +36,7 @@ class DashboardController extends Controller
         $activeTab = $request->query('tab', 'overview');
 
         $filters = $request->only([
-            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_campaign'
+            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_campaign',
         ]);
         $filters = array_filter($filters, fn ($val) => ! is_null($val) && $val !== '');
 
