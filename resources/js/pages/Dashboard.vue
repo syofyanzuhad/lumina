@@ -297,44 +297,47 @@ const openModal = (type: string, title: string) => {
 
             <!-- Date Period & Refresh Controls -->
             <div class="flex items-center gap-2">
-                <button
-                    type="button"
-                    @click="setPeriod('today')"
-                    :class="[
-                        'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all',
-                        period === 'today'
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    ]"
-                >
-                    Today
-                </button>
-                <button
-                    type="button"
-                    @click="setPeriod('7d')"
-                    :class="[
-                        'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all',
-                        period === '7d'
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    ]"
-                >
-                    Last 7 Days
-                </button>
-                <button
-                    type="button"
-                    @click="setPeriod('30d')"
-                    :class="[
-                        'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all',
-                        period === '30d'
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    ]"
-                >
-                    Last 30 Days
-                </button>
+                <!-- Unified Date Period Segment -->
+                <div class="flex items-center gap-0.5 p-1 bg-muted rounded-lg border border-sidebar-border/50">
+                    <button
+                        type="button"
+                        @click="setPeriod('today')"
+                        :class="[
+                            'px-2.5 py-1 text-xs font-semibold rounded-md transition-all',
+                            period === 'today'
+                                ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                : 'text-muted-foreground hover:text-foreground'
+                        ]"
+                    >
+                        Today
+                    </button>
+                    <button
+                        type="button"
+                        @click="setPeriod('7d')"
+                        :class="[
+                            'px-2.5 py-1 text-xs font-semibold rounded-md transition-all',
+                            period === '7d'
+                                ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                : 'text-muted-foreground hover:text-foreground'
+                        ]"
+                    >
+                        7d
+                    </button>
+                    <button
+                        type="button"
+                        @click="setPeriod('30d')"
+                        :class="[
+                            'px-2.5 py-1 text-xs font-semibold rounded-md transition-all',
+                            period === '30d'
+                                ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                : 'text-muted-foreground hover:text-foreground'
+                        ]"
+                    >
+                        30d
+                    </button>
+                </div>
 
-                <div class="hidden sm:block ml-2 border-l border-sidebar-border/70 dark:border-sidebar-border pl-2">
+                <div class="hidden sm:block ml-1">
                     <AppearanceTabs />
                 </div>
 
@@ -344,9 +347,9 @@ const openModal = (type: string, title: string) => {
                         <button
                             type="button"
                             title="Export Data"
-                            class="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80 ml-1 flex items-center gap-1"
+                            class="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80 flex items-center gap-1 border border-sidebar-border/50"
                         >
-                            <Download class="h-4 w-4" />
+                            <Download class="h-3.5 w-3.5" />
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-56">
@@ -392,16 +395,16 @@ const openModal = (type: string, title: string) => {
                 <button
                     type="button"
                     @click="toggleLive"
-                    :title="isLive ? 'Live Auto-Refresh Active (30s)' : 'Turn On Live Auto-Refresh'"
+                    :title="isLive ? 'Live Auto-Refresh Active (30s)' : 'Turn On Live Auto-Refresh (30s)'"
                     :class="[
-                        'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ml-1',
+                        'px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 border',
                         isLive
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-xs'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                            : 'bg-muted text-muted-foreground border-sidebar-border/50 hover:bg-muted/80'
                     ]"
                 >
                     <span :class="['h-2 w-2 rounded-full', isLive ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/50']"></span>
-                    <span>{{ isLive ? 'Live 30s' : 'Live Off' }}</span>
+                    <span>{{ isLive ? 'Live' : 'Off' }}</span>
                 </button>
 
                 <!-- Refresh Data Button -->
@@ -409,9 +412,9 @@ const openModal = (type: string, title: string) => {
                     type="button"
                     @click="refreshData"
                     title="Refresh Data"
-                    class="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80 ml-1"
+                    class="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80 border border-sidebar-border/50"
                 >
-                    <RefreshCw :class="['h-4 w-4', { 'animate-spin': isRefreshing }]" />
+                    <RefreshCw :class="['h-3.5 w-3.5', { 'animate-spin': isRefreshing }]" />
                 </button>
             </div>
         </div>
