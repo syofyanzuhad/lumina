@@ -102,15 +102,15 @@ class AnalyticsService
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
             $pathExpr = DB::getDriverName() === 'sqlite'
-                ? DB::raw("CASE WHEN instr(path, '?') > 0 THEN substr(path, 1, instr(path, '?') - 1) ELSE path END as clean_path")
-                : DB::raw("SUBSTRING_INDEX(path, '?', 1) as clean_path");
+                ? DB::raw("COALESCE(clean_path, CASE WHEN instr(path, '?') > 0 THEN substr(path, 1, instr(path, '?') - 1) ELSE path END) as target_path")
+                : DB::raw("COALESCE(clean_path, SUBSTRING_INDEX(path, '?', 1)) as target_path");
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->select($pathExpr, DB::raw('count(*) as count'))
-                ->groupBy('clean_path')
+                ->groupBy('target_path')
                 ->orderByDesc('count')
-                ->orderBy('clean_path')
+                ->orderBy('target_path')
                 ->limit($limit)
                 ->get();
 
@@ -118,7 +118,7 @@ class AnalyticsService
                 $count = (int) $row->count;
 
                 return [
-                    'path' => (string) $row->clean_path,
+                    'path' => (string) $row->target_path,
                     'count' => $count,
                     'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
                 ];
@@ -472,6 +472,42 @@ class AnalyticsService
     }
 
     /**
+     * Get UTM campaign breakdown for site and date range.
+     */
+    public function getUtmCampaigns(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
+    {
+        $cacheKey = $this->cacheKey($site->id, "utm_campaigns_{$limit}", $start, $end);
+
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
+            $totalPageviews = $this->getPageviews($site, $start, $end);
+
+            $results = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotNull('utm_campaign')
+                ->where('utm_campaign', '!=', '')
+                ->select('utm_campaign', 'utm_source', 'utm_medium', DB::raw('count(*) as count'))
+                ->groupBy('utm_campaign', 'utm_source', 'utm_medium')
+                ->orderByDesc('count')
+                ->limit($limit)
+                ->get();
+
+            return $results->map(function ($row) use ($totalPageviews) {
+                $count = (int) $row->count;
+
+                return [
+                    'campaign' => (string) $row->utm_campaign,
+                    'source' => $row->utm_source ? (string) $row->utm_source : null,
+                    'medium' => $row->utm_medium ? (string) $row->utm_medium : null,
+                    'count' => $count,
+                    'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
+                ];
+            })->toArray();
+        });
+
+        return collect($data ?? []);
+    }
+
+    /**
      * Get complete dashboard overview payload.
      */
     public function getOverview(Site $site, CarbonInterface $start, CarbonInterface $end): array
@@ -489,6 +525,7 @@ class AnalyticsService
             'top_browsers' => $this->getTopBrowsers($site, $start, $end),
             'top_os' => $this->getTopOperatingSystems($site, $start, $end),
             'top_countries' => $this->getTopCountries($site, $start, $end),
+            'utm_campaigns' => $this->getUtmCampaigns($site, $start, $end),
             'custom_events' => $this->getCustomEvents($site, $start, $end),
             'goals' => $this->getGoals($site, $start, $end),
         ];
