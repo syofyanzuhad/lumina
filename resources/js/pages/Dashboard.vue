@@ -588,7 +588,7 @@ const applyCustomDateRange = () => {
                     <span v-else class="text-xs text-muted-foreground">Hover bar to inspect</span>
                 </div>
 
-                <div class="flex items-end gap-1.5 h-44 pt-6 pb-2">
+                <div class="flex items-end gap-1.5 h-44 pt-6 pb-2 relative">
                     <div
                         v-for="day in overview.daily_pageviews"
                         :key="day.date"
@@ -596,6 +596,22 @@ const applyCustomDateRange = () => {
                         @mouseleave="hoveredDay = null"
                         class="flex-1 flex flex-col items-center group relative h-full justify-end cursor-pointer"
                     >
+                        <!-- Floating Tooltip Card on Hover -->
+                        <div
+                            class="absolute -top-14 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center z-30 pointer-events-none"
+                        >
+                            <div class="bg-popover text-popover-foreground border border-sidebar-border/80 shadow-md rounded-lg px-2.5 py-1 text-[11px] font-mono font-medium whitespace-nowrap space-y-0.5 text-center">
+                                <div class="text-xs font-bold text-foreground">{{ day.date }}</div>
+                                <div class="flex items-center gap-2 text-[10px]">
+                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold">{{ formatNumber(day.pageviews) }} views</span>
+                                    <span class="text-muted-foreground">•</span>
+                                    <span class="text-sky-500 font-bold">{{ formatNumber(day.visitors) }} visitors</span>
+                                </div>
+                            </div>
+                            <!-- Tooltip Arrow Pointer -->
+                            <div class="w-2 h-2 bg-popover border-r border-b border-sidebar-border/80 rotate-45 -mt-1"></div>
+                        </div>
+
                         <div class="w-full flex items-end gap-[1px] h-full justify-center">
                             <!-- Pageviews Bar -->
                             <div
