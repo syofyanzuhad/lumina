@@ -562,12 +562,27 @@ const applyCustomDateRange = () => {
 
             <!-- Interactive Daily Pageviews Bar Chart -->
             <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <Calendar class="h-4 w-4 text-indigo-500" />
-                        <h3 class="text-sm font-bold text-foreground">Daily Pageview Trends</h3>
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
+                            <Calendar class="h-4 w-4 text-indigo-500" />
+                            <h3 class="text-sm font-bold text-foreground">Daily Pageview Trends</h3>
+                        </div>
+
+                        <!-- Legend Pills -->
+                        <div class="flex items-center gap-3 ml-2 text-[11px] font-semibold text-muted-foreground">
+                            <div class="flex items-center gap-1.5">
+                                <span class="h-2.5 w-2.5 rounded-sm bg-indigo-500 dark:bg-indigo-400"></span>
+                                <span>Pageviews</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="h-2.5 w-2.5 rounded-sm bg-sky-400/50 dark:bg-sky-500/50"></span>
+                                <span>Visitors</span>
+                            </div>
+                        </div>
                     </div>
-                    <span v-if="hoveredDay" class="text-xs font-mono text-indigo-600 dark:text-indigo-400">
+
+                    <span v-if="hoveredDay" class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md">
                         {{ hoveredDay.date }}: {{ formatNumber(hoveredDay.pageviews) }} views ({{ formatNumber(hoveredDay.visitors) }} visitors)
                     </span>
                     <span v-else class="text-xs text-muted-foreground">Hover bar to inspect</span>
@@ -581,11 +596,28 @@ const applyCustomDateRange = () => {
                         @mouseleave="hoveredDay = null"
                         class="flex-1 flex flex-col items-center group relative h-full justify-end cursor-pointer"
                     >
-                        <div
-                            class="w-full rounded-t-md bg-indigo-500 dark:bg-indigo-400 transition-all duration-200 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-300 min-h-[3px]"
-                            :style="{ height: `${Math.max(Math.round((day.pageviews / maxDaily) * 100), 2)}%` }"
-                        ></div>
+                        <div class="w-full flex items-end gap-[1px] h-full justify-center">
+                            <!-- Pageviews Bar -->
+                            <div
+                                class="flex-1 rounded-t-xs bg-indigo-500 dark:bg-indigo-400 transition-all duration-200 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-300 min-h-[3px]"
+                                :style="{ height: `${Math.max(Math.round((day.pageviews / maxDaily) * 100), 2)}%` }"
+                            ></div>
+                            <!-- Unique Visitors Sub-Bar -->
+                            <div
+                                class="flex-1 rounded-t-xs bg-sky-400/50 dark:bg-sky-500/50 transition-all duration-200 group-hover:bg-sky-400 dark:group-hover:bg-sky-300 min-h-[2px]"
+                                :style="{ height: `${Math.max(Math.round((day.visitors / maxDaily) * 100), 2)}%` }"
+                            ></div>
+                        </div>
                     </div>
+                </div>
+
+                <!-- X-Axis Date Range Labels -->
+                <div v-if="overview.daily_pageviews.length > 0" class="flex justify-between items-center text-[10px] font-mono text-muted-foreground pt-2 border-t border-sidebar-border/40">
+                    <span>{{ overview.daily_pageviews[0].date }}</span>
+                    <span v-if="overview.daily_pageviews.length > 2">
+                        {{ overview.daily_pageviews[Math.floor(overview.daily_pageviews.length / 2)].date }}
+                    </span>
+                    <span>{{ overview.daily_pageviews[overview.daily_pageviews.length - 1].date }}</span>
                 </div>
             </div>
 
