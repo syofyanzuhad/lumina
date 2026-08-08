@@ -145,6 +145,59 @@ const getDeviceIcon = (deviceStr: string) => {
     if (lower.includes('tablet')) return Laptop;
     return Monitor;
 };
+
+const referrerDomains: Record<string, string> = {
+    'Google': 'google.com',
+    'Hacker News': 'news.ycombinator.com',
+    'X (Twitter)': 'x.com',
+    'Twitter': 'x.com',
+    'GitHub': 'github.com',
+    'Facebook': 'facebook.com',
+    'LinkedIn': 'linkedin.com',
+    'Reddit': 'reddit.com',
+    'YouTube': 'youtube.com',
+    'Instagram': 'instagram.com',
+    'TikTok': 'tiktok.com',
+    'Bing': 'bing.com',
+    'DuckDuckGo': 'duckduckgo.com',
+    'Slack': 'slack.com',
+    'Discord': 'discord.com',
+    'Medium': 'medium.com',
+    'Dev.to': 'dev.to',
+    'Product Hunt': 'producthunt.com',
+    'Notion': 'notion.so',
+    'Netlify': 'netlify.com',
+    'Vercel': 'vercel.com',
+};
+
+const getReferrerFavicon = (name: string): string | null => {
+    const domain = referrerDomains[name];
+    return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : null;
+};
+
+const getBrowserIcon = (browser: string): string | null => {
+    const lower = (browser || '').toLowerCase();
+    if (lower.includes('chrome') && !lower.includes('chromium')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/googlechrome.svg';
+    if (lower.includes('firefox')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/firefox.svg';
+    if (lower.includes('safari')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/safari.svg';
+    if (lower.includes('edge')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/microsoftedge.svg';
+    if (lower.includes('opera')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/opera.svg';
+    if (lower.includes('brave')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/brave.svg';
+    if (lower.includes('vivaldi')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/vivaldi.svg';
+    if (lower.includes('samsung')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/samsung.svg';
+    return null;
+};
+
+const getOsIcon = (os: string): string | null => {
+    const lower = (os || '').toLowerCase();
+    if (lower.includes('windows')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/windows.svg';
+    if (lower.includes('mac') || lower.includes('os x') || lower.includes('macos') || lower.includes('darwin')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/apple.svg';
+    if (lower.includes('linux') || lower.includes('ubuntu') || lower.includes('debian')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/linux.svg';
+    if (lower.includes('android')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/android.svg';
+    if (lower.includes('ios') || lower.includes('iphone') || lower.includes('ipad')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/ios.svg';
+    if (lower.includes('chrome')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/googlechrome.svg';
+    return null;
+};
 </script>
 
 <template>
@@ -367,7 +420,17 @@ const getDeviceIcon = (deviceStr: string) => {
                     <div class="space-y-4">
                         <div v-for="refItem in overview.top_referrers" :key="refItem.referrer" class="space-y-1.5">
                             <div class="flex justify-between text-xs font-medium">
-                                <span class="truncate font-mono text-slate-200">{{ refItem.referrer }}</span>
+                                <span class="truncate font-mono text-slate-200 flex items-center gap-1.5">
+                                    <img
+                                        v-if="getReferrerFavicon(refItem.referrer)"
+                                        :src="getReferrerFavicon(refItem.referrer)!"
+                                        :alt="refItem.referrer"
+                                        class="h-3.5 w-3.5 rounded-sm shrink-0 object-contain"
+                                        @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                    />
+                                    <Globe v-else class="h-3 w-3 shrink-0 text-slate-500" />
+                                    <span class="truncate">{{ refItem.referrer }}</span>
+                                </span>
                                 <span class="text-slate-400 font-mono">{{ formatNumber(refItem.count) }} ({{ refItem.percentage }}%)</span>
                             </div>
                             <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800/60">

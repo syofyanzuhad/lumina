@@ -304,6 +304,59 @@ const getDeviceIcon = (deviceStr: string) => {
     return Monitor;
 };
 
+const referrerDomains: Record<string, string> = {
+    'Google': 'google.com',
+    'Hacker News': 'news.ycombinator.com',
+    'X (Twitter)': 'x.com',
+    'Twitter': 'x.com',
+    'GitHub': 'github.com',
+    'Facebook': 'facebook.com',
+    'LinkedIn': 'linkedin.com',
+    'Reddit': 'reddit.com',
+    'YouTube': 'youtube.com',
+    'Instagram': 'instagram.com',
+    'TikTok': 'tiktok.com',
+    'Bing': 'bing.com',
+    'DuckDuckGo': 'duckduckgo.com',
+    'Slack': 'slack.com',
+    'Discord': 'discord.com',
+    'Medium': 'medium.com',
+    'Dev.to': 'dev.to',
+    'Product Hunt': 'producthunt.com',
+    'Notion': 'notion.so',
+    'Netlify': 'netlify.com',
+    'Vercel': 'vercel.com',
+};
+
+const getReferrerFavicon = (name: string): string | null => {
+    const domain = referrerDomains[name];
+    return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : null;
+};
+
+const getBrowserIcon = (browser: string): string | null => {
+    const lower = (browser || '').toLowerCase();
+    if (lower.includes('chrome') && !lower.includes('chromium')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/googlechrome.svg';
+    if (lower.includes('firefox')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/firefox.svg';
+    if (lower.includes('safari')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/safari.svg';
+    if (lower.includes('edge')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/microsoftedge.svg';
+    if (lower.includes('opera')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/opera.svg';
+    if (lower.includes('brave')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/brave.svg';
+    if (lower.includes('vivaldi')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/vivaldi.svg';
+    if (lower.includes('samsung')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/samsung.svg';
+    return null;
+};
+
+const getOsIcon = (os: string): string | null => {
+    const lower = (os || '').toLowerCase();
+    if (lower.includes('windows')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/windows.svg';
+    if (lower.includes('mac') || lower.includes('os x') || lower.includes('macos') || lower.includes('darwin')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/apple.svg';
+    if (lower.includes('linux') || lower.includes('ubuntu') || lower.includes('debian')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/linux.svg';
+    if (lower.includes('android')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/android.svg';
+    if (lower.includes('ios') || lower.includes('iphone') || lower.includes('ipad')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/ios.svg';
+    if (lower.includes('chrome')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/googlechrome.svg';
+    return null;
+};
+
 const activeModal = ref<string | null>(null);
 const modalTitle = ref<string>('');
 
@@ -776,7 +829,15 @@ const applyCustomDateRange = () => {
                                 class="absolute inset-y-0 left-0 bg-emerald-100/70 dark:bg-emerald-500/15 rounded-lg transition-all duration-500 group-hover:bg-emerald-200/80 dark:group-hover:bg-emerald-500/25"
                                 :style="{ width: `${refItem.percentage}%` }"
                             ></div>
-                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors mr-2 flex items-center gap-1">
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors mr-2 flex items-center gap-1.5">
+                                <img
+                                    v-if="getReferrerFavicon(refItem.referrer)"
+                                    :src="getReferrerFavicon(refItem.referrer)!"
+                                    :alt="refItem.referrer"
+                                    class="h-3.5 w-3.5 rounded-sm shrink-0 object-contain"
+                                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                />
+                                <Globe v-else class="h-3 w-3 shrink-0 text-muted-foreground/60" />
                                 <span class="truncate">{{ refItem.referrer }}</span>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
                             </span>
@@ -858,7 +919,15 @@ const applyCustomDateRange = () => {
                                 class="absolute inset-y-0 left-0 bg-sky-100/70 dark:bg-sky-500/15 rounded-lg transition-all duration-500 group-hover:bg-sky-200/80 dark:group-hover:bg-sky-500/25"
                                 :style="{ width: `${item.percentage}%` }"
                             ></div>
-                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mr-2 flex items-center gap-1">
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mr-2 flex items-center gap-1.5">
+                                <img
+                                    v-if="getBrowserIcon(item.browser)"
+                                    :src="getBrowserIcon(item.browser)!"
+                                    :alt="item.browser"
+                                    class="h-3.5 w-3.5 shrink-0 object-contain dark:invert dark:brightness-200"
+                                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                />
+                                <Globe v-else class="h-3 w-3 shrink-0 text-muted-foreground/60" />
                                 <span class="truncate">{{ item.browser }}</span>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
                             </span>
@@ -897,7 +966,15 @@ const applyCustomDateRange = () => {
                                 class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
                                 :style="{ width: `${item.percentage}%` }"
                             ></div>
-                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1">
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1.5">
+                                <img
+                                    v-if="getOsIcon(item.os)"
+                                    :src="getOsIcon(item.os)!"
+                                    :alt="item.os"
+                                    class="h-3.5 w-3.5 shrink-0 object-contain dark:invert dark:brightness-200"
+                                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                />
+                                <Laptop v-else class="h-3 w-3 shrink-0 text-muted-foreground/60" />
                                 <span class="truncate">{{ item.os }}</span>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
                             </span>
@@ -1153,6 +1230,14 @@ const applyCustomDateRange = () => {
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-2.5 min-w-0">
                                     <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 text-[11px] font-black">#{{ idx + 1 }}</span>
+                                    <img
+                                        v-if="getBrowserIcon(item.browser)"
+                                        :src="getBrowserIcon(item.browser)!"
+                                        :alt="item.browser"
+                                        class="h-4 w-4 shrink-0 object-contain dark:invert dark:brightness-200"
+                                        @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                    />
+                                    <Globe v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
                                     <span class="font-mono font-bold text-foreground text-xs truncate">{{ item.browser }}</span>
                                 </div>
                                 <span class="shrink-0 text-[13px] font-black text-sky-600 dark:text-sky-400">{{ item.percentage }}%</span>
@@ -1182,6 +1267,14 @@ const applyCustomDateRange = () => {
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-2.5 min-w-0">
                                     <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-black">#{{ idx + 1 }}</span>
+                                    <img
+                                        v-if="getOsIcon(item.os)"
+                                        :src="getOsIcon(item.os)!"
+                                        :alt="item.os"
+                                        class="h-4 w-4 shrink-0 object-contain dark:invert dark:brightness-200"
+                                        @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                    />
+                                    <Laptop v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
                                     <span class="font-mono font-bold text-foreground text-xs truncate">{{ item.os }}</span>
                                 </div>
                                 <span class="shrink-0 text-[13px] font-black text-purple-600 dark:text-purple-400">{{ item.percentage }}%</span>
