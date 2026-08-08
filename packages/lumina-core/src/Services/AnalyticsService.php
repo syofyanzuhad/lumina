@@ -2,6 +2,7 @@
 
 namespace Lumina\Core\Services;
 
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -405,6 +406,72 @@ class AnalyticsService
     }
 
     /**
+     * Get currently active visitors in the last N minutes.
+     */
+    public function getCurrentVisitors(Site $site, int $minutes = 5): int
+    {
+        return (int) Event::where('site_id', $site->id)
+            ->where('created_at', '>=', now()->subMinutes($minutes))
+            ->distinct('visitor_hash')
+            ->count('visitor_hash');
+    }
+
+    /**
+     * Get bounce rate (percentage of single-pageview visitor sessions).
+     */
+    public function getBounceRate(Site $site, CarbonInterface $start, CarbonInterface $end): float
+    {
+        $cacheKey = $this->cacheKey($site->id, 'bounce_rate', $start, $end);
+
+        return (float) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
+            $visitorCounts = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->select('visitor_hash', DB::raw('count(*) as views'))
+                ->groupBy('visitor_hash')
+                ->get();
+
+            $totalVisitors = $visitorCounts->count();
+            if ($totalVisitors === 0) {
+                return 0.0;
+            }
+
+            $bounces = $visitorCounts->where('views', 1)->count();
+
+            return round(($bounces / $totalVisitors) * 100, 1);
+        });
+    }
+
+    /**
+     * Get average visit duration in seconds across visitor sessions.
+     */
+    public function getAvgVisitDuration(Site $site, CarbonInterface $start, CarbonInterface $end): int
+    {
+        $cacheKey = $this->cacheKey($site->id, 'avg_visit_duration', $start, $end);
+
+        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
+            $sessions = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->select('visitor_hash', DB::raw('MIN(created_at) as first_seen'), DB::raw('MAX(created_at) as last_seen'))
+                ->groupBy('visitor_hash')
+                ->get();
+
+            $multiEventSessions = $sessions->filter(function ($s) {
+                return $s->first_seen !== $s->last_seen;
+            });
+
+            if ($multiEventSessions->isEmpty()) {
+                return 0;
+            }
+
+            $totalDuration = $multiEventSessions->sum(function ($s) {
+                return Carbon::parse($s->last_seen)->diffInSeconds(Carbon::parse($s->first_seen));
+            });
+
+            return (int) round($totalDuration / $multiEventSessions->count());
+        });
+    }
+
+    /**
      * Get complete dashboard overview payload.
      */
     public function getOverview(Site $site, CarbonInterface $start, CarbonInterface $end): array
@@ -412,6 +479,9 @@ class AnalyticsService
         return [
             'total_pageviews' => $this->getPageviews($site, $start, $end),
             'unique_visitors' => $this->getUniqueVisitors($site, $start, $end),
+            'current_visitors' => $this->getCurrentVisitors($site),
+            'bounce_rate' => $this->getBounceRate($site, $start, $end),
+            'avg_duration' => $this->getAvgVisitDuration($site, $start, $end),
             'top_pages' => $this->getTopPages($site, $start, $end),
             'top_referrers' => $this->getTopReferrers($site, $start, $end),
             'daily_pageviews' => $this->getDailyPageviews($site, $start, $end),
@@ -685,9 +755,15 @@ class AnalyticsService
                     ->whereBetween('created_at', [$start, $end]);
 
                 if ($goal->target_type === 'path') {
-                    $query->where('path', $goal->target_value);
+                    if (str_contains($goal->target_value, '*')) {
+                        $pattern = str_replace('*', '%', $goal->target_value);
+                        $query->where('path', 'like', $pattern);
+                    } else {
+                        $query->where('path', $goal->target_value);
+                    }
                     $events = $query->get();
                 } elseif ($goal->target_type === 'custom_event') {
+
                     $events = $query->whereNotNull('metadata')->get()
                         ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']) && $e->metadata['name'] === $goal->target_value);
                 } else {
