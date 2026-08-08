@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, Link } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download, Maximize2, CalendarDays } from '@lucide/vue';
+import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download, Maximize2, CalendarDays, Filter } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import CustomEventsTab from '@/components/CustomEventsTab.vue';
 import {
@@ -137,6 +137,7 @@ const props = defineProps<{
     custom_event_property_keys?: string[];
     custom_event_property_breakdown?: any[];
     custom_event_logs?: any[];
+    filters?: Record<string, string>;
 }>();
 
 defineOptions({
@@ -171,13 +172,57 @@ onUnmounted(() => {
 const isRefreshing = ref(false);
 const hoveredDay = ref<DailyItem | null>(null);
 
-const maxDaily = computed(() => {
-    if (!props.overview?.daily_pageviews || props.overview.daily_pageviews.length === 0) {
-        return 1;
-    }
-    const max = Math.max(...props.overview.daily_pageviews.map((d) => d.pageviews));
-    return max > 0 ? max : 1;
+const showViews = ref(true);
+const showVisitors = ref(false);
+
+const toggleViews = () => {
+    showViews.value = !showViews.value;
+};
+
+const toggleVisitors = () => {
+    showVisitors.value = !showVisitors.value;
+};
+
+const getRelativePercentage = (count: number, list: Array<{ count: number }>) => {
+    const max = Math.max(...list.map((i) => i.count));
+    return max > 0 ? Math.round((count / max) * 100) : 0;
+};
+
+const viewsMax = computed(() => {
+    if (!props.overview?.daily_pageviews?.length) return 1;
+    const m = Math.max(...props.overview.daily_pageviews.map((d) => d.pageviews));
+    return m > 0 ? m : 1;
 });
+
+const visitorsMax = computed(() => {
+    if (!props.overview?.daily_pageviews?.length) return 1;
+    const m = Math.max(...props.overview.daily_pageviews.map((d) => d.visitors));
+    return m > 0 ? m : 1;
+});
+
+const maxDaily = computed(() => {
+    const vals: number[] = [];
+    if (showViews.value) vals.push(viewsMax.value);
+    if (showVisitors.value) vals.push(visitorsMax.value);
+    if (!vals.length) return 1;
+    return Math.max(...vals);
+});
+
+const addFilter = (key: string, value: string) => {
+    const current = { ...props.filters };
+    current[key] = value;
+    router.get('/dashboard', { site_id: props.activeSite.id, period: props.period, tab: props.activeTab, ...current }, { preserveState: true, preserveScroll: true });
+};
+
+const removeFilter = (key: string) => {
+    const current = { ...props.filters };
+    delete current[key];
+    router.get('/dashboard', { site_id: props.activeSite.id, period: props.period, tab: props.activeTab, ...current }, { preserveState: true, preserveScroll: true });
+};
+
+const clearFilters = () => {
+    router.get('/dashboard', { site_id: props.activeSite.id, period: props.period, tab: props.activeTab }, { preserveState: true, preserveScroll: true });
+};
 
 const changeSite = (event: Event) => {
     const target = event.target as HTMLSelectElement;
@@ -560,6 +605,22 @@ const applyCustomDateRange = () => {
                 </div>
 
 
+            <!-- Active Filters Bar -->
+            <div v-if="filters && Object.keys(filters).length > 0" class="flex flex-wrap items-center gap-2 px-1">
+                <span class="flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                    <Filter class="h-3 w-3" /> Filters:
+                </span>
+                <span
+                    v-for="(val, key) in filters"
+                    :key="key"
+                    class="flex items-center gap-1.5 text-xs font-semibold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/20"
+                >
+                    {{ key }}: {{ val }}
+                    <button @click="removeFilter(key as string)" class="ml-0.5 hover:text-red-500 transition-colors" title="Remove filter">✕</button>
+                </span>
+                <button @click="clearFilters" class="text-xs text-muted-foreground hover:text-foreground underline transition-colors">Clear all</button>
+            </div>
+
             <!-- Interactive Daily Pageviews Bar Chart -->
             <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -569,16 +630,32 @@ const applyCustomDateRange = () => {
                             <h3 class="text-sm font-bold text-foreground">Daily Pageview Trends</h3>
                         </div>
 
-                        <!-- Legend Pills -->
-                        <div class="flex items-center gap-3 ml-2 text-[11px] font-semibold text-muted-foreground">
-                            <div class="flex items-center gap-1.5">
-                                <span class="h-2.5 w-2.5 rounded-sm bg-indigo-500 dark:bg-indigo-400"></span>
-                                <span>Pageviews</span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="h-2.5 w-2.5 rounded-sm bg-sky-400/50 dark:bg-sky-500/50"></span>
-                                <span>Visitors</span>
-                            </div>
+                        <!-- Interactive Legend Pills -->
+                        <div class="flex items-center gap-2 ml-2">
+                            <button
+                                @click="toggleViews"
+                                :class="[
+                                    'flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all',
+                                    showViews
+                                        ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30'
+                                        : 'bg-muted text-muted-foreground border-sidebar-border/50 opacity-60'
+                                ]"
+                            >
+                                <span class="h-2 w-2 rounded-sm bg-indigo-500"></span>
+                                Pageviews
+                            </button>
+                            <button
+                                @click="toggleVisitors"
+                                :class="[
+                                    'flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all',
+                                    showVisitors
+                                        ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                                        : 'bg-muted text-muted-foreground border-sidebar-border/50 opacity-60'
+                                ]"
+                            >
+                                <span class="h-2 w-2 rounded-sm bg-indigo-400/40"></span>
+                                Visitors
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -598,9 +675,9 @@ const applyCustomDateRange = () => {
                             <div class="bg-popover text-popover-foreground border border-sidebar-border/80 shadow-md rounded-lg px-2.5 py-1 text-[11px] font-mono font-medium whitespace-nowrap space-y-0.5 text-center">
                                 <div class="text-xs font-bold text-foreground">{{ day.date }}</div>
                                 <div class="flex items-center gap-2 text-[10px]">
-                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold">{{ formatNumber(day.pageviews) }} views</span>
-                                    <span class="text-muted-foreground">•</span>
-                                    <span class="text-sky-500 font-bold">{{ formatNumber(day.visitors) }} visitors</span>
+                                    <span v-if="showViews" class="text-indigo-600 dark:text-indigo-400 font-bold">{{ formatNumber(day.pageviews) }} views</span>
+                                    <span v-if="showViews && showVisitors" class="text-muted-foreground">•</span>
+                                    <span v-if="showVisitors" class="text-indigo-400/70 font-bold">{{ formatNumber(day.visitors) }} visitors</span>
                                 </div>
                             </div>
                             <!-- Tooltip Arrow Pointer -->
@@ -610,12 +687,14 @@ const applyCustomDateRange = () => {
                         <div class="w-full flex items-end gap-[1px] h-full justify-center">
                             <!-- Pageviews Bar -->
                             <div
+                                v-if="showViews"
                                 class="flex-1 rounded-t-xs bg-indigo-500 dark:bg-indigo-400 transition-all duration-200 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-300 min-h-[3px]"
                                 :style="{ height: `${Math.max(Math.round((day.pageviews / maxDaily) * 100), 2)}%` }"
                             ></div>
-                            <!-- Unique Visitors Sub-Bar -->
+                            <!-- Unique Visitors Bar (same color, lower opacity) -->
                             <div
-                                class="flex-1 rounded-t-xs bg-sky-400/50 dark:bg-sky-500/50 transition-all duration-200 group-hover:bg-sky-400 dark:group-hover:bg-sky-300 min-h-[2px]"
+                                v-if="showVisitors"
+                                class="flex-1 rounded-t-xs bg-indigo-500/35 dark:bg-indigo-400/35 transition-all duration-200 group-hover:bg-indigo-500/55 dark:group-hover:bg-indigo-400/55 min-h-[2px]"
                                 :style="{ height: `${Math.max(Math.round((day.visitors / maxDaily) * 100), 2)}%` }"
                             ></div>
                         </div>
