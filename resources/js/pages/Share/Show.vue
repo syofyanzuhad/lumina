@@ -730,6 +730,12 @@ const getOsIcon = (os: string): string | null => {
                     :logs="custom_event_logs"
                 />
             </template>
+
+            <!-- Powered by Lumina Branding Footer -->
+            <footer class="pt-8 pb-4 flex items-center justify-center gap-2 text-xs text-muted-foreground border-t border-sidebar-border/50">
+                <Sparkles class="h-3.5 w-3.5 text-indigo-500" />
+                <span>Analytics powered by <a href="/" target="_blank" class="font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Lumina Analytics</a></span>
+            </footer>
         </div>
     </div>
 </template>
