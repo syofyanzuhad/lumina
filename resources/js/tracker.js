@@ -15,9 +15,36 @@
   }
   if (!domain) return;
 
+  var excludePattern = scriptEl.getAttribute('data-exclude');
+
+  function isExcluded() {
+    try {
+      if (window.localStorage && window.localStorage.getItem('lumina_ignore') === 'true') {
+        return true;
+      }
+    } catch (e) {}
+
+    if (excludePattern) {
+      var currentPath = window.location.pathname;
+      var patterns = excludePattern.split(',');
+      for (var i = 0; i < patterns.length; i++) {
+        var p = patterns[i].trim();
+        if (!p) continue;
+        if (p.indexOf('*') !== -1) {
+          var regex = new RegExp('^' + p.replace(/[-[\]{}()+?.,\\^$|#\s]/g, '\\$&').replace(/\*/g, '.*') + '$');
+          if (regex.test(currentPath)) return true;
+        } else if (currentPath === p || currentPath.indexOf(p) === 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   var lastPath = '';
 
   function sendEvent(eventName, props) {
+    if (isExcluded()) return;
     try {
       var currentPath = window.location.pathname + window.location.search;
       var payload = {
