@@ -169,6 +169,9 @@ class ExportController extends Controller
             fputcsv($file, ['Metric', 'Value']);
             fputcsv($file, ['Total Pageviews', $overview['total_pageviews'] ?? 0]);
             fputcsv($file, ['Unique Visitors', $overview['unique_visitors'] ?? 0]);
+            fputcsv($file, ['Currently Online', $overview['current_visitors'] ?? 0]);
+            fputcsv($file, ['Bounce Rate', ($overview['bounce_rate'] ?? 0).'%']);
+            fputcsv($file, ['Avg Visit Duration', ($overview['avg_duration'] ?? 0).'s']);
             fputcsv($file, []);
 
             fputcsv($file, ['Top Pages - Path', 'Pageviews', 'Percentage']);
@@ -180,6 +183,30 @@ class ExportController extends Controller
             fputcsv($file, ['Top Referrers - Referrer', 'Views', 'Percentage']);
             foreach ($overview['top_referrers'] ?? [] as $ref) {
                 fputcsv($file, [$ref['referrer'], $ref['count'], $ref['percentage'].'%']);
+            }
+            fputcsv($file, []);
+
+            fputcsv($file, ['Top Countries - Code / Name', 'Views', 'Percentage']);
+            foreach ($overview['top_countries'] ?? [] as $country) {
+                fputcsv($file, [$country['name'].' ('.$country['code'].')', $country['count'], $country['percentage'].'%']);
+            }
+            fputcsv($file, []);
+
+            fputcsv($file, ['Device Types - Device', 'Views', 'Percentage']);
+            foreach ($overview['device_breakdown'] ?? [] as $device) {
+                fputcsv($file, [$device['device'], $device['count'], $device['percentage'].'%']);
+            }
+            fputcsv($file, []);
+
+            fputcsv($file, ['Top Browsers - Browser', 'Views', 'Percentage']);
+            foreach ($overview['top_browsers'] ?? [] as $browser) {
+                fputcsv($file, [$browser['browser'], $browser['count'], $browser['percentage'].'%']);
+            }
+            fputcsv($file, []);
+
+            fputcsv($file, ['Top Operating Systems - OS', 'Views', 'Percentage']);
+            foreach ($overview['top_os'] ?? [] as $os) {
+                fputcsv($file, [$os['os'], $os['count'], $os['percentage'].'%']);
             }
 
             fclose($file);
