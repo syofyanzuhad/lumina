@@ -23,23 +23,42 @@ class AnalyticsService
      */
     public function clearCache(Site $site): void
     {
-        Cache::forget("lumina:analytics:{$site->id}:pageviews");
-        Cache::forget("lumina:analytics:{$site->id}:unique_visitors");
-        Cache::forget("lumina:analytics:{$site->id}:daily_pageviews");
-        Cache::forget("lumina:analytics:{$site->id}:top_pages_10");
-        Cache::forget("lumina:analytics:{$site->id}:top_referrers_10");
-        Cache::forget("lumina:analytics:{$site->id}:custom_events_10");
-        Cache::forget("lumina:analytics:{$site->id}:device_breakdown");
-        Cache::forget("lumina:analytics:{$site->id}:top_browsers_10");
-        Cache::forget("lumina:analytics:{$site->id}:top_os_10");
-        Cache::forget("lumina:analytics:{$site->id}:top_countries_10");
-        Cache::forget("lumina:analytics:{$site->id}:custom_events_list");
-        Cache::forget("lumina:analytics:{$site->id}:custom_event_summary");
-        Cache::forget("lumina:analytics:{$site->id}:custom_event_timeline");
-        Cache::forget("lumina:analytics:{$site->id}:custom_event_property_keys");
-        Cache::forget("lumina:analytics:{$site->id}:custom_event_property_breakdown");
-        Cache::forget("lumina:analytics:{$site->id}:custom_event_logs");
-        Cache::forget("lumina:analytics:{$site->id}:goals");
+        if (Cache::supportsTags()) {
+            Cache::tags(["lumina:site:{$site->id}"])->flush();
+
+            return;
+        }
+
+        // For cache drivers without tags support (e.g. file, database default), clear common date ranges/keys
+        $commonPeriods = [
+            [now()->subDays(6)->startOfDay(), now()->endOfDay()],
+            [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            [now()->startOfDay(), now()->endOfDay()],
+        ];
+
+        $metrics = [
+            'pageviews',
+            'unique_visitors',
+            'daily_pageviews',
+            'top_pages_10',
+            'top_referrers_10',
+            'custom_events_10',
+            'device_breakdown',
+            'top_browsers_10',
+            'top_os_10',
+            'top_countries_10',
+            'custom_events_list',
+            'custom_event_summary',
+            'custom_event_timeline',
+            'custom_event_logs',
+            'goals',
+        ];
+
+        foreach ($commonPeriods as [$start, $end]) {
+            foreach ($metrics as $metric) {
+                Cache::forget($this->cacheKey($site->id, $metric, $start, $end));
+            }
+        }
     }
 
     /**
@@ -49,7 +68,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'pageviews', $start, $end);
 
-        return (int) Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
             return Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->count();
@@ -63,7 +82,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'unique_visitors', $start, $end);
 
-        return (int) Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
             return Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->distinct('visitor_hash')
@@ -78,37 +97,31 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, "top_pages_{$limit}", $start, $end);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
-            $events = Event::where('site_id', $site->id)
+            $pathExpr = DB::getDriverName() === 'sqlite'
+                ? DB::raw("CASE WHEN instr(path, '?') > 0 THEN substr(path, 1, instr(path, '?') - 1) ELSE path END as clean_path")
+                : DB::raw("SUBSTRING_INDEX(path, '?', 1) as clean_path");
+
+            $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
-                ->select('path')
+                ->select($pathExpr, DB::raw('count(*) as count'))
+                ->groupBy('clean_path')
+                ->orderByDesc('count')
+                ->orderBy('clean_path')
+                ->limit($limit)
                 ->get();
 
-            $grouped = $events->groupBy(function ($e) {
-                $rawPath = (string) $e->path;
-                $pos = strpos($rawPath, '?');
+            return $results->map(function ($row) use ($totalPageviews) {
+                $count = (int) $row->count;
 
-                return $pos !== false ? substr($rawPath, 0, $pos) : $rawPath;
-            });
-
-            return $grouped
-                ->map(fn ($group, $path) => [
-                    'path' => (string) $path,
-                    'count' => $group->count(),
-                    'percentage' => $totalPageviews > 0 ? round(($group->count() / $totalPageviews) * 100, 1) : 0.0,
-                ])
-                ->sort(function ($a, $b) {
-                    if ($a['count'] === $b['count']) {
-                        return strcmp($a['path'], $b['path']);
-                    }
-
-                    return $b['count'] <=> $a['count'];
-                })
-                ->take($limit)
-                ->values()
-                ->toArray();
+                return [
+                    'path' => (string) $row->clean_path,
+                    'count' => $count,
+                    'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
+                ];
+            })->toArray();
         });
 
         return collect($data ?? []);
@@ -121,26 +134,32 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, "top_referrers_{$limit}", $start, $end);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
-            $events = Event::where('site_id', $site->id)
+            $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->whereNotNull('referrer')
                 ->where('referrer', '!=', '')
-                ->select('referrer')
+                ->select('referrer', DB::raw('count(*) as count'))
+                ->groupBy('referrer')
+                ->orderByDesc('count')
                 ->get();
 
-            $grouped = $events->groupBy(function ($e) {
-                return ReferrerHelper::parseName($e->referrer);
+            $grouped = $results->groupBy(function ($row) {
+                return ReferrerHelper::parseName($row->referrer);
             });
 
             return $grouped
-                ->map(fn ($group, $platform) => [
-                    'referrer' => (string) $platform,
-                    'count' => $group->count(),
-                    'percentage' => $totalPageviews > 0 ? round(($group->count() / $totalPageviews) * 100, 1) : 0.0,
-                ])
+                ->map(function ($group, $platform) use ($totalPageviews) {
+                    $count = $group->sum('count');
+
+                    return [
+                        'referrer' => (string) $platform,
+                        'count' => $count,
+                        'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
+                    ];
+                })
                 ->sort(function ($a, $b) {
                     if ($a['count'] === $b['count']) {
                         return strcmp($a['referrer'], $b['referrer']);
@@ -163,12 +182,21 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'daily_pageviews', $start, $end);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
-            $events = Event::where('site_id', $site->id)
-                ->whereBetween('created_at', [$start, $end])
-                ->get();
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
+            $dateExpr = DB::getDriverName() === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', created_at) as date")
+                : DB::raw('DATE(created_at) as date');
 
-            $grouped = $events->groupBy(fn ($e) => $e->created_at->format('Y-m-d'));
+            $results = Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->select(
+                    $dateExpr,
+                    DB::raw('count(*) as pageviews'),
+                    DB::raw('count(distinct visitor_hash) as visitors')
+                )
+                ->groupBy('date')
+                ->get()
+                ->keyBy('date');
 
             $series = [];
             $curr = $start->copy()->startOfDay();
@@ -176,11 +204,12 @@ class AnalyticsService
 
             while ($curr->lte($last)) {
                 $dateStr = $curr->format('Y-m-d');
-                $dayEvents = $grouped->get($dateStr, collect());
+                $dayRow = $results->get($dateStr);
+
                 $series[] = [
                     'date' => $dateStr,
-                    'pageviews' => $dayEvents->count(),
-                    'visitors' => $dayEvents->pluck('visitor_hash')->unique()->count(),
+                    'pageviews' => $dayRow ? (int) $dayRow->pageviews : 0,
+                    'visitors' => $dayRow ? (int) $dayRow->visitors : 0,
                 ];
                 $curr = $curr->addDay();
             }
@@ -198,7 +227,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'device_breakdown', $start, $end);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
             $results = Event::where('site_id', $site->id)
@@ -229,7 +258,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, "top_browsers_{$limit}", $start, $end);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
             $results = Event::where('site_id', $site->id)
@@ -264,7 +293,7 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, "top_os_{$limit}", $start, $end);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
             $results = Event::where('site_id', $site->id)
@@ -299,36 +328,36 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, "top_countries_{$limit}", $start, $end);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit) {
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit) {
             $totalPageviews = $this->getPageviews($site, $start, $end);
 
-            $events = Event::where('site_id', $site->id)
+            $countryExpr = DB::raw('UPPER(TRIM(COALESCE(country_code, country))) as code');
+
+            $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->where(function ($q) {
                     $q->whereNotNull('country_code')->orWhereNotNull('country');
                 })
-                ->select('country_code', 'country', 'country_name')
+                ->select($countryExpr, DB::raw('MAX(country_name) as country_name'), DB::raw('count(*) as count'))
+                ->groupBy('code')
+                ->orderByDesc('count')
                 ->get();
 
-            $grouped = $events->groupBy(function ($e) {
-                $code = $e->country_code ?: $e->country;
-
-                return strtoupper(trim((string) $code));
-            });
-
-            return $grouped
-                ->map(function ($group, $code) use ($totalPageviews) {
-                    $first = $group->first();
-                    $name = $first->country_name ?: CountryHelper::getName($code);
+            return $results
+                ->map(function ($row) use ($totalPageviews) {
+                    $code = (string) $row->code;
+                    $name = $row->country_name ?: CountryHelper::getName($code);
                     if ($name === $code || empty($name)) {
                         $name = CountryHelper::getName($code) ?? $code;
                     }
 
+                    $count = (int) $row->count;
+
                     return [
-                        'code' => (string) $code,
+                        'code' => $code,
                         'name' => (string) $name,
-                        'count' => $group->count(),
-                        'percentage' => $totalPageviews > 0 ? round(($group->count() / $totalPageviews) * 100, 1) : 0.0,
+                        'count' => $count,
+                        'percentage' => $totalPageviews > 0 ? round(($count / $totalPageviews) * 100, 1) : 0.0,
                     ];
                 })
                 ->sort(function ($a, $b) {
@@ -699,5 +728,17 @@ class AnalyticsService
         });
 
         return collect($data ?? []);
+    }
+
+    /**
+     * Cache helper with tag support if available.
+     */
+    protected function rememberCache(int $siteId, string $key, \Closure $callback): mixed
+    {
+        if (Cache::supportsTags()) {
+            return Cache::tags(["lumina:site:{$siteId}"])->remember($key, $this->ttl, $callback);
+        }
+
+        return Cache::remember($key, $this->ttl, $callback);
     }
 }
