@@ -2,6 +2,10 @@
 
 namespace Lumina\Core\Filament\Resources;
 
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -67,8 +71,8 @@ class SiteResource extends Resource
                     ->sortable(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('generateToken')
+                EditAction::make(),
+                Action::make('generateToken')
                     ->label('Regenerate API Token')
                     ->icon('heroicon-o-key')
                     ->color('warning')
@@ -85,8 +89,8 @@ class SiteResource extends Resource
                     }),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
