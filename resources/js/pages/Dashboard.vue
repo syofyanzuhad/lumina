@@ -267,25 +267,8 @@ const openModal = (type: string, title: string) => {
     <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 sm:p-6">
         <!-- Top Control Bar -->
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-xl p-4 shadow-sm">
-            <!-- Active Site Switcher & Tab Pill -->
+            <!-- Tab Switcher -->
             <div class="flex flex-wrap items-center gap-3">
-                <div class="flex items-center gap-2">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                        <Globe class="h-4 w-4" />
-                    </div>
-                    <select
-                        id="site-select"
-                        :value="activeSite.id"
-                        @change="changeSite"
-                        class="block rounded-lg border-0 py-1.5 pl-3 pr-8 text-sm font-bold ring-1 ring-inset ring-sidebar-border focus:ring-2 focus:ring-indigo-600 dark:bg-slate-900 dark:text-slate-100 shadow-xs"
-                    >
-                        <option v-for="site in sites" :key="site.id" :value="site.id">
-                            {{ site.domain }}
-                        </option>
-                    </select>
-                </div>
-
-                <!-- Consolidated Tab Switcher -->
                 <div class="flex items-center gap-1 p-1 bg-muted rounded-lg border border-sidebar-border/50">
                     <button
                         @click="setTab('overview')"
