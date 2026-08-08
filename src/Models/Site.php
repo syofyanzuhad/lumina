@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Lumina\Core\Database\Factories\SiteFactory;
 
-#[Fillable(['domain', 'owner_id', 'is_public', 'share_token', 'share_password'])]
+#[Fillable(['domain', 'owner_id', 'is_public', 'share_token', 'share_password', 'api_token'])]
 class Site extends Model
 {
     use HasFactory;
@@ -127,5 +127,13 @@ class Site extends Model
     public function generateShareToken(): string
     {
         return Str::random(32);
+    }
+
+    /**
+     * Generate a new 64-character API token for programmatic access.
+     */
+    public function generateApiToken(): string
+    {
+        return 'lum_'.Str::random(60);
     }
 }
