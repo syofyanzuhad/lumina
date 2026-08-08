@@ -196,6 +196,36 @@ const visitorsMax = computed(() => {
     return m > 0 ? m : 1;
 });
 
+const formatDateLabel = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+        if (dateStr.includes(' ')) {
+            // Hourly format: "YYYY-MM-DD HH:00"
+            const [datePart, timePart] = dateStr.split(' ');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hour] = timePart.split(':').map(Number);
+            const utcDate = new Date(Date.UTC(year, month - 1, day, hour, 0, 0));
+            return new Intl.DateTimeFormat(navigator.language || 'en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+            }).format(utcDate);
+        } else {
+            // Daily format: "YYYY-MM-DD"
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+            return new Intl.DateTimeFormat(navigator.language || 'en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            }).format(utcDate);
+        }
+    } catch {
+        return dateStr;
+    }
+};
+
 const maxDaily = computed(() => {
     const vals: number[] = [];
     if (showViews.value) vals.push(viewsMax.value);
@@ -730,7 +760,7 @@ const applyCustomDateRange = () => {
                             ]"
                         >
                             <div class="bg-popover text-popover-foreground border border-sidebar-border/80 shadow-md rounded-lg px-2.5 py-1 text-[11px] font-mono font-medium whitespace-nowrap space-y-0.5 text-center">
-                                <div class="text-xs font-bold text-foreground">{{ day.date }}</div>
+                                <div class="text-xs font-bold text-foreground">{{ formatDateLabel(day.date) }}</div>
                                 <div class="flex items-center gap-2 text-[10px]">
                                     <span v-if="showViews" class="text-indigo-600 dark:text-indigo-400 font-bold">{{ formatNumber(day.pageviews) }} views</span>
                                     <span v-if="showViews && showVisitors" class="text-muted-foreground">•</span>
@@ -760,11 +790,11 @@ const applyCustomDateRange = () => {
 
                 <!-- X-Axis Date Range Labels -->
                 <div v-if="overview.daily_pageviews.length > 0" class="flex justify-between items-center text-[9px] sm:text-[10px] font-mono text-muted-foreground pt-2 border-t border-sidebar-border/40">
-                    <span>{{ overview.daily_pageviews[0].date }}</span>
+                    <span>{{ formatDateLabel(overview.daily_pageviews[0].date) }}</span>
                     <span v-if="overview.daily_pageviews.length > 2">
-                        {{ overview.daily_pageviews[Math.floor(overview.daily_pageviews.length / 2)].date }}
+                        {{ formatDateLabel(overview.daily_pageviews[Math.floor(overview.daily_pageviews.length / 2)].date) }}
                     </span>
-                    <span>{{ overview.daily_pageviews[overview.daily_pageviews.length - 1].date }}</span>
+                    <span>{{ formatDateLabel(overview.daily_pageviews[overview.daily_pageviews.length - 1].date) }}</span>
                 </div>
             </div>
 
