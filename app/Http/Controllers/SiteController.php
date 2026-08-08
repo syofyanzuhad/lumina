@@ -37,6 +37,10 @@ class SiteController extends Controller
     {
         Gate::authorize('view', $site);
 
+        if (! $site->api_token) {
+            $site->update(['api_token' => $site->generateApiToken()]);
+        }
+
         return Inertia::render('Sites/Show', [
             'site' => $site,
         ]);
