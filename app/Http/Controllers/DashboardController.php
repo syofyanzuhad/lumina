@@ -80,6 +80,40 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', $data);
     }
 
+    public function breakdown(Request $request, AnalyticsService $analytics)
+    {
+        $user = $request->user();
+        $siteId = $request->query('site_id');
+        $site = Site::where('owner_id', $user->id)->findOrFail($siteId);
+
+        $period = $request->query('period', '30d');
+        [$start, $end] = $this->resolveDateRange($period, $request->query('start_date'), $request->query('end_date'));
+
+        $type = $request->query('type');
+        $limit = (int) $request->query('limit', 50);
+
+        $filters = $request->only([
+            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_campaign',
+        ]);
+        $filters = array_filter($filters, fn ($val) => ! is_null($val) && $val !== '');
+
+        $data = match ($type) {
+            'pages' => $analytics->getTopPages($site, $start, $end, $limit, $filters),
+            'referrers' => $analytics->getTopReferrers($site, $start, $end, $limit, $filters),
+            'browsers' => $analytics->getTopBrowsers($site, $start, $end, $limit, $filters),
+            'os' => $analytics->getTopOperatingSystems($site, $start, $end, $limit, $filters),
+            'locations' => $analytics->getTopCountries($site, $start, $end, $limit, $filters),
+            'utm' => $analytics->getUtmCampaigns($site, $start, $end, $limit, $filters),
+            'devices' => $analytics->getDeviceBreakdown($site, $start, $end, $filters),
+            default => [],
+        };
+
+        return response()->json([
+            'type' => $type,
+            'data' => $data,
+        ]);
+    }
+
     protected function resolveDateRange(string $period, ?string $startDate, ?string $endDate): array
     {
         if ($period === 'today') {

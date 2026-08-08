@@ -20,6 +20,7 @@ Route::middleware(['lumina.track'])->group(function () {
 
 Route::middleware(['auth', 'verified', 'lumina.track'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/breakdown', [DashboardController::class, 'breakdown'])->name('dashboard.breakdown');
     Route::get('/sites', [SiteController::class, 'index'])->name('sites.index');
     Route::get('/sites/create', [SiteController::class, 'create'])->name('sites.create');
     Route::post('/sites', [SiteController::class, 'store'])->name('sites.store');
