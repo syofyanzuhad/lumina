@@ -79,6 +79,9 @@ interface GoalItem {
 interface Overview {
     total_pageviews: number;
     unique_visitors: number;
+    current_visitors?: number;
+    bounce_rate?: number;
+    avg_duration?: number;
     top_pages: TopPage[];
     top_referrers: TopReferrer[];
     daily_pageviews: DailyItem[];
@@ -89,6 +92,7 @@ interface Overview {
     custom_events: CustomEventItem[];
     goals?: GoalItem[];
 }
+
 
 const props = defineProps<{
     site: SiteItem;
@@ -355,7 +359,26 @@ const getDeviceIcon = (deviceStr: string) => {
 
                 <div v-else-if="overview" class="space-y-6">
                     <!-- KPI Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Currently Online Card -->
+                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Currently Online</span>
+                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 relative">
+                                    <span class="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                    </span>
+                                    <Users class="h-4 w-4" />
+                                </div>
+                            </div>
+                            <div class="mt-3 text-3xl font-black tracking-tight text-foreground">
+                                {{ formatNumber(overview.current_visitors ?? 0) }}
+                            </div>
+                            <div class="mt-2 text-xs text-muted-foreground">Active in last 5 minutes</div>
+                        </div>
+
+                        <!-- Pageviews Card -->
                         <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Pageviews</span>
@@ -369,10 +392,11 @@ const getDeviceIcon = (deviceStr: string) => {
                             <div class="mt-2 text-xs text-muted-foreground">Total raw page visits recorded</div>
                         </div>
 
+                        <!-- Unique Visitors Card -->
                         <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Unique Visitors</span>
-                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
                                     <Users class="h-4 w-4" />
                                 </div>
                             </div>
@@ -381,7 +405,27 @@ const getDeviceIcon = (deviceStr: string) => {
                             </div>
                             <div class="mt-2 text-xs text-muted-foreground">Distinct daily hashed visitors</div>
                         </div>
+
+                        <!-- Bounce / Duration Card -->
+                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bounce / Duration</span>
+                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                    <Sparkles class="h-4 w-4" />
+                                </div>
+                            </div>
+                            <div class="mt-3 flex items-baseline gap-3">
+                                <div class="text-3xl font-black tracking-tight text-foreground">
+                                    {{ overview.bounce_rate ?? 0 }}%
+                                </div>
+                                <div class="text-sm font-semibold text-muted-foreground font-mono">
+                                    {{ overview.avg_duration ?? 0 }}s avg
+                                </div>
+                            </div>
+                            <div class="mt-2 text-xs text-muted-foreground">Single-page visits & session duration</div>
+                        </div>
                     </div>
+
 
                     <!-- Daily Chart -->
                     <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
