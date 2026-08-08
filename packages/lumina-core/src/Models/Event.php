@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Lumina\Core\Database\Factories\EventFactory;
 use Lumina\Core\Enums\DeviceType;
 
-#[Fillable(['site_id', 'path', 'referrer', 'visitor_hash', 'device_type', 'country', 'browser', 'browser_version', 'os', 'os_version', 'country_code', 'country_name', 'metadata', 'created_at'])]
+#[Fillable(['site_id', 'path', 'clean_path', 'referrer', 'visitor_hash', 'device_type', 'country', 'browser', 'browser_version', 'os', 'os_version', 'country_code', 'country_name', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'metadata', 'created_at'])]
 class Event extends Model
 {
     use HasFactory, MassPrunable;

@@ -81,9 +81,31 @@ class InsertEvent implements ShouldQueue
 
         $countryName = CountryHelper::getName($countryCode);
 
+        $cleanPath = parse_url($this->path, PHP_URL_PATH) ?? '/';
+
+        $cleanPath = '/'.ltrim($cleanPath, '/');
+
+        // Extract UTM parameters if query string is present
+        $queryString = parse_url($this->path, PHP_URL_QUERY);
+        $utmSource = null;
+        $utmMedium = null;
+        $utmCampaign = null;
+        $utmTerm = null;
+        $utmContent = null;
+
+        if ($queryString) {
+            parse_str($queryString, $queryParams);
+            $utmSource = isset($queryParams['utm_source']) ? substr((string) $queryParams['utm_source'], 0, 255) : null;
+            $utmMedium = isset($queryParams['utm_medium']) ? substr((string) $queryParams['utm_medium'], 0, 255) : null;
+            $utmCampaign = isset($queryParams['utm_campaign']) ? substr((string) $queryParams['utm_campaign'], 0, 255) : null;
+            $utmTerm = isset($queryParams['utm_term']) ? substr((string) $queryParams['utm_term'], 0, 255) : null;
+            $utmContent = isset($queryParams['utm_content']) ? substr((string) $queryParams['utm_content'], 0, 255) : null;
+        }
+
         Event::create([
             'site_id' => $this->siteId,
             'path' => $this->path,
+            'clean_path' => $cleanPath,
             'referrer' => $this->referrer,
             'visitor_hash' => $this->visitorHash,
             'device_type' => $this->deviceType,
@@ -94,6 +116,11 @@ class InsertEvent implements ShouldQueue
             'os_version' => $osVersion,
             'country_code' => $countryCode,
             'country_name' => $countryName,
+            'utm_source' => $utmSource,
+            'utm_medium' => $utmMedium,
+            'utm_campaign' => $utmCampaign,
+            'utm_term' => $utmTerm,
+            'utm_content' => $utmContent,
             'metadata' => $this->metadata,
         ]);
     }
