@@ -1,9 +1,27 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { Eye, Users, Globe, Calendar, Sparkles, Smartphone, Laptop, Monitor, Lock, ArrowRight, ShieldCheck, Copy, Check } from '@lucide/vue';
+import { Eye, Users, Globe, Calendar, Sparkles, Smartphone, Laptop, Monitor, Lock, ArrowRight, ShieldCheck, Copy, Check, Maximize2, Filter, CalendarDays } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import CustomEventsTab from '@/components/CustomEventsTab.vue';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface SiteItem {
     id: number;
@@ -76,6 +94,12 @@ interface GoalItem {
     trend: GoalTrendItem[];
 }
 
+interface UtmCampaignItem {
+    campaign: string;
+    count: number;
+    percentage: number;
+}
+
 interface Overview {
     total_pageviews: number;
     unique_visitors: number;
@@ -89,10 +113,10 @@ interface Overview {
     top_browsers?: TopBrowser[];
     top_os?: TopOS[];
     top_countries?: TopCountry[];
+    utm_campaigns?: UtmCampaignItem[];
     custom_events: CustomEventItem[];
     goals?: GoalItem[];
 }
-
 
 const props = defineProps<{
     site: SiteItem;
@@ -109,6 +133,7 @@ const props = defineProps<{
     custom_event_property_keys?: string[];
     custom_event_property_breakdown?: any[];
     custom_event_logs?: any[];
+    filters?: Record<string, string>;
 }>();
 
 defineOptions({
@@ -129,19 +154,73 @@ const submitPassword = () => {
 
 const hoveredDay = ref<DailyItem | null>(null);
 
-const maxDaily = computed(() => {
-    if (!props.overview?.daily_pageviews || props.overview.daily_pageviews.length === 0) {
-        return 1;
-    }
-    const max = Math.max(...props.overview.daily_pageviews.map((d) => d.pageviews));
-    return max > 0 ? max : 1;
+const showViews = ref(true);
+const showVisitors = ref(false);
+
+const toggleViews = () => {
+    showViews.value = !showViews.value;
+};
+
+const toggleVisitors = () => {
+    showVisitors.value = !showVisitors.value;
+};
+
+const viewsMax = computed(() => {
+    if (!props.overview?.daily_pageviews?.length) return 1;
+    const m = Math.max(...props.overview.daily_pageviews.map((d) => d.pageviews));
+    return m > 0 ? m : 1;
 });
+
+const visitorsMax = computed(() => {
+    if (!props.overview?.daily_pageviews?.length) return 1;
+    const m = Math.max(...props.overview.daily_pageviews.map((d) => d.visitors));
+    return m > 0 ? m : 1;
+});
+
+const maxDaily = computed(() => {
+    const vals: number[] = [];
+    if (showViews.value) vals.push(viewsMax.value);
+    if (showVisitors.value) vals.push(visitorsMax.value);
+    if (!vals.length) return 1;
+    return Math.max(...vals);
+});
+
+const addFilter = (key: string, value: string) => {
+    if (!props.site.share_token) return;
+    const current = { ...props.filters };
+    current[key] = value;
+    router.get(
+        `/share/${props.site.share_token}`,
+        { period: props.period, tab: props.activeTab, ...current },
+        { preserveState: true, preserveScroll: true }
+    );
+};
+
+const removeFilter = (key: string) => {
+    if (!props.site.share_token) return;
+    const current = { ...props.filters };
+    delete current[key];
+    router.get(
+        `/share/${props.site.share_token}`,
+        { period: props.period, tab: props.activeTab, ...current },
+        { preserveState: true, preserveScroll: true }
+    );
+};
+
+const clearFilters = () => {
+    if (!props.site.share_token) return;
+    router.get(
+        `/share/${props.site.share_token}`,
+        { period: props.period, tab: props.activeTab },
+        { preserveState: true, preserveScroll: true }
+    );
+};
 
 const setPeriod = (newPeriod: string) => {
     if (!props.site.share_token) return;
     router.get(
         `/share/${props.site.share_token}`,
-        { period: newPeriod, tab: props.activeTab },
+        { period: newPeriod, tab: props.activeTab, ...props.filters },
         { preserveState: true, preserveScroll: true }
     );
 };
@@ -150,7 +229,7 @@ const setTab = (newTab: string) => {
     if (!props.site.share_token) return;
     router.get(
         `/share/${props.site.share_token}`,
-        { period: props.period, tab: newTab },
+        { period: props.period, tab: newTab, ...props.filters },
         { preserveState: true, preserveScroll: true }
     );
 };
@@ -242,29 +321,56 @@ const getOsIcon = (os: string): string | null => {
     if (lower.includes('chrome')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/googlechrome.svg';
     return null;
 };
+
+const activeModal = ref<string | null>(null);
+const modalTitle = ref<string>('');
+
+const openModal = (type: string, title: string) => {
+    activeModal.value = type;
+    modalTitle.value = title;
+};
+
+const isCustomDateModalOpen = ref(false);
+const customStartDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
+const customEndDate = ref(new Date().toISOString().split('T')[0]);
+
+const applyCustomDateRange = () => {
+    if (!customStartDate.value || !customEndDate.value || !props.site.share_token) return;
+    isCustomDateModalOpen.value = false;
+    router.get(
+        `/share/${props.site.share_token}`,
+        {
+            period: 'custom',
+            start_date: customStartDate.value,
+            end_date: customEndDate.value,
+            tab: props.activeTab,
+            ...props.filters,
+        },
+        { preserveState: true, preserveScroll: true }
+    );
+};
 </script>
 
 <template>
     <Head :title="requiresPassword ? `Protected Analytics — ${site.domain}` : `${site.domain} — Public Analytics`" />
 
     <div class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased">
-        <!-- Mode 1: Password Gate Screen -->
-        <div v-if="requiresPassword" class="flex-1 flex items-center justify-center p-4 sm:p-6">
-            <div class="w-full max-w-md bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-2xl p-8 shadow-lg text-center space-y-6">
-                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                    <Lock class="h-8 w-8" />
-                </div>
-
-                <div class="space-y-2">
+        <!-- Mode 1: Password Required View -->
+        <div v-if="requiresPassword" class="flex-1 flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-card border border-sidebar-border/80 dark:border-sidebar-border rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                        <Lock class="h-7 w-7" />
+                    </div>
                     <h1 class="text-2xl font-bold tracking-tight">Protected Dashboard</h1>
-                    <p class="text-sm text-muted-foreground">
-                        Enter password to view public analytics for <strong class="text-foreground font-semibold">{{ site.domain }}</strong>
+                    <p class="text-xs text-muted-foreground">
+                        The analytics dashboard for <strong class="text-foreground">{{ site.domain }}</strong> is password protected.
                     </p>
                 </div>
 
-                <form @submit.prevent="submitPassword" class="space-y-4 text-left">
-                    <div class="space-y-2">
-                        <label for="password" class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <form @submit.prevent="submitPassword" class="space-y-4">
+                    <div>
+                        <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                             Dashboard Password
                         </label>
                         <input
@@ -333,72 +439,110 @@ const getOsIcon = (os: string): string | null => {
                     </div>
                 </div>
 
-                <!-- Date Period & Theme Switcher -->
-                <div class="flex items-center gap-2 flex-wrap">
-                    <button
-                        type="button"
-                        @click="setPeriod('7d')"
-                        :class="[
-                            'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer',
-                            period === '7d'
-                                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        ]"
-                    >
-                        Last 7 Days
-                    </button>
-                    <button
-                        type="button"
-                        @click="setPeriod('30d')"
-                        :class="[
-                            'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer',
-                            period === '30d'
-                                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        ]"
-                    >
-                        Last 30 Days
-                    </button>
-
-                    <div class="ml-2 border-l border-sidebar-border/70 dark:border-sidebar-border pl-2">
-                        <AppearanceTabs />
+                <!-- Controls Bar -->
+                <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                    <!-- Tab Switcher -->
+                    <div class="flex items-center gap-0.5 p-1 bg-muted rounded-lg border border-sidebar-border/50">
+                        <button
+                            @click="setTab('overview')"
+                            :class="[
+                                'px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer',
+                                (!activeTab || activeTab === 'overview')
+                                    ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                    : 'bg-transparent text-muted-foreground hover:text-foreground'
+                            ]"
+                        >
+                            Overview
+                        </button>
+                        <button
+                            @click="setTab('events')"
+                            :class="[
+                                'px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer',
+                                activeTab === 'events'
+                                    ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                    : 'bg-transparent text-muted-foreground hover:text-foreground'
+                            ]"
+                        >
+                            Custom Events
+                        </button>
                     </div>
 
-                    <div class="hidden md:flex items-center gap-1.5 ml-3 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-semibold">
-                        <Sparkles class="h-3.5 w-3.5" />
-                        <span>Powered by Lumina</span>
+                    <!-- Date Period Segment -->
+                    <div class="flex items-center gap-0.5 p-1 bg-muted rounded-lg border border-sidebar-border/50">
+                        <button
+                            type="button"
+                            @click="setPeriod('today')"
+                            :class="[
+                                'px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer',
+                                period === 'today'
+                                    ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            ]"
+                        >
+                            Today
+                        </button>
+                        <button
+                            type="button"
+                            @click="setPeriod('7d')"
+                            :class="[
+                                'px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer',
+                                period === '7d'
+                                    ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            ]"
+                        >
+                            7d
+                        </button>
+                        <button
+                            type="button"
+                            @click="setPeriod('30d')"
+                            :class="[
+                                'px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer',
+                                period === '30d'
+                                    ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            ]"
+                        >
+                            30d
+                        </button>
+                        <button
+                            type="button"
+                            @click="isCustomDateModalOpen = true"
+                            :title="period === 'custom' ? 'Custom Date Range Active' : 'Select Custom Date Range'"
+                            :class="[
+                                'px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer',
+                                period === 'custom'
+                                    ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            ]"
+                        >
+                            <CalendarDays class="h-3.5 w-3.5" />
+                            <span>Custom</span>
+                        </button>
                     </div>
+
+                    <AppearanceTabs />
                 </div>
             </header>
 
-            <!-- Tab Header Controls -->
-            <div class="flex items-center gap-1.5 p-1 bg-muted rounded-xl border border-sidebar-border/50 self-start">
-                <button
-                    @click="setTab('overview')"
-                    :class="[
-                        'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer',
-                        (!activeTab || activeTab === 'overview')
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
-                            : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80'
-                    ]"
-                >
-                    Overview
-                </button>
-                <button
-                    @click="setTab('events')"
-                    :class="[
-                        'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer',
-                        activeTab === 'events'
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500'
-                            : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80'
-                    ]"
-                >
-                    Custom Events
-                </button>
-            </div>
-
             <!-- Overview Content -->
             <template v-if="!activeTab || activeTab === 'overview'">
+                <!-- Active Filters Bar -->
+                <div v-if="filters && Object.keys(filters).length > 0" class="flex flex-wrap items-center gap-2 px-1">
+                    <span class="flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                        <Filter class="h-3 w-3" /> Filters:
+                    </span>
+                    <span
+                        v-for="(val, key) in filters"
+                        :key="key"
+                        class="flex items-center gap-1.5 text-xs font-semibold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/20"
+                    >
+                        {{ key }}: {{ val }}
+                        <button @click="removeFilter(key as string)" class="ml-0.5 hover:text-red-500 transition-colors" title="Remove filter">✕</button>
+                    </span>
+                    <button @click="clearFilters" class="text-xs text-muted-foreground hover:text-foreground underline transition-colors">Clear all</button>
+                </div>
+
                 <!-- Empty State -->
                 <div v-if="overview?.total_pageviews === 0" class="rounded-xl border border-dashed border-sidebar-border/80 dark:border-sidebar-border p-12 text-center bg-card shadow-sm">
                     <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -411,263 +555,474 @@ const getOsIcon = (os: string): string | null => {
                 </div>
 
                 <div v-else-if="overview" class="space-y-6">
-                    <!-- KPI Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- KPI Summary Cards -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         <!-- Currently Online Card -->
-                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm transition-all hover:shadow-md">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Currently Online</span>
-                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 relative">
-                                    <span class="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                                <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">Currently Online</span>
+                                <div class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 relative shrink-0">
+                                    <span class="absolute -top-0.5 -right-0.5 flex h-2 w-2 sm:h-2.5 sm:w-2.5">
                                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500"></span>
                                     </span>
-                                    <Users class="h-4 w-4" />
+                                    <Users class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 </div>
                             </div>
-                            <div class="mt-3 text-3xl font-black tracking-tight text-foreground">
+                            <div class="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                                 {{ formatNumber(overview.current_visitors ?? 0) }}
                             </div>
-                            <div class="mt-2 text-xs text-muted-foreground">Active in last 5 minutes</div>
+                            <div class="mt-1 sm:mt-2 hidden sm:flex items-center text-xs text-muted-foreground">
+                                <span>Active in last 5 minutes</span>
+                            </div>
                         </div>
 
                         <!-- Pageviews Card -->
-                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm transition-all hover:shadow-md">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Pageviews</span>
-                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                                    <Eye class="h-4 w-4" />
+                                <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">Total Pageviews</span>
+                                <div class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0">
+                                    <Eye class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 </div>
                             </div>
-                            <div class="mt-3 text-3xl font-black tracking-tight text-foreground">
+                            <div class="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                                 {{ formatNumber(overview.total_pageviews) }}
                             </div>
-                            <div class="mt-2 text-xs text-muted-foreground">Total raw page visits recorded</div>
+                            <div class="mt-1 sm:mt-2 hidden sm:flex items-center text-xs text-muted-foreground">
+                                <span>Total raw page visits recorded</span>
+                            </div>
                         </div>
 
                         <!-- Unique Visitors Card -->
-                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm transition-all hover:shadow-md">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Unique Visitors</span>
-                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                                    <Users class="h-4 w-4" />
+                                <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">Unique Visitors</span>
+                                <div class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0">
+                                    <Users class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 </div>
                             </div>
-                            <div class="mt-3 text-3xl font-black tracking-tight text-foreground">
+                            <div class="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                                 {{ formatNumber(overview.unique_visitors) }}
                             </div>
-                            <div class="mt-2 text-xs text-muted-foreground">Distinct daily hashed visitors</div>
+                            <div class="mt-1 sm:mt-2 hidden sm:flex items-center text-xs text-muted-foreground">
+                                <span>Distinct daily hashed visitors</span>
+                            </div>
                         </div>
 
-                        <!-- Bounce / Duration Card -->
-                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <!-- Bounce Rate & Avg Duration Card -->
+                        <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm transition-all hover:shadow-md">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bounce / Duration</span>
-                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                    <Sparkles class="h-4 w-4" />
+                                <span class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">Bounce / Duration</span>
+                                <div class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                                    <Sparkles class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 </div>
                             </div>
-                            <div class="mt-3 flex items-baseline gap-3">
-                                <div class="text-3xl font-black tracking-tight text-foreground">
+                            <div class="mt-2 sm:mt-3 flex items-baseline gap-1.5 sm:gap-3 flex-wrap">
+                                <div class="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                                     {{ overview.bounce_rate ?? 0 }}%
                                 </div>
-                                <div class="text-sm font-semibold text-muted-foreground font-mono">
+                                <div class="text-xs sm:text-sm font-semibold text-muted-foreground font-mono">
                                     {{ overview.avg_duration ?? 0 }}s avg
                                 </div>
                             </div>
-                            <div class="mt-2 text-xs text-muted-foreground">Single-page visits & session duration</div>
+                            <div class="mt-1 sm:mt-2 hidden sm:flex items-center text-xs text-muted-foreground">
+                                <span>Single-page visits & session duration</span>
+                            </div>
                         </div>
                     </div>
 
-
-                    <!-- Daily Chart -->
-                    <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
-                        <div class="flex items-center justify-between mb-4">
+                    <!-- Interactive Daily Pageviews Bar Chart -->
+                    <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-3.5 sm:p-6 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
                             <div class="flex items-center gap-2">
-                                <Calendar class="h-4 w-4 text-indigo-500" />
+                                <Calendar class="h-4 w-4 text-indigo-500 shrink-0" />
                                 <h3 class="text-sm font-bold text-foreground">Daily Pageview Trends</h3>
                             </div>
-                            <span v-if="hoveredDay" class="text-xs font-mono text-indigo-600 dark:text-indigo-400">
-                                {{ hoveredDay.date }}: {{ formatNumber(hoveredDay.pageviews) }} views ({{ formatNumber(hoveredDay.visitors) }} visitors)
-                            </span>
-                            <span v-else class="text-xs text-muted-foreground">Hover bar to inspect</span>
+
+                            <!-- Interactive Legend Pills -->
+                            <div class="flex items-center gap-1.5 sm:gap-2">
+                                <button
+                                    @click="toggleViews"
+                                    :class="[
+                                        'flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border transition-all cursor-pointer',
+                                        showViews
+                                            ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30'
+                                            : 'bg-muted text-muted-foreground border-sidebar-border/50 opacity-60'
+                                    ]"
+                                >
+                                    <span class="h-2 w-2 rounded-sm bg-indigo-500 shrink-0"></span>
+                                    Pageviews
+                                </button>
+                                <button
+                                    @click="toggleVisitors"
+                                    :class="[
+                                        'flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border transition-all cursor-pointer',
+                                        showVisitors
+                                            ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                                            : 'bg-muted text-muted-foreground border-sidebar-border/50 opacity-60'
+                                    ]"
+                                >
+                                    <span class="h-2 w-2 rounded-sm bg-indigo-400/40 shrink-0"></span>
+                                    Visitors
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="flex items-end gap-1.5 h-44 pt-6 pb-2">
+                        <div class="flex items-end gap-0.5 sm:gap-1.5 h-36 sm:h-44 pt-6 pb-2 relative touch-pan-x">
                             <div
                                 v-for="day in overview.daily_pageviews"
                                 :key="day.date"
                                 @mouseenter="hoveredDay = day"
                                 @mouseleave="hoveredDay = null"
+                                @touchstart="hoveredDay = day"
                                 class="flex-1 flex flex-col items-center group relative h-full justify-end cursor-pointer"
                             >
+                                <!-- Floating Tooltip Card on Hover / Touch -->
                                 <div
-                                    class="w-full rounded-t-md bg-indigo-500 dark:bg-indigo-400 transition-all duration-200 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-300 min-h-[3px]"
-                                    :style="{ height: `${Math.max(Math.round((day.pageviews / maxDaily) * 100), 2)}%` }"
-                                ></div>
+                                    :class="[
+                                        'absolute -top-14 left-1/2 -translate-x-1/2 flex-col items-center z-30 pointer-events-none transition-all',
+                                        hoveredDay === day ? 'flex' : 'hidden group-hover:flex'
+                                    ]"
+                                >
+                                    <div class="bg-popover text-popover-foreground border border-sidebar-border/80 shadow-md rounded-lg px-2.5 py-1 text-[11px] font-mono font-medium whitespace-nowrap space-y-0.5 text-center">
+                                        <div class="text-xs font-bold text-foreground">{{ day.date }}</div>
+                                        <div class="flex items-center gap-2 text-[10px]">
+                                            <span v-if="showViews" class="text-indigo-600 dark:text-indigo-400 font-bold">{{ formatNumber(day.pageviews) }} views</span>
+                                            <span v-if="showViews && showVisitors" class="text-muted-foreground">•</span>
+                                            <span v-if="showVisitors" class="text-indigo-400/70 font-bold">{{ formatNumber(day.visitors) }} visitors</span>
+                                        </div>
+                                    </div>
+                                    <!-- Tooltip Arrow Pointer -->
+                                    <div class="w-2 h-2 bg-popover border-r border-b border-sidebar-border/80 rotate-45 -mt-1"></div>
+                                </div>
+
+                                <div class="w-full flex items-end gap-[1px] h-full justify-center">
+                                    <!-- Pageviews Bar -->
+                                    <div
+                                        v-if="showViews"
+                                        class="flex-1 rounded-t-xs bg-indigo-500 dark:bg-indigo-400 transition-all duration-200 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-300 min-h-[3px]"
+                                        :style="{ height: `${Math.max(Math.round((day.pageviews / maxDaily) * 100), 2)}%` }"
+                                    ></div>
+                                    <!-- Unique Visitors Bar -->
+                                    <div
+                                        v-if="showVisitors"
+                                        class="flex-1 rounded-t-xs bg-indigo-500/35 dark:bg-indigo-400/35 transition-all duration-200 group-hover:bg-indigo-500/55 dark:group-hover:bg-indigo-400/55 min-h-[2px]"
+                                        :style="{ height: `${Math.max(Math.round((day.visitors / maxDaily) * 100), 2)}%` }"
+                                    ></div>
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- X-Axis Date Range Labels -->
+                        <div v-if="overview.daily_pageviews.length > 0" class="flex justify-between items-center text-[9px] sm:text-[10px] font-mono text-muted-foreground pt-2 border-t border-sidebar-border/40">
+                            <span>{{ overview.daily_pageviews[0].date }}</span>
+                            <span v-if="overview.daily_pageviews.length > 2">
+                                {{ overview.daily_pageviews[Math.floor(overview.daily_pageviews.length / 2)].date }}
+                            </span>
+                            <span>{{ overview.daily_pageviews[overview.daily_pageviews.length - 1].date }}</span>
                         </div>
                     </div>
 
-                    <!-- Top Pages, Referrers, Devices -->
+                    <!-- Details Section: Top Pages, Referrers, and Devices -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Top Pages -->
+                        <!-- Top Pages Card -->
                         <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Pages</h3>
-                                <span class="text-xs text-muted-foreground">{{ overview.top_pages.length }} entries</span>
-                            </div>
-                            <div class="space-y-4">
-                                <div v-for="page in overview.top_pages" :key="page.path" class="space-y-1.5">
-                                    <div class="flex justify-between text-xs font-medium">
-                                        <span class="truncate font-mono text-foreground">{{ page.path }}</span>
-                                        <span class="text-muted-foreground font-mono">{{ formatNumber(page.count) }} ({{ page.percentage }}%)</span>
-                                    </div>
-                                    <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                        <div class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${page.percentage}%` }"></div>
-                                    </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-muted-foreground">{{ overview.top_pages.length }} entries</span>
+                                    <button
+                                        @click="openModal('pages', 'Top Pages Breakdown')"
+                                        title="Expand Details"
+                                        class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                                    >
+                                        <Maximize2 class="h-3.5 w-3.5" />
+                                    </button>
                                 </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div
+                                    v-for="page in overview.top_pages"
+                                    :key="page.path"
+                                    @click="addFilter('path', page.path)"
+                                    :title="`Click to filter dashboard by path: ${page.path}`"
+                                    class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                                >
+                                    <div
+                                        class="absolute inset-y-0 left-0 bg-indigo-100/70 dark:bg-indigo-500/15 rounded-lg transition-all duration-500 group-hover:bg-indigo-200/80 dark:group-hover:bg-indigo-500/25"
+                                        :style="{ width: `${page.percentage}%` }"
+                                    ></div>
+                                    <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mr-2 flex items-center gap-1">
+                                        <span class="truncate">{{ page.path }}</span>
+                                        <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                                    </span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(page.count) }} <span class="text-muted-foreground/70">({{ page.percentage }}%)</span></span>
+                                </div>
+
                                 <p v-if="overview.top_pages.length === 0" class="text-xs text-muted-foreground">No pageviews recorded yet.</p>
                             </div>
                         </div>
 
-                        <!-- Top Referrers -->
+                        <!-- Top Referrers Card -->
                         <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Referrers</h3>
-                                <span class="text-xs text-muted-foreground">{{ overview.top_referrers.length }} entries</span>
-                            </div>
-                            <div class="space-y-4">
-                                <div v-for="refItem in overview.top_referrers" :key="refItem.referrer" class="space-y-1.5">
-                                    <div class="flex justify-between text-xs font-medium">
-                                        <span class="truncate font-mono text-foreground flex items-center gap-1.5">
-                                            <img
-                                                v-if="getReferrerFavicon(refItem.referrer)"
-                                                :src="getReferrerFavicon(refItem.referrer)!"
-                                                :alt="refItem.referrer"
-                                                class="h-3.5 w-3.5 rounded-sm shrink-0 object-contain"
-                                                @error="($event.target as HTMLImageElement).style.display = 'none'"
-                                            />
-                                            <Globe v-else class="h-3 w-3 shrink-0 text-muted-foreground/60" />
-                                            <span class="truncate">{{ refItem.referrer }}</span>
-                                        </span>
-                                        <span class="text-muted-foreground font-mono">{{ formatNumber(refItem.count) }} ({{ refItem.percentage }}%)</span>
-                                    </div>
-                                    <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                        <div class="bg-emerald-600 dark:bg-emerald-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${refItem.percentage}%` }"></div>
-                                    </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-muted-foreground">{{ overview.top_referrers.length }} entries</span>
+                                    <button
+                                        @click="openModal('referrers', 'Top Referrers Breakdown')"
+                                        title="Expand Details"
+                                        class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                                    >
+                                        <Maximize2 class="h-3.5 w-3.5" />
+                                    </button>
                                 </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div
+                                    v-for="refItem in overview.top_referrers"
+                                    :key="refItem.referrer"
+                                    @click="addFilter('referrer', refItem.referrer)"
+                                    :title="`Click to filter dashboard by referrer: ${refItem.referrer}`"
+                                    class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                                >
+                                    <div
+                                        class="absolute inset-y-0 left-0 bg-emerald-100/70 dark:bg-emerald-500/15 rounded-lg transition-all duration-500 group-hover:bg-emerald-200/80 dark:group-hover:bg-emerald-500/25"
+                                        :style="{ width: `${refItem.percentage}%` }"
+                                    ></div>
+                                    <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors mr-2 flex items-center gap-1.5">
+                                        <img
+                                            v-if="getReferrerFavicon(refItem.referrer)"
+                                            :src="getReferrerFavicon(refItem.referrer)!"
+                                            :alt="refItem.referrer"
+                                            class="h-3.5 w-3.5 rounded-sm shrink-0 object-contain"
+                                            @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                        />
+                                        <Globe v-else class="h-3 w-3 shrink-0 text-muted-foreground/60" />
+                                        <span class="truncate">{{ refItem.referrer }}</span>
+                                        <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                                    </span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(refItem.count) }} <span class="text-muted-foreground/70">({{ refItem.percentage }}%)</span></span>
+                                </div>
+
                                 <p v-if="overview.top_referrers.length === 0" class="text-xs text-muted-foreground">No external referrers.</p>
                             </div>
                         </div>
 
-                        <!-- Device Breakdown -->
+                        <!-- Device Breakdown Card -->
                         <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Device Types</h3>
-                                <span v-if="overview.device_breakdown" class="text-xs text-muted-foreground">{{ overview.device_breakdown.length }} devices</span>
-                            </div>
-                            <div class="space-y-4">
-                                <div v-for="dev in overview.device_breakdown" :key="dev.device" class="space-y-1.5">
-                                    <div class="flex justify-between text-xs font-medium">
-                                        <span class="flex items-center gap-1.5 capitalize font-mono text-foreground">
-                                            <component :is="getDeviceIcon(dev.device)" class="h-3.5 w-3.5 text-indigo-500" />
-                                            {{ dev.device }}
-                                        </span>
-                                        <span class="text-muted-foreground font-mono">{{ formatNumber(dev.count) }} ({{ dev.percentage }}%)</span>
-                                    </div>
-                                    <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                        <div class="bg-amber-500 dark:bg-amber-400 h-2 rounded-full transition-all duration-500" :style="{ width: `${dev.percentage}%` }"></div>
-                                    </div>
+                                <div class="flex items-center gap-2">
+                                    <span v-if="overview.device_breakdown" class="text-xs text-muted-foreground">{{ overview.device_breakdown.length }} devices</span>
+                                    <button
+                                        @click="openModal('devices', 'Device Breakdown')"
+                                        title="Expand Details"
+                                        class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                                    >
+                                        <Maximize2 class="h-3.5 w-3.5" />
+                                    </button>
                                 </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div
+                                    v-for="dev in overview.device_breakdown"
+                                    :key="dev.device"
+                                    @click="addFilter('device', dev.device)"
+                                    :title="`Click to filter dashboard by device: ${dev.device}`"
+                                    class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                                >
+                                    <div
+                                        class="absolute inset-y-0 left-0 bg-amber-100/70 dark:bg-amber-500/15 rounded-lg transition-all duration-500 group-hover:bg-amber-200/80 dark:group-hover:bg-amber-500/25"
+                                        :style="{ width: `${dev.percentage}%` }"
+                                    ></div>
+                                    <span class="relative z-10 flex items-center gap-1.5 capitalize font-mono text-foreground font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors mr-2">
+                                        <component :is="getDeviceIcon(dev.device)" class="h-3.5 w-3.5 text-amber-500" />
+                                        {{ dev.device }}
+                                        <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                                    </span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(dev.count) }} <span class="text-muted-foreground/70">({{ dev.percentage }}%)</span></span>
+                                </div>
+
                                 <p v-if="!overview.device_breakdown || overview.device_breakdown.length === 0" class="text-xs text-muted-foreground">No device data available.</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Top Browsers, OS, Locations -->
+                    <!-- Details Section 2: Top Browsers, Top OS, and Top Locations -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Top Browsers -->
+                        <!-- Top Browsers Card -->
                         <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Browsers</h3>
-                                <span v-if="overview.top_browsers" class="text-xs text-muted-foreground">{{ overview.top_browsers.length }} browsers</span>
-                            </div>
-                            <div class="space-y-4">
-                                <div v-for="item in overview.top_browsers" :key="item.browser" class="space-y-1.5">
-                                    <div class="flex justify-between text-xs font-medium">
-                                        <span class="truncate font-mono text-foreground flex items-center gap-1.5">
-                                            <img
-                                                v-if="getBrowserIcon(item.browser)"
-                                                :src="getBrowserIcon(item.browser)!"
-                                                :alt="item.browser"
-                                                class="h-3.5 w-3.5 shrink-0 object-contain dark:invert dark:brightness-200"
-                                                @error="($event.target as HTMLImageElement).style.display = 'none'"
-                                            />
-                                            <Globe v-else class="h-3 w-3 shrink-0 text-muted-foreground/60" />
-                                            <span class="truncate">{{ item.browser }}</span>
-                                        </span>
-                                        <span class="text-muted-foreground font-mono">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
-                                    </div>
-                                    <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                        <div class="bg-sky-600 dark:bg-sky-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${item.percentage}%` }"></div>
-                                    </div>
+                                <div class="flex items-center gap-2">
+                                    <span v-if="overview.top_browsers" class="text-xs text-muted-foreground">{{ overview.top_browsers.length }} browsers</span>
+                                    <button
+                                        @click="openModal('browsers', 'Top Browsers Breakdown')"
+                                        title="Expand Details"
+                                        class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                                    >
+                                        <Maximize2 class="h-3.5 w-3.5" />
+                                    </button>
                                 </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div
+                                    v-for="item in overview.top_browsers"
+                                    :key="item.browser"
+                                    @click="addFilter('browser', item.browser)"
+                                    :title="`Click to filter dashboard by browser: ${item.browser}`"
+                                    class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                                >
+                                    <div
+                                        class="absolute inset-y-0 left-0 bg-sky-100/70 dark:bg-sky-500/15 rounded-lg transition-all duration-500 group-hover:bg-sky-200/80 dark:group-hover:bg-sky-500/25"
+                                        :style="{ width: `${item.percentage}%` }"
+                                    ></div>
+                                    <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mr-2 flex items-center gap-1.5">
+                                        <img
+                                            v-if="getBrowserIcon(item.browser)"
+                                            :src="getBrowserIcon(item.browser)!"
+                                            :alt="item.browser"
+                                            class="h-3.5 w-3.5 shrink-0 object-contain dark:invert dark:brightness-200"
+                                            @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                        />
+                                        <Globe v-else class="h-3 w-3 shrink-0 text-muted-foreground/60" />
+                                        <span class="truncate">{{ item.browser }}</span>
+                                        <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                                    </span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                                </div>
+
                                 <p v-if="!overview.top_browsers || overview.top_browsers.length === 0" class="text-xs text-muted-foreground">No browser data available.</p>
                             </div>
                         </div>
 
-                        <!-- Top OS -->
+                        <!-- Top OS Card -->
                         <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Operating Systems</h3>
-                                <span v-if="overview.top_os" class="text-xs text-muted-foreground">{{ overview.top_os.length }} OS</span>
-                            </div>
-                            <div class="space-y-4">
-                                <div v-for="item in overview.top_os" :key="item.os" class="space-y-1.5">
-                                    <div class="flex justify-between text-xs font-medium">
-                                        <span class="truncate font-mono text-foreground flex items-center gap-1.5">
-                                            <img
-                                                v-if="getOsIcon(item.os)"
-                                                :src="getOsIcon(item.os)!"
-                                                :alt="item.os"
-                                                class="h-3.5 w-3.5 shrink-0 object-contain dark:invert dark:brightness-200"
-                                                @error="($event.target as HTMLImageElement).style.display = 'none'"
-                                            />
-                                            <Laptop v-else class="h-3 w-3 shrink-0 text-muted-foreground/60" />
-                                            <span class="truncate">{{ item.os }}</span>
-                                        </span>
-                                        <span class="text-muted-foreground font-mono">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
-                                    </div>
-                                    <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                        <div class="bg-purple-600 dark:bg-purple-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${item.percentage}%` }"></div>
-                                    </div>
+                                <div class="flex items-center gap-2">
+                                    <span v-if="overview.top_os" class="text-xs text-muted-foreground">{{ overview.top_os.length }} OS</span>
+                                    <button
+                                        @click="openModal('os', 'Operating Systems Breakdown')"
+                                        title="Expand Details"
+                                        class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                                    >
+                                        <Maximize2 class="h-3.5 w-3.5" />
+                                    </button>
                                 </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div
+                                    v-for="item in overview.top_os"
+                                    :key="item.os"
+                                    @click="addFilter('os', item.os)"
+                                    :title="`Click to filter dashboard by OS: ${item.os}`"
+                                    class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                                >
+                                    <div
+                                        class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
+                                        :style="{ width: `${item.percentage}%` }"
+                                    ></div>
+                                    <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1.5">
+                                        <img
+                                            v-if="getOsIcon(item.os)"
+                                            :src="getOsIcon(item.os)!"
+                                            :alt="item.os"
+                                            class="h-3.5 w-3.5 shrink-0 object-contain dark:invert dark:brightness-200"
+                                            @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                        />
+                                        <Laptop v-else class="h-3 w-3 shrink-0 text-muted-foreground/60" />
+                                        <span class="truncate">{{ item.os }}</span>
+                                        <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                                    </span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                                </div>
+
                                 <p v-if="!overview.top_os || overview.top_os.length === 0" class="text-xs text-muted-foreground">No OS data available.</p>
                             </div>
                         </div>
 
-                        <!-- Top Locations -->
+                        <!-- Top Locations Card -->
                         <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Locations</h3>
-                                <span v-if="overview.top_countries" class="text-xs text-muted-foreground">{{ overview.top_countries.length }} countries</span>
-                            </div>
-                            <div class="space-y-4">
-                                <div v-for="item in overview.top_countries" :key="item.code || item.name" class="space-y-1.5">
-                                    <div class="flex justify-between text-xs font-medium">
-                                        <span class="truncate font-mono text-foreground flex items-center gap-1.5">
-                                            <span class="text-base leading-none select-none">{{ getCountryFlag(item.code) }}</span>
-                                            <span v-if="item.code" class="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase">{{ item.code }}</span>
-                                            {{ item.name || item.code }}
-                                        </span>
-                                        <span class="text-muted-foreground font-mono">{{ formatNumber(item.count) }} ({{ item.percentage }}%)</span>
-                                    </div>
-                                    <div class="w-full bg-muted h-2 rounded-full overflow-hidden">
-                                        <div class="bg-rose-600 dark:bg-rose-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${item.percentage}%` }"></div>
-                                    </div>
+                                <div class="flex items-center gap-2">
+                                    <span v-if="overview.top_countries" class="text-xs text-muted-foreground">{{ overview.top_countries.length }} countries</span>
+                                    <button
+                                        @click="openModal('locations', 'Geographic Locations Breakdown')"
+                                        title="Expand Details"
+                                        class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                                    >
+                                        <Maximize2 class="h-3.5 w-3.5" />
+                                    </button>
                                 </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div
+                                    v-for="item in overview.top_countries"
+                                    :key="item.code || item.name"
+                                    @click="addFilter('country', item.code || item.name)"
+                                    :title="`Click to filter dashboard by country: ${item.name || item.code}`"
+                                    class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                                >
+                                    <div
+                                        class="absolute inset-y-0 left-0 bg-rose-100/70 dark:bg-rose-500/15 rounded-lg transition-all duration-500 group-hover:bg-rose-200/80 dark:group-hover:bg-rose-500/25"
+                                        :style="{ width: `${item.percentage}%` }"
+                                    ></div>
+                                    <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors mr-2 flex items-center gap-1.5">
+                                        <span class="text-base leading-none select-none">{{ getCountryFlag(item.code) }}</span>
+                                        <span v-if="item.code" class="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase">{{ item.code }}</span>
+                                        <span class="truncate">{{ item.name || item.code }}</span>
+                                        <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                                    </span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                                </div>
+
                                 <p v-if="!overview.top_countries || overview.top_countries.length === 0" class="text-xs text-muted-foreground">No location data available.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UTM Campaigns Card -->
+                    <div v-if="overview.utm_campaigns && overview.utm_campaigns.length > 0" class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-foreground">UTM Campaigns</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-muted-foreground">{{ overview.utm_campaigns.length }} campaigns</span>
+                                <button
+                                    @click="openModal('utm', 'UTM Campaigns Breakdown')"
+                                    title="Expand Details"
+                                    class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                                >
+                                    <Maximize2 class="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div
+                                v-for="campaign in overview.utm_campaigns"
+                                :key="campaign.campaign"
+                                @click="addFilter('utm_campaign', campaign.campaign)"
+                                :title="`Click to filter dashboard by campaign: ${campaign.campaign}`"
+                                class="group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden"
+                            >
+                                <div
+                                    class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
+                                    :style="{ width: `${campaign.percentage}%` }"
+                                ></div>
+                                <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1">
+                                    <span class="truncate">{{ campaign.campaign }}</span>
+                                    <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+                                </span>
+                                <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(campaign.count) }} <span class="text-muted-foreground/70">({{ campaign.percentage }}%)</span></span>
                             </div>
                         </div>
                     </div>
@@ -737,5 +1092,229 @@ const getOsIcon = (os: string): string | null => {
                 <span>Analytics powered by <a href="/" target="_blank" class="font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Lumina Analytics</a></span>
             </footer>
         </div>
+
+        <!-- Side Drawer Modal for Detailed Breakdown -->
+        <Sheet :open="!!activeModal" @update:open="(val) => { if (!val) activeModal = null; }">
+            <SheetContent side="right" class="w-full sm:max-w-lg overflow-y-auto p-4 sm:p-5">
+                <SheetHeader class="pb-2 border-b border-sidebar-border/50">
+                    <SheetTitle class="text-base font-bold">{{ modalTitle }}</SheetTitle>
+                    <SheetDescription class="text-xs text-muted-foreground">
+                        Complete detailed breakdown for <strong class="text-foreground">{{ site.domain }}</strong>
+                    </SheetDescription>
+                </SheetHeader>
+
+                <div class="mt-4 space-y-2 pb-4">
+                    <!-- Top Pages Modal -->
+                    <template v-if="activeModal === 'pages' && overview?.top_pages">
+                        <div
+                            v-for="page in overview.top_pages"
+                            :key="page.path"
+                            @click="addFilter('path', page.path); activeModal = null"
+                            :title="`Click to filter by path: ${page.path}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-indigo-100/70 dark:bg-indigo-500/15 rounded-lg transition-all duration-500 group-hover:bg-indigo-200/80 dark:group-hover:bg-indigo-500/25"
+                                :style="{ width: `${page.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mr-2 flex items-center gap-1.5">
+                                <span class="truncate">{{ page.path }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(page.count) }} views <span class="text-muted-foreground/70">({{ page.percentage }}%)</span></span>
+                        </div>
+                    </template>
+
+                    <!-- Top Referrers Modal -->
+                    <template v-if="activeModal === 'referrers' && overview?.top_referrers">
+                        <div
+                            v-for="refItem in overview.top_referrers"
+                            :key="refItem.referrer"
+                            @click="addFilter('referrer', refItem.referrer); activeModal = null"
+                            :title="`Click to filter by referrer: ${refItem.referrer}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-emerald-100/70 dark:bg-emerald-500/15 rounded-lg transition-all duration-500 group-hover:bg-emerald-200/80 dark:group-hover:bg-emerald-500/25"
+                                :style="{ width: `${refItem.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors mr-2 flex items-center gap-2">
+                                <img
+                                    v-if="getReferrerFavicon(refItem.referrer)"
+                                    :src="getReferrerFavicon(refItem.referrer)!"
+                                    :alt="refItem.referrer"
+                                    class="h-4 w-4 rounded-sm shrink-0 object-contain"
+                                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                />
+                                <Globe v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                                <span class="truncate">{{ refItem.referrer }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(refItem.count) }} visits <span class="text-muted-foreground/70">({{ refItem.percentage }}%)</span></span>
+                        </div>
+                    </template>
+
+                    <!-- Device Breakdown Modal -->
+                    <template v-if="activeModal === 'devices' && overview?.device_breakdown">
+                        <div
+                            v-for="dev in overview.device_breakdown"
+                            :key="dev.device"
+                            @click="addFilter('device', dev.device); activeModal = null"
+                            :title="`Click to filter by device: ${dev.device}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-amber-100/70 dark:bg-amber-500/15 rounded-lg transition-all duration-500 group-hover:bg-amber-200/80 dark:group-hover:bg-amber-500/25"
+                                :style="{ width: `${dev.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 flex items-center gap-2 capitalize font-mono text-foreground font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors mr-2">
+                                <component :is="getDeviceIcon(dev.device)" class="h-4 w-4 text-amber-500 shrink-0" />
+                                <span>{{ dev.device }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(dev.count) }} sessions <span class="text-muted-foreground/70">({{ dev.percentage }}%)</span></span>
+                        </div>
+                    </template>
+
+                    <!-- Top Browsers Modal -->
+                    <template v-if="activeModal === 'browsers' && overview?.top_browsers">
+                        <div
+                            v-for="item in overview.top_browsers"
+                            :key="item.browser"
+                            @click="addFilter('browser', item.browser); activeModal = null"
+                            :title="`Click to filter by browser: ${item.browser}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-sky-100/70 dark:bg-sky-500/15 rounded-lg transition-all duration-500 group-hover:bg-sky-200/80 dark:group-hover:bg-sky-500/25"
+                                :style="{ width: `${item.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mr-2 flex items-center gap-2">
+                                <img
+                                    v-if="getBrowserIcon(item.browser)"
+                                    :src="getBrowserIcon(item.browser)!"
+                                    :alt="item.browser"
+                                    class="h-4 w-4 shrink-0 object-contain dark:invert dark:brightness-200"
+                                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                />
+                                <Globe v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                                <span class="truncate">{{ item.browser }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} sessions <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                        </div>
+                    </template>
+
+                    <!-- Top OS Modal -->
+                    <template v-if="activeModal === 'os' && overview?.top_os">
+                        <div
+                            v-for="item in overview.top_os"
+                            :key="item.os"
+                            @click="addFilter('os', item.os); activeModal = null"
+                            :title="`Click to filter by OS: ${item.os}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
+                                :style="{ width: `${item.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-2">
+                                <img
+                                    v-if="getOsIcon(item.os)"
+                                    :src="getOsIcon(item.os)!"
+                                    :alt="item.os"
+                                    class="h-4 w-4 shrink-0 object-contain dark:invert dark:brightness-200"
+                                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                                />
+                                <Laptop v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                                <span class="truncate">{{ item.os }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} sessions <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                        </div>
+                    </template>
+
+                    <!-- Top Locations Modal -->
+                    <template v-if="activeModal === 'locations' && overview?.top_countries">
+                        <div
+                            v-for="item in overview.top_countries"
+                            :key="item.code || item.name"
+                            @click="addFilter('country', item.code || item.name); activeModal = null"
+                            :title="`Click to filter by country: ${item.name || item.code}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-rose-100/70 dark:bg-rose-500/15 rounded-lg transition-all duration-500 group-hover:bg-rose-200/80 dark:group-hover:bg-rose-500/25"
+                                :style="{ width: `${item.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors mr-2 flex items-center gap-2">
+                                <span class="text-base leading-none select-none shrink-0">{{ getCountryFlag(item.code) }}</span>
+                                <span v-if="item.code" class="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase shrink-0">{{ item.code }}</span>
+                                <span class="truncate">{{ item.name || item.code }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} visitors <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                        </div>
+                    </template>
+
+                    <!-- UTM Campaigns Modal -->
+                    <template v-if="activeModal === 'utm' && overview?.utm_campaigns">
+                        <div
+                            v-for="campaign in overview.utm_campaigns"
+                            :key="campaign.campaign"
+                            @click="addFilter('utm_campaign', campaign.campaign); activeModal = null"
+                            :title="`Click to filter by UTM campaign: ${campaign.campaign}`"
+                            class="group relative flex justify-between items-center text-xs font-medium p-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all overflow-hidden border border-sidebar-border/50"
+                        >
+                            <div
+                                class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
+                                :style="{ width: `${campaign.percentage}%` }"
+                            ></div>
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1.5">
+                                <span class="truncate">{{ campaign.campaign }}</span>
+                                <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                            </span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(campaign.count) }} visits <span class="text-muted-foreground/70">({{ campaign.percentage }}%)</span></span>
+                        </div>
+                    </template>
+                </div>
+            </SheetContent>
+        </Sheet>
+
+        <!-- Custom Date Range Dialog -->
+        <Dialog v-model:open="isCustomDateModalOpen">
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Custom Date Range</DialogTitle>
+                    <DialogDescription>
+                        Select a start and end date to filter public analytics for {{ site.domain }}.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="grid grid-cols-2 gap-4 py-4">
+                    <div class="space-y-2">
+                        <Label for="share-start-date">Start Date</Label>
+                        <Input
+                            id="share-start-date"
+                            type="date"
+                            v-model="customStartDate"
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="share-end-date">End Date</Label>
+                        <Input
+                            id="share-end-date"
+                            type="date"
+                            v-model="customEndDate"
+                        />
+                    </div>
+                </div>
+
+                <DialogFooter class="sm:justify-between">
+                    <Button variant="outline" @click="isCustomDateModalOpen = false">Cancel</Button>
+                    <Button @click="applyCustomDateRange">Apply Range</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

@@ -38,6 +38,11 @@ class ShareController extends Controller
         [$start, $end] = $this->resolveDateRange($period, $request->query('start_date'), $request->query('end_date'));
         $activeTab = $request->query('tab', 'overview');
 
+        $filters = $request->only([
+            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_campaign',
+        ]);
+        $filters = array_filter($filters, fn ($val) => ! is_null($val) && $val !== '');
+
         $data = [
             'site' => [
                 'id' => $site->id,
@@ -49,10 +54,11 @@ class ShareController extends Controller
             'requiresPassword' => false,
             'period' => $period,
             'activeTab' => $activeTab,
+            'filters' => $filters,
         ];
 
         if ($activeTab === 'overview') {
-            $data['overview'] = $analytics->getOverview($site, $start, $end);
+            $data['overview'] = $analytics->getOverview($site, $start, $end, $filters);
         } elseif ($activeTab === 'events') {
             $selectedEvent = $request->query('event');
             $selectedPropertyKey = $request->query('property');
