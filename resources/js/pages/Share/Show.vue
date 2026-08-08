@@ -328,25 +328,25 @@ const getReferrerFavicon = (name: string): string | null => {
 
 const getBrowserIcon = (browser: string): string | null => {
     const lower = (browser || '').toLowerCase();
-    if (lower.includes('chrome') && !lower.includes('chromium')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/googlechrome.svg';
-    if (lower.includes('firefox')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/firefox.svg';
-    if (lower.includes('safari')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/safari.svg';
-    if (lower.includes('edge')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/microsoftedge.svg';
-    if (lower.includes('opera')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/opera.svg';
-    if (lower.includes('brave')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/brave.svg';
-    if (lower.includes('vivaldi')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/vivaldi.svg';
-    if (lower.includes('samsung')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/samsung.svg';
+    if (lower.includes('chrome') && !lower.includes('chromium')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/chrome/chrome-original.svg';
+    if (lower.includes('firefox')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firefox/firefox-original.svg';
+    if (lower.includes('safari')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/safari/safari-original.svg';
+    if (lower.includes('edge')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/edge/edge-original.svg';
+    if (lower.includes('opera')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/opera/opera-original.svg';
+    if (lower.includes('brave')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/brave/brave-original.svg';
     return null;
 };
 
 const getOsIcon = (os: string): string | null => {
     const lower = (os || '').toLowerCase();
-    if (lower.includes('windows')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/windows.svg';
-    if (lower.includes('mac') || lower.includes('os x') || lower.includes('macos') || lower.includes('darwin')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/apple.svg';
-    if (lower.includes('linux') || lower.includes('ubuntu') || lower.includes('debian')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/linux.svg';
-    if (lower.includes('android')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/android.svg';
-    if (lower.includes('ios') || lower.includes('iphone') || lower.includes('ipad')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/ios.svg';
-    if (lower.includes('chrome')) return 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/googlechrome.svg';
+    if (lower.includes('windows')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/windows11/windows11-original.svg';
+    if (lower.includes('mac') || lower.includes('os x') || lower.includes('macos') || lower.includes('darwin')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apple/apple-original.svg';
+    if (lower.includes('ubuntu')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ubuntu/ubuntu-plain.svg';
+    if (lower.includes('debian')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/debian/debian-original.svg';
+    if (lower.includes('linux')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg';
+    if (lower.includes('android')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/android/android-original.svg';
+    if (lower.includes('ios') || lower.includes('iphone') || lower.includes('ipad')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apple/apple-original.svg';
+    if (lower.includes('chrome')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/chrome/chrome-original.svg';
     return null;
 };
 
