@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, Link } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download, Maximize2 } from '@lucide/vue';
+import { Eye, Users, Globe, Code, Calendar, Sparkles, RefreshCw, Smartphone, Laptop, Monitor, Download, Maximize2, CalendarDays } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import CustomEventsTab from '@/components/CustomEventsTab.vue';
 import {
@@ -19,6 +19,17 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface SiteItem {
     id: number;
@@ -259,6 +270,22 @@ const openModal = (type: string, title: string) => {
     activeModal.value = type;
     modalTitle.value = title;
 };
+
+const isCustomDateModalOpen = ref(false);
+const customStartDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
+const customEndDate = ref(new Date().toISOString().split('T')[0]);
+
+const applyCustomDateRange = () => {
+    if (!customStartDate.value || !customEndDate.value) return;
+    isCustomDateModalOpen.value = false;
+    router.get('/dashboard', {
+        site_id: props.activeSite.id,
+        period: 'custom',
+        start_date: customStartDate.value,
+        end_date: customEndDate.value,
+        tab: props.activeTab,
+    }, { preserveState: true, preserveScroll: true });
+};
 </script>
 
 <template>
@@ -334,6 +361,20 @@ const openModal = (type: string, title: string) => {
                         ]"
                     >
                         30d
+                    </button>
+                    <button
+                        type="button"
+                        @click="isCustomDateModalOpen = true"
+                        :title="period === 'custom' ? 'Custom Date Range Active' : 'Select Custom Date Range'"
+                        :class="[
+                            'px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
+                            period === 'custom'
+                                ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                : 'text-muted-foreground hover:text-foreground'
+                        ]"
+                    >
+                        <CalendarDays class="h-3.5 w-3.5" />
+                        <span>Custom</span>
                     </button>
                 </div>
 
@@ -943,5 +984,41 @@ const openModal = (type: string, title: string) => {
                 </div>
             </SheetContent>
         </Sheet>
+
+        <!-- Custom Date Range Dialog -->
+        <Dialog v-model:open="isCustomDateModalOpen">
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Custom Date Range</DialogTitle>
+                    <DialogDescription>
+                        Select a start and end date to filter analytics for {{ activeSite.domain }}.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="grid grid-cols-2 gap-4 py-4">
+                    <div class="space-y-2">
+                        <Label for="start-date">Start Date</Label>
+                        <Input
+                            id="start-date"
+                            type="date"
+                            v-model="customStartDate"
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="end-date">End Date</Label>
+                        <Input
+                            id="end-date"
+                            type="date"
+                            v-model="customEndDate"
+                        />
+                    </div>
+                </div>
+
+                <DialogFooter class="sm:justify-between">
+                    <Button variant="outline" @click="isCustomDateModalOpen = false">Cancel</Button>
+                    <Button @click="applyCustomDateRange">Apply Range</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>
