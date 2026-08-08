@@ -183,10 +183,6 @@ const toggleVisitors = () => {
     showVisitors.value = !showVisitors.value;
 };
 
-const getRelativePercentage = (count: number, list: Array<{ count: number }>) => {
-    const max = Math.max(...list.map((i) => i.count));
-    return max > 0 ? Math.round((count / max) * 100) : 0;
-};
 
 const viewsMax = computed(() => {
     if (!props.overview?.daily_pageviews?.length) return 1;
@@ -739,7 +735,7 @@ const applyCustomDateRange = () => {
                         >
                             <div
                                 class="absolute inset-y-0 left-0 bg-indigo-100/70 dark:bg-indigo-500/15 rounded-lg transition-all duration-500 group-hover:bg-indigo-200/80 dark:group-hover:bg-indigo-500/25"
-                                :style="{ width: `${getRelativePercentage(page.count, overview.top_pages)}%` }"
+                                :style="{ width: `${page.percentage}%` }"
                             ></div>
                             <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mr-2 flex items-center gap-1">
                                 <span class="truncate">{{ page.path }}</span>
@@ -778,7 +774,7 @@ const applyCustomDateRange = () => {
                         >
                             <div
                                 class="absolute inset-y-0 left-0 bg-emerald-100/70 dark:bg-emerald-500/15 rounded-lg transition-all duration-500 group-hover:bg-emerald-200/80 dark:group-hover:bg-emerald-500/25"
-                                :style="{ width: `${getRelativePercentage(refItem.count, overview.top_referrers)}%` }"
+                                :style="{ width: `${refItem.percentage}%` }"
                             ></div>
                             <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors mr-2 flex items-center gap-1">
                                 <span class="truncate">{{ refItem.referrer }}</span>
@@ -817,7 +813,7 @@ const applyCustomDateRange = () => {
                         >
                             <div
                                 class="absolute inset-y-0 left-0 bg-amber-100/70 dark:bg-amber-500/15 rounded-lg transition-all duration-500 group-hover:bg-amber-200/80 dark:group-hover:bg-amber-500/25"
-                                :style="{ width: `${getRelativePercentage(dev.count, overview.device_breakdown)}%` }"
+                                :style="{ width: `${dev.percentage}%` }"
                             ></div>
                             <span class="relative z-10 flex items-center gap-1.5 capitalize font-mono text-foreground font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors mr-2">
                                 <component :is="getDeviceIcon(dev.device)" class="h-3.5 w-3.5 text-amber-500" />
@@ -860,7 +856,7 @@ const applyCustomDateRange = () => {
                         >
                             <div
                                 class="absolute inset-y-0 left-0 bg-sky-100/70 dark:bg-sky-500/15 rounded-lg transition-all duration-500 group-hover:bg-sky-200/80 dark:group-hover:bg-sky-500/25"
-                                :style="{ width: `${getRelativePercentage(item.count, overview.top_browsers)}%` }"
+                                :style="{ width: `${item.percentage}%` }"
                             ></div>
                             <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mr-2 flex items-center gap-1">
                                 <span class="truncate">{{ item.browser }}</span>
@@ -899,7 +895,7 @@ const applyCustomDateRange = () => {
                         >
                             <div
                                 class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
-                                :style="{ width: `${getRelativePercentage(item.count, overview.top_os)}%` }"
+                                :style="{ width: `${item.percentage}%` }"
                             ></div>
                             <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1">
                                 <span class="truncate">{{ item.os }}</span>
@@ -938,7 +934,7 @@ const applyCustomDateRange = () => {
                         >
                             <div
                                 class="absolute inset-y-0 left-0 bg-rose-100/70 dark:bg-rose-500/15 rounded-lg transition-all duration-500 group-hover:bg-rose-200/80 dark:group-hover:bg-rose-500/25"
-                                :style="{ width: `${getRelativePercentage(item.count, overview.top_countries)}%` }"
+                                :style="{ width: `${item.percentage}%` }"
                             ></div>
                             <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors mr-2 flex items-center gap-1.5">
                                 <span class="text-base leading-none select-none">{{ getCountryFlag(item.code) }}</span>
@@ -980,7 +976,7 @@ const applyCustomDateRange = () => {
                     >
                         <div
                             class="absolute inset-y-0 left-0 bg-purple-100/70 dark:bg-purple-500/15 rounded-lg transition-all duration-500 group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25"
-                            :style="{ width: `${getRelativePercentage(campaign.count, overview.utm_campaigns)}%` }"
+                            :style="{ width: `${campaign.percentage}%` }"
                         ></div>
                         <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors mr-2 flex items-center gap-1">
                             <span class="truncate">{{ campaign.campaign }}</span>
