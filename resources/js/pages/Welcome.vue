@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { Eye, Users, Shield, Zap, Package, ArrowRight, BarChart3, Globe, Code, Sparkles, CheckCircle2, Copy, Check, Terminal, ShieldCheck, HelpCircle, XCircle, Sun, Moon, Target, Download, Share2, Smartphone } from '@lucide/vue';
+import { Eye, Users, Shield, Zap, Package, ArrowRight, BarChart3, Globe, Sparkles, CheckCircle2, Copy, Check, Terminal, ShieldCheck, HelpCircle, XCircle, Sun, Moon, Target, Download, Share2, Smartphone } from '@lucide/vue';
 import { dashboard, login, register } from '@/routes';
 import { useAppearance } from '@/composables/useAppearance';
+import AppLogoIcon from '@/components/AppLogoIcon.vue';
 
 const { appearance, updateAppearance } = useAppearance();
 
@@ -28,6 +29,22 @@ const copySnippet = () => {
 
 <template>
     <Head title="Lumina — Lightweight Web Analytics for Laravel">
+        <meta name="description" content="Self-hosted, cookie-free web analytics for Laravel applications under 2KB script payload. Track pageviews, custom events, and conversion goals with zero infrastructure hassle." />
+        <meta name="keywords" content="Laravel analytics, web analytics, self-hosted analytics, cookie-free analytics, privacy friendly analytics, Plausible alternative, GDPR compliant analytics" />
+        <link rel="canonical" href="https://uselumina.laravel.cloud" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Lumina — Lightweight Web Analytics for Laravel" />
+        <meta property="og:description" content="Self-hosted web analytics native to Laravel. < 2KB tracker payload, 100% cookie-free GDPR privacy, and conversion goal tracking." />
+        <meta property="og:url" content="https://uselumina.laravel.cloud" />
+        <meta property="og:site_name" content="Lumina Analytics" />
+
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Lumina — Lightweight Web Analytics for Laravel" />
+        <meta name="twitter:description" content="Self-hosted web analytics native to Laravel. < 2KB tracker payload, 100% cookie-free GDPR privacy, and conversion goal tracking." />
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -41,11 +58,7 @@ const copySnippet = () => {
         <!-- Navigation Header -->
         <header class="relative z-10 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 p-0.5 shadow-lg shadow-indigo-500/30">
-                    <div class="h-full w-full bg-white dark:bg-slate-950 rounded-[10px] flex items-center justify-center">
-                        <BarChart3 class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                </div>
+                <AppLogoIcon class="h-9 w-9" />
                 <span class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-700 to-indigo-600 dark:from-white dark:via-slate-200 dark:to-indigo-300">
                     Lumina
                 </span>
