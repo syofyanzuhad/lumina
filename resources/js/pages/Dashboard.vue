@@ -395,13 +395,11 @@ const openModal = (type: string, title: string) => {
     modalTitle.value = title;
 };
 
-const isCustomDateModalOpen = ref(false);
 const customStartDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
 const customEndDate = ref(new Date().toISOString().split('T')[0]);
 
 const applyCustomDateRange = () => {
     if (!customStartDate.value || !customEndDate.value) return;
-    isCustomDateModalOpen.value = false;
     router.get('/dashboard', {
         site_id: props.activeSite.id,
         period: 'custom',
@@ -490,20 +488,38 @@ const applyCustomDateRange = () => {
                     >
                         30d
                     </button>
-                    <button
-                        type="button"
-                        @click="isCustomDateModalOpen = true"
-                        :title="period === 'custom' ? 'Custom Date Range Active' : 'Select Custom Date Range'"
-                        :class="[
-                            'px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
-                            period === 'custom'
-                                ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
-                                : 'text-muted-foreground hover:text-foreground'
-                        ]"
-                    >
-                        <CalendarDays class="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                        <span class="hidden xs:inline">Custom</span>
-                    </button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <button
+                                type="button"
+                                :title="period === 'custom' ? 'Custom Date Range Active' : 'Select Custom Date Range'"
+                                :class="[
+                                    'px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
+                                    period === 'custom'
+                                        ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                ]"
+                            >
+                                <CalendarDays class="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                <span class="hidden xs:inline">Custom</span>
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-72 p-4 space-y-3">
+                            <DropdownMenuLabel class="px-0 text-xs font-bold">Custom Date Range</DropdownMenuLabel>
+                            <DropdownMenuSeparator class="-mx-4" />
+                            <div class="space-y-2">
+                                <Label for="start-date" class="text-xs font-medium">Start Date</Label>
+                                <Input id="start-date" type="date" v-model="customStartDate" class="h-8 text-xs" />
+                            </div>
+                            <div class="space-y-2">
+                                <Label for="end-date" class="text-xs font-medium">End Date</Label>
+                                <Input id="end-date" type="date" v-model="customEndDate" class="h-8 text-xs" />
+                            </div>
+                            <div class="pt-1 flex justify-end">
+                                <Button size="sm" class="h-8 text-xs w-full" @click="applyCustomDateRange">Apply Range</Button>
+                            </div>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 <div class="hidden sm:block ml-1">
@@ -1346,41 +1362,5 @@ const applyCustomDateRange = () => {
                 </div>
             </SheetContent>
         </Sheet>
-
-        <!-- Custom Date Range Dialog -->
-        <Dialog v-model:open="isCustomDateModalOpen">
-            <DialogContent class="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Custom Date Range</DialogTitle>
-                    <DialogDescription>
-                        Select a start and end date to filter analytics for {{ activeSite.domain }}.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <div class="grid grid-cols-2 gap-4 py-4">
-                    <div class="space-y-2">
-                        <Label for="start-date">Start Date</Label>
-                        <Input
-                            id="start-date"
-                            type="date"
-                            v-model="customStartDate"
-                        />
-                    </div>
-                    <div class="space-y-2">
-                        <Label for="end-date">End Date</Label>
-                        <Input
-                            id="end-date"
-                            type="date"
-                            v-model="customEndDate"
-                        />
-                    </div>
-                </div>
-
-                <DialogFooter class="sm:justify-between">
-                    <Button variant="outline" @click="isCustomDateModalOpen = false">Cancel</Button>
-                    <Button @click="applyCustomDateRange">Apply Range</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
     </div>
 </template>
