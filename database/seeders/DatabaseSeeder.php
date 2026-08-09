@@ -54,105 +54,124 @@ class DatabaseSeeder extends Seeder
             ['target_type' => 'custom_event', 'target_value' => 'signup_completed']
         );
 
-        // 4. Seed Rich & Heavy Demo Analytics Data across the last 90 days
-        $existingCount = Event::where('site_id', $site->id)->count();
-        if ($existingCount < 5000) {
-            $paths = [
-                '/', '/pricing', '/features', '/docs', '/docs/installation', '/docs/laravel-setup',
-                '/blog/laravel-13-analytics', '/blog/privacy-first-tracking', '/blog/building-fast-dashboards',
-                '/signup', '/login', '/dashboard', '/settings', '/integrations', '/changelog',
-                '/case-studies/acme-corp', '/case-studies/techstart', '/api-reference'
-            ];
+        // 4. Seed Super Heavy Demo Analytics Data (150,000 records) across 365 days
+        $paths = [
+            '/', '/', '/', '/', '/pricing', '/pricing', '/features', '/docs', '/docs/installation',
+            '/docs/laravel-setup', '/docs/api-reference', '/docs/webhooks', '/docs/security',
+            '/blog/laravel-13-analytics', '/blog/privacy-first-tracking', '/blog/building-fast-dashboards',
+            '/blog/scaling-postgres-timescale', '/blog/cookieless-future-2026', '/blog/open-source-analytics',
+            '/signup', '/signup', '/login', '/dashboard', '/settings', '/integrations', '/changelog',
+            '/case-studies/acme-corp', '/case-studies/techstart', '/case-studies/global-fintech',
+            '/api-reference', '/downloads', '/careers', '/about', '/contact'
+        ];
 
-            $browsers = [
-                'Chrome', 'Chrome', 'Chrome', 'Safari', 'Safari', 'Firefox', 'Edge', 'Brave', 'Opera'
-            ];
+        $browsers = [
+            'Chrome', 'Chrome', 'Chrome', 'Chrome', 'Safari', 'Safari', 'Safari', 'Firefox', 'Edge', 'Brave', 'Opera', 'Samsung Internet', 'Vivaldi'
+        ];
 
-            $operatingSystems = [
-                'macOS', 'macOS', 'Windows', 'Windows', 'iOS', 'Android', 'Linux'
-            ];
+        $operatingSystems = [
+            'macOS', 'macOS', 'Windows', 'Windows', 'Windows', 'iOS', 'iOS', 'Android', 'Android', 'Linux', 'Ubuntu'
+        ];
 
-            $countries = [
-                ['code' => 'US', 'name' => 'United States'],
-                ['code' => 'US', 'name' => 'United States'],
-                ['code' => 'GB', 'name' => 'United Kingdom'],
-                ['code' => 'DE', 'name' => 'Germany'],
-                ['code' => 'ID', 'name' => 'Indonesia'],
-                ['code' => 'JP', 'name' => 'Japan'],
-                ['code' => 'CA', 'name' => 'Canada'],
-                ['code' => 'FR', 'name' => 'France'],
-                ['code' => 'AU', 'name' => 'Australia'],
-                ['code' => 'NL', 'name' => 'Netherlands'],
-                ['code' => 'SG', 'name' => 'Singapore'],
-                ['code' => 'BR', 'name' => 'Brazil'],
-                ['code' => 'IN', 'name' => 'India'],
-            ];
+        $countries = [
+            ['code' => 'US', 'name' => 'United States'],
+            ['code' => 'US', 'name' => 'United States'],
+            ['code' => 'US', 'name' => 'United States'],
+            ['code' => 'GB', 'name' => 'United Kingdom'],
+            ['code' => 'DE', 'name' => 'Germany'],
+            ['code' => 'ID', 'name' => 'Indonesia'],
+            ['code' => 'JP', 'name' => 'Japan'],
+            ['code' => 'CA', 'name' => 'Canada'],
+            ['code' => 'FR', 'name' => 'France'],
+            ['code' => 'AU', 'name' => 'Australia'],
+            ['code' => 'NL', 'name' => 'Netherlands'],
+            ['code' => 'SG', 'name' => 'Singapore'],
+            ['code' => 'BR', 'name' => 'Brazil'],
+            ['code' => 'IN', 'name' => 'India'],
+            ['code' => 'KR', 'name' => 'South Korea'],
+            ['code' => 'ES', 'name' => 'Spain'],
+            ['code' => 'IT', 'name' => 'Italy'],
+            ['code' => 'SE', 'name' => 'Sweden'],
+            ['code' => 'CH', 'name' => 'Switzerland'],
+            ['code' => 'VN', 'name' => 'Vietnam'],
+            ['code' => 'MY', 'name' => 'Malaysia'],
+            ['code' => 'PH', 'name' => 'Philippines'],
+        ];
 
-            $referrers = [
-                'https://google.com', 'https://google.com', 'https://google.com',
-                'https://github.com', 'https://github.com',
-                'https://x.com', 'https://x.com',
-                'https://news.ycombinator.com', 'https://news.ycombinator.com',
-                'https://producthunt.com', 'https://reddit.com/r/laravel',
-                'https://dev.to', 'https://medium.com', 'Direct'
-            ];
+        $referrers = [
+            'https://google.com', 'https://google.com', 'https://google.com', 'https://google.com',
+            'https://github.com', 'https://github.com', 'https://github.com',
+            'https://x.com', 'https://x.com', 'https://x.com',
+            'https://news.ycombinator.com', 'https://news.ycombinator.com',
+            'https://producthunt.com', 'https://reddit.com/r/laravel', 'https://reddit.com/r/webdev',
+            'https://dev.to', 'https://medium.com', 'https://indiehackers.com',
+            'https://youtube.com', 'https://linkedin.com', 'Direct', 'Direct', 'Direct'
+        ];
 
-            $customEvents = ['signup_completed', 'checkout_started', 'button_clicked', 'video_watched', 'code_copied', 'demo_requested', 'export_pdf'];
+        $customEvents = [
+            'signup_completed', 'checkout_started', 'button_clicked', 'video_watched',
+            'code_copied', 'demo_requested', 'export_pdf', 'api_key_created',
+            'dark_mode_toggled', 'filter_applied', 'invite_sent'
+        ];
 
-            $utmCampaigns = ['summer_sale', 'product_hunt_launch', 'black_friday', 'newsletter_august', 'twitter_ads'];
+        $utmCampaigns = [
+            'summer_sale_2026', 'product_hunt_launch', 'black_friday_deals',
+            'newsletter_august', 'twitter_ads_q3', 'google_search_brand',
+            'laravel_news_sponsorship', 'github_sponsors_promo'
+        ];
 
-            // Insert in chunks of 500 records for maximum performance
-            $records = [];
-            for ($i = 0; $i < 10000; $i++) {
-                $daysAgo = rand(0, 89);
-                $createdAt = now()->subDays($daysAgo)->subHours(rand(0, 23))->subMinutes(rand(0, 59))->subSeconds(rand(0, 59));
-                $country = $countries[array_rand($countries)];
-                $path = $paths[array_rand($paths)];
-                $isCustomEvent = rand(1, 10) <= 3; // 30% custom events
+        // Insert 140,000 additional events in batch chunks of 2,000 for maximum seeding speed
+        $records = [];
+        for ($i = 0; $i < 140000; $i++) {
+            $daysAgo = rand(0, 364);
+            $createdAt = now()->subDays($daysAgo)->subHours(rand(0, 23))->subMinutes(rand(0, 59))->subSeconds(rand(0, 59));
+            $country = $countries[array_rand($countries)];
+            $path = $paths[array_rand($paths)];
+            $isCustomEvent = rand(1, 10) <= 3; // 30% custom events
 
-                $metadata = null;
-                if ($isCustomEvent) {
-                    $eventName = $customEvents[array_rand($customEvents)];
-                    $metadata = [
-                        'name' => $eventName,
-                        'props' => [
-                            'plan' => ['free', 'pro', 'enterprise'][rand(0, 2)],
-                            'source' => ['hero', 'pricing_table', 'modal', 'footer'][rand(0, 3)],
-                            'currency' => 'USD',
-                        ],
-                    ];
-                } elseif (rand(1, 4) === 1) {
-                    // 25% chance of UTM campaign for pageviews
-                    $metadata = [
-                        'utm_campaign' => $utmCampaigns[array_rand($utmCampaigns)],
-                        'utm_source' => ['newsletter', 'twitter', 'google', 'partner'][rand(0, 3)],
-                        'utm_medium' => ['cpc', 'social', 'email'][rand(0, 2)],
-                    ];
-                }
-
-                $records[] = [
-                    'site_id' => $site->id,
-                    'path' => $path,
-                    'referrer' => $referrers[array_rand($referrers)],
-                    'visitor_hash' => hash('sha256', 'visitor_'.rand(1, 450).'_'.$createdAt->format('Y-m-d')),
-                    'browser' => $browsers[array_rand($browsers)],
-                    'os' => $operatingSystems[array_rand($operatingSystems)],
-                    'country_code' => $country['code'],
-                    'country_name' => $country['name'],
-                    'device_type' => ['desktop', 'desktop', 'mobile', 'mobile', 'tablet'][rand(0, 4)],
-                    'metadata' => $metadata ? json_encode($metadata) : null,
-                    'created_at' => $createdAt,
+            $metadata = null;
+            if ($isCustomEvent) {
+                $eventName = $customEvents[array_rand($customEvents)];
+                $metadata = [
+                    'name' => $eventName,
+                    'props' => [
+                        'plan' => ['free', 'pro', 'enterprise'][rand(0, 2)],
+                        'source' => ['hero', 'pricing_table', 'modal', 'footer', 'sidebar'][rand(0, 4)],
+                        'currency' => 'USD',
+                        'value' => rand(10, 500),
+                    ],
                 ];
-
-                if (count($records) >= 500) {
-                    DB::table('events')->insert($records);
-                    $records = [];
-                }
+            } elseif (rand(1, 4) === 1) {
+                // 25% chance of UTM campaign for pageviews
+                $metadata = [
+                    'utm_campaign' => $utmCampaigns[array_rand($utmCampaigns)],
+                    'utm_source' => ['newsletter', 'twitter', 'google', 'partner', 'youtube', 'reddit'][rand(0, 5)],
+                    'utm_medium' => ['cpc', 'social', 'email', 'referral', 'banner'][rand(0, 4)],
+                ];
             }
 
-            if (!empty($records)) {
+            $records[] = [
+                'site_id' => $site->id,
+                'path' => $path,
+                'referrer' => $referrers[array_rand($referrers)],
+                'visitor_hash' => hash('sha256', 'visitor_'.rand(1, 4500).'_'.$createdAt->format('Y-m-d')),
+                'browser' => $browsers[array_rand($browsers)],
+                'os' => $operatingSystems[array_rand($operatingSystems)],
+                'country_code' => $country['code'],
+                'country_name' => $country['name'],
+                'device_type' => ['desktop', 'desktop', 'mobile', 'mobile', 'tablet'][rand(0, 4)],
+                'metadata' => $metadata ? json_encode($metadata) : null,
+                'created_at' => $createdAt,
+            ];
+
+            if (count($records) >= 2000) {
                 DB::table('events')->insert($records);
+                $records = [];
             }
+        }
+
+        if (!empty($records)) {
+            DB::table('events')->insert($records);
         }
     }
 }
