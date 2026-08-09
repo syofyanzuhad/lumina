@@ -12,13 +12,13 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -533,20 +533,38 @@ const applyCustomDateRange = () => {
                         >
                             30d
                         </button>
-                        <button
-                            type="button"
-                            @click="isCustomDateModalOpen = true"
-                            :title="period === 'custom' ? 'Custom Date Range Active' : 'Select Custom Date Range'"
-                            :class="[
-                                'px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer',
-                                period === 'custom'
-                                    ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            ]"
-                        >
-                            <CalendarDays class="h-3.5 w-3.5" />
-                            <span>Custom</span>
-                        </button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger as-child>
+                                <button
+                                    type="button"
+                                    :title="period === 'custom' ? 'Custom Date Range Active' : 'Select Custom Date Range'"
+                                    :class="[
+                                        'px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer',
+                                        period === 'custom'
+                                            ? 'bg-indigo-600 text-white shadow-xs dark:bg-indigo-500'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    ]"
+                                >
+                                    <CalendarDays class="h-3.5 w-3.5" />
+                                    <span>Custom</span>
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" class="w-72 p-4 space-y-3">
+                                <DropdownMenuLabel class="px-0 text-xs font-bold">Custom Date Range</DropdownMenuLabel>
+                                <DropdownMenuSeparator class="-mx-4" />
+                                <div class="space-y-2">
+                                    <Label for="share-start-date" class="text-xs font-medium">Start Date</Label>
+                                    <Input id="share-start-date" type="date" v-model="customStartDate" class="h-8 text-xs" />
+                                </div>
+                                <div class="space-y-2">
+                                    <Label for="share-end-date" class="text-xs font-medium">End Date</Label>
+                                    <Input id="share-end-date" type="date" v-model="customEndDate" class="h-8 text-xs" />
+                                </div>
+                                <div class="pt-1 flex justify-end">
+                                    <Button size="sm" class="h-8 text-xs w-full" @click="applyCustomDateRange">Apply Range</Button>
+                                </div>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     <AppearanceTabs />
@@ -1331,40 +1349,5 @@ const applyCustomDateRange = () => {
             </SheetContent>
         </Sheet>
 
-        <!-- Custom Date Range Dialog -->
-        <Dialog v-model:open="isCustomDateModalOpen">
-            <DialogContent class="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Custom Date Range</DialogTitle>
-                    <DialogDescription>
-                        Select a start and end date to filter public analytics for {{ site.domain }}.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <div class="grid grid-cols-2 gap-4 py-4">
-                    <div class="space-y-2">
-                        <Label for="share-start-date">Start Date</Label>
-                        <Input
-                            id="share-start-date"
-                            type="date"
-                            v-model="customStartDate"
-                        />
-                    </div>
-                    <div class="space-y-2">
-                        <Label for="share-end-date">End Date</Label>
-                        <Input
-                            id="share-end-date"
-                            type="date"
-                            v-model="customEndDate"
-                        />
-                    </div>
-                </div>
-
-                <DialogFooter class="sm:justify-between">
-                    <Button variant="outline" @click="isCustomDateModalOpen = false">Cancel</Button>
-                    <Button @click="applyCustomDateRange">Apply Range</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
     </div>
 </template>
