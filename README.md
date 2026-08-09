@@ -7,7 +7,8 @@
 
 ## 📸 Screenshots
 
-<img width="2880" height="3856" alt="lumina test_demo" src="https://github.com/user-attachments/assets/09f745ab-5bca-4017-bf93-3014bc58491d" />
+<img width="2880" height="3878" alt="uselumina_laravel_cloud_demo" src="https://github.com/user-attachments/assets/df45529b-4943-4b75-a678-7464738d5c93" />
+<!-- <img width="2880" height="3856" alt="lumina test_demo" src="https://github.com/user-attachments/assets/09f745ab-5bca-4017-bf93-3014bc58491d" /> -->
 
 ---
 
