@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { Eye, Users, Globe, Calendar, Sparkles, Smartphone, Laptop, Monitor, Lock, ArrowRight, ShieldCheck, Copy, Check, Maximize2, Filter, CalendarDays } from '@lucide/vue';
+import { Eye, Users, Globe, Calendar, Sparkles, Smartphone, Laptop, Monitor, Lock, ArrowRight, ShieldCheck, Copy, Check, Maximize2, Filter, CalendarDays, ExternalLink } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import CustomEventsTab from '@/components/CustomEventsTab.vue';
 import {
@@ -756,7 +756,7 @@ const applyCustomDateRange = () => {
                     <!-- Details Section: Top Pages, Referrers, and Devices -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <!-- Top Pages Card -->
-                        <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="group/card rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Pages</h3>
                                 <div class="flex items-center gap-2">
@@ -783,11 +783,21 @@ const applyCustomDateRange = () => {
                                         class="absolute inset-y-0 left-0 bg-indigo-100/70 dark:bg-indigo-500/15 rounded-lg transition-all duration-500 group-hover:bg-indigo-200/80 dark:group-hover:bg-indigo-500/25"
                                         :style="{ width: `${page.percentage}%` }"
                                     ></div>
-                                    <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mr-2 flex items-center gap-1">
+                                    <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mr-2 flex items-center gap-1 min-w-0">
                                         <span class="truncate">{{ page.path }}</span>
+                                        <a
+                                            :href="`https://${site.domain}${page.path.startsWith('/') ? '' : '/'}${page.path}`"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            @click.stop
+                                            title="Open page in new tab"
+                                            class="p-0.5 rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/80 transition-colors shrink-0 inline-flex items-center justify-center"
+                                        >
+                                            <ExternalLink class="h-3 w-3" />
+                                        </a>
                                         <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
                                     </span>
-                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(page.count) }} <span class="text-muted-foreground/70">({{ page.percentage }}%)</span></span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 opacity-0 group-hover/card:opacity-100 transition-opacity mr-1.5">{{ page.percentage }}%</span>{{ formatNumber(page.count) }}</span>
                                 </div>
 
                                 <p v-if="overview.top_pages.length === 0" class="text-xs text-muted-foreground">No pageviews recorded yet.</p>
@@ -795,7 +805,7 @@ const applyCustomDateRange = () => {
                         </div>
 
                         <!-- Top Referrers Card -->
-                        <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="group/card rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Referrers</h3>
                                 <div class="flex items-center gap-2">
@@ -834,7 +844,7 @@ const applyCustomDateRange = () => {
                                         <span class="truncate">{{ refItem.referrer }}</span>
                                         <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
                                     </span>
-                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(refItem.count) }} <span class="text-muted-foreground/70">({{ refItem.percentage }}%)</span></span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 opacity-0 group-hover/card:opacity-100 transition-opacity mr-1.5">{{ refItem.percentage }}%</span>{{ formatNumber(refItem.count) }}</span>
                                 </div>
 
                                 <p v-if="overview.top_referrers.length === 0" class="text-xs text-muted-foreground">No external referrers.</p>
@@ -842,7 +852,7 @@ const applyCustomDateRange = () => {
                         </div>
 
                         <!-- Device Breakdown Card -->
-                        <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="group/card rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Device Types</h3>
                                 <div class="flex items-center gap-2">
@@ -874,7 +884,7 @@ const applyCustomDateRange = () => {
                                         {{ dev.device }}
                                         <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
                                     </span>
-                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(dev.count) }} <span class="text-muted-foreground/70">({{ dev.percentage }}%)</span></span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 opacity-0 group-hover/card:opacity-100 transition-opacity mr-1.5">{{ dev.percentage }}%</span>{{ formatNumber(dev.count) }}</span>
                                 </div>
 
                                 <p v-if="!overview.device_breakdown || overview.device_breakdown.length === 0" class="text-xs text-muted-foreground">No device data available.</p>
@@ -885,7 +895,7 @@ const applyCustomDateRange = () => {
                     <!-- Details Section 2: Top Browsers, Top OS, and Top Locations -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <!-- Top Browsers Card -->
-                        <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="group/card rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Browsers</h3>
                                 <div class="flex items-center gap-2">
@@ -924,7 +934,7 @@ const applyCustomDateRange = () => {
                                         <span class="truncate">{{ item.browser }}</span>
                                         <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
                                     </span>
-                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 opacity-0 group-hover/card:opacity-100 transition-opacity mr-1.5">{{ item.percentage }}%</span>{{ formatNumber(item.count) }}</span>
                                 </div>
 
                                 <p v-if="!overview.top_browsers || overview.top_browsers.length === 0" class="text-xs text-muted-foreground">No browser data available.</p>
@@ -932,7 +942,7 @@ const applyCustomDateRange = () => {
                         </div>
 
                         <!-- Top OS Card -->
-                        <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="group/card rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Operating Systems</h3>
                                 <div class="flex items-center gap-2">
@@ -971,7 +981,7 @@ const applyCustomDateRange = () => {
                                         <span class="truncate">{{ item.os }}</span>
                                         <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
                                     </span>
-                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 opacity-0 group-hover/card:opacity-100 transition-opacity mr-1.5">{{ item.percentage }}%</span>{{ formatNumber(item.count) }}</span>
                                 </div>
 
                                 <p v-if="!overview.top_os || overview.top_os.length === 0" class="text-xs text-muted-foreground">No OS data available.</p>
@@ -979,7 +989,7 @@ const applyCustomDateRange = () => {
                         </div>
 
                         <!-- Top Locations Card -->
-                        <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                        <div class="group/card rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Locations</h3>
                                 <div class="flex items-center gap-2">
@@ -1012,7 +1022,7 @@ const applyCustomDateRange = () => {
                                         <span class="truncate">{{ item.name || item.code }}</span>
                                         <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
                                     </span>
-                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                                    <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 opacity-0 group-hover/card:opacity-100 transition-opacity mr-1.5">{{ item.percentage }}%</span>{{ formatNumber(item.count) }}</span>
                                 </div>
 
                                 <p v-if="!overview.top_countries || overview.top_countries.length === 0" class="text-xs text-muted-foreground">No location data available.</p>
@@ -1021,7 +1031,7 @@ const applyCustomDateRange = () => {
                     </div>
 
                     <!-- UTM Campaigns Card -->
-                    <div v-if="overview.utm_campaigns && overview.utm_campaigns.length > 0" class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
+                    <div v-if="overview.utm_campaigns && overview.utm_campaigns.length > 0" class="group/card rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-sm font-bold text-foreground">UTM Campaigns</h3>
                             <div class="flex items-center gap-2">
@@ -1052,7 +1062,7 @@ const applyCustomDateRange = () => {
                                     <span class="truncate">{{ campaign.campaign }}</span>
                                     <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
                                 </span>
-                                <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(campaign.count) }} <span class="text-muted-foreground/70">({{ campaign.percentage }}%)</span></span>
+                                <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 opacity-0 group-hover/card:opacity-100 transition-opacity mr-1.5">{{ campaign.percentage }}%</span>{{ formatNumber(campaign.count) }}</span>
                             </div>
                         </div>
                     </div>
@@ -1147,11 +1157,21 @@ const applyCustomDateRange = () => {
                                 class="absolute inset-y-0 left-0 bg-indigo-100/70 dark:bg-indigo-500/15 rounded-lg transition-all duration-500 group-hover:bg-indigo-200/80 dark:group-hover:bg-indigo-500/25"
                                 :style="{ width: `${page.percentage}%` }"
                             ></div>
-                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mr-2 flex items-center gap-1.5">
+                            <span class="relative z-10 truncate font-mono text-foreground font-medium group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mr-2 flex items-center gap-1.5 min-w-0">
                                 <span class="truncate">{{ page.path }}</span>
+                                <a
+                                    :href="`https://${site.domain}${page.path.startsWith('/') ? '' : '/'}${page.path}`"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    @click.stop
+                                    title="Open page in new tab"
+                                    class="p-0.5 rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/80 transition-colors shrink-0 inline-flex items-center justify-center"
+                                >
+                                    <ExternalLink class="h-3 w-3" />
+                                </a>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
                             </span>
-                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(page.count) }} views <span class="text-muted-foreground/70">({{ page.percentage }}%)</span></span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 mr-1.5">{{ page.percentage }}%</span>{{ formatNumber(page.count) }} views</span>
                         </div>
                     </template>
 
@@ -1180,7 +1200,7 @@ const applyCustomDateRange = () => {
                                 <span class="truncate">{{ refItem.referrer }}</span>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
                             </span>
-                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(refItem.count) }} visits <span class="text-muted-foreground/70">({{ refItem.percentage }}%)</span></span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 mr-1.5">{{ refItem.percentage }}%</span>{{ formatNumber(refItem.count) }} visits</span>
                         </div>
                     </template>
 
@@ -1202,7 +1222,7 @@ const applyCustomDateRange = () => {
                                 <span>{{ dev.device }}</span>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
                             </span>
-                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(dev.count) }} sessions <span class="text-muted-foreground/70">({{ dev.percentage }}%)</span></span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 mr-1.5">{{ dev.percentage }}%</span>{{ formatNumber(dev.count) }} sessions</span>
                         </div>
                     </template>
 
@@ -1231,7 +1251,7 @@ const applyCustomDateRange = () => {
                                 <span class="truncate">{{ item.browser }}</span>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
                             </span>
-                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} sessions <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 mr-1.5">{{ item.percentage }}%</span>{{ formatNumber(item.count) }} sessions</span>
                         </div>
                     </template>
 
@@ -1260,7 +1280,7 @@ const applyCustomDateRange = () => {
                                 <span class="truncate">{{ item.os }}</span>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
                             </span>
-                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} sessions <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 mr-1.5">{{ item.percentage }}%</span>{{ formatNumber(item.count) }} sessions</span>
                         </div>
                     </template>
 
@@ -1283,7 +1303,7 @@ const applyCustomDateRange = () => {
                                 <span class="truncate">{{ item.name || item.code }}</span>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
                             </span>
-                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(item.count) }} visitors <span class="text-muted-foreground/70">({{ item.percentage }}%)</span></span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 mr-1.5">{{ item.percentage }}%</span>{{ formatNumber(item.count) }} visitors</span>
                         </div>
                     </template>
 
@@ -1304,7 +1324,7 @@ const applyCustomDateRange = () => {
                                 <span class="truncate">{{ campaign.campaign }}</span>
                                 <Filter class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
                             </span>
-                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">{{ formatNumber(campaign.count) }} visits <span class="text-muted-foreground/70">({{ campaign.percentage }}%)</span></span>
+                            <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]"><span class="text-muted-foreground/70 mr-1.5">{{ campaign.percentage }}%</span>{{ formatNumber(campaign.count) }} visits</span>
                         </div>
                     </template>
                 </div>
