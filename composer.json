@@ -1,5 +1,5 @@
 {
-    "name": "lumina/core",
+    "name": "syofyanzuhad/lumina-core",
     "description": "Core models, migrations, and shared logic for Lumina analytics.",
     "license": "MIT",
     "type": "library",
