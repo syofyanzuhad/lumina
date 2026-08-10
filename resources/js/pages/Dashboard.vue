@@ -12,7 +12,25 @@ const props = defineProps<{
     activeSite: SiteItem;
     period: string;
     activeTab?: string;
-    overview?: any;
+    filters?: Record<string, string>;
+    // Immediate KPI props
+    total_pageviews?: number;
+    unique_visitors?: number;
+    current_visitors?: number;
+    bounce_rate?: number;
+    avg_duration?: number;
+    daily_pageviews?: any[];
+    // Deferred breakdown props
+    top_pages?: any[];
+    top_referrers?: any[];
+    device_breakdown?: any[];
+    top_browsers?: any[];
+    top_os?: any[];
+    top_countries?: any[];
+    utm_campaigns?: any[];
+    custom_events?: any[];
+    goals?: any[];
+    // Custom Events Tab
     selectedEvent?: string | null;
     selectedPropertyKey?: string | null;
     custom_event_summary?: any;
@@ -21,7 +39,6 @@ const props = defineProps<{
     custom_event_property_keys?: string[];
     custom_event_property_breakdown?: any[];
     custom_event_logs?: any[];
-    filters?: Record<string, string>;
 }>();
 
 defineOptions({
@@ -70,8 +87,22 @@ const changeSite = (event: Event) => {
             :sites="sites"
             :period="period"
             :activeTab="activeTab"
-            :overview="overview"
             :filters="filters"
+            :total_pageviews="total_pageviews"
+            :unique_visitors="unique_visitors"
+            :current_visitors="current_visitors"
+            :bounce_rate="bounce_rate"
+            :avg_duration="avg_duration"
+            :daily_pageviews="daily_pageviews"
+            :top_pages="top_pages"
+            :top_referrers="top_referrers"
+            :device_breakdown="device_breakdown"
+            :top_browsers="top_browsers"
+            :top_os="top_os"
+            :top_countries="top_countries"
+            :utm_campaigns="utm_campaigns"
+            :custom_events="custom_events"
+            :goals="goals"
             :showLive="true"
             :showExport="true"
             :showEventsTab="true"

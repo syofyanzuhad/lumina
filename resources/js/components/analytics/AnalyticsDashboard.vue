@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, Deferred } from '@inertiajs/vue3';
 import CustomEventsTab from '@/components/CustomEventsTab.vue';
 import AnalyticsControlBar from '@/components/analytics/AnalyticsControlBar.vue';
 import AnalyticsFiltersBar from '@/components/analytics/AnalyticsFiltersBar.vue';
@@ -36,8 +36,26 @@ export interface AnalyticsDashboardProps {
     }[];
     period: string;
     activeTab?: string;
-    overview?: any;
     filters?: Record<string, string>;
+
+    // Immediate KPI props (available on first render)
+    total_pageviews?: number;
+    unique_visitors?: number;
+    current_visitors?: number;
+    bounce_rate?: number;
+    avg_duration?: number;
+    daily_pageviews?: any[];
+
+    // Deferred breakdown props (arrive after initial render)
+    top_pages?: any[];
+    top_referrers?: any[];
+    device_breakdown?: any[];
+    top_browsers?: any[];
+    top_os?: any[];
+    top_countries?: any[];
+    utm_campaigns?: any[];
+    custom_events?: any[];
+    goals?: any[];
 
     // Feature Flags
     showLive?: boolean;
@@ -73,7 +91,17 @@ const siteIdRef = computed(() => props.site?.id);
 const filtersRef = toRef(props, 'filters');
 const periodRef = toRef(props, 'period');
 const tabRef = toRef(props, 'activeTab');
-const overviewRef = toRef(props, 'overview');
+
+// Build a synthetic overview ref for the breakdown modal fallback
+const overviewRef = computed(() => ({
+    top_pages: props.top_pages,
+    top_referrers: props.top_referrers,
+    device_breakdown: props.device_breakdown,
+    top_browsers: props.top_browsers,
+    top_os: props.top_os,
+    top_countries: props.top_countries,
+    utm_campaigns: props.utm_campaigns,
+}));
 
 // Composables setup
 const { addFilter, removeFilter, clearFilters } = useAnalyticsFilters({
@@ -91,7 +119,7 @@ const { customStartDate, customEndDate, setPeriod, applyCustomDateRange } = useA
     currentTab: tabRef,
 });
 
-const dailyPageviewsRef = computed(() => props.overview?.daily_pageviews);
+const dailyPageviewsRef = computed(() => props.daily_pageviews);
 const {
     hoveredDay,
     showViews,
@@ -102,7 +130,13 @@ const {
 } = useAnalyticsChart(dailyPageviewsRef);
 
 const { isLive, isRefreshing, toggleLive, refreshData } = useLivePolling({
-    only: ['overview'],
+    only: [
+        'total_pageviews', 'unique_visitors', 'current_visitors',
+        'bounce_rate', 'avg_duration', 'daily_pageviews',
+        'top_pages', 'top_referrers', 'device_breakdown',
+        'top_browsers', 'top_os', 'top_countries',
+        'utm_campaigns', 'custom_events', 'goals',
+    ],
 });
 
 const breakdownEndpointRef = computed(
@@ -136,8 +170,8 @@ const setTab = (newTab: string) => {
 
 // Item Mapping Helpers for Breakdown Cards
 const topPagesItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.overview?.top_pages) return [];
-    return props.overview.top_pages.map((p: any) => ({
+    if (!props.top_pages) return [];
+    return props.top_pages.map((p: any) => ({
         idKey: p.path,
         label: p.path,
         count: p.count,
@@ -147,8 +181,8 @@ const topPagesItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const topReferrersItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.overview?.top_referrers) return [];
-    return props.overview.top_referrers.map((r: any) => ({
+    if (!props.top_referrers) return [];
+    return props.top_referrers.map((r: any) => ({
         idKey: r.referrer,
         label: r.referrer,
         count: r.count,
@@ -159,8 +193,8 @@ const topReferrersItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const deviceItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.overview?.device_breakdown) return [];
-    return props.overview.device_breakdown.map((d: any) => ({
+    if (!props.device_breakdown) return [];
+    return props.device_breakdown.map((d: any) => ({
         idKey: d.device,
         label: d.device,
         count: d.count,
@@ -171,8 +205,8 @@ const deviceItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const topBrowsersItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.overview?.top_browsers) return [];
-    return props.overview.top_browsers.map((b: any) => ({
+    if (!props.top_browsers) return [];
+    return props.top_browsers.map((b: any) => ({
         idKey: b.browser,
         label: b.browser,
         count: b.count,
@@ -183,8 +217,8 @@ const topBrowsersItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const topOsItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.overview?.top_os) return [];
-    return props.overview.top_os.map((o: any) => ({
+    if (!props.top_os) return [];
+    return props.top_os.map((o: any) => ({
         idKey: o.os,
         label: o.os,
         count: o.count,
@@ -195,8 +229,8 @@ const topOsItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const topCountriesItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.overview?.top_countries) return [];
-    return props.overview.top_countries.map((c: any) => ({
+    if (!props.top_countries) return [];
+    return props.top_countries.map((c: any) => ({
         idKey: c.code || c.name,
         label: c.name || c.code,
         count: c.count,
@@ -237,19 +271,19 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
         />
 
         <!-- Overview Dashboard Tab -->
-        <div v-if="activeTab === 'overview' && overview" class="space-y-6">
-            <!-- KPI Cards -->
+        <div v-if="activeTab === 'overview'" class="space-y-6">
+            <!-- KPI Cards — render immediately, no defer needed -->
             <AnalyticsKpiCards
-                :currentVisitors="overview.current_visitors"
-                :totalPageviews="overview.total_pageviews"
-                :uniqueVisitors="overview.total_visitors"
-                :bounceRate="overview.bounce_rate"
-                :avgDuration="overview.avg_duration"
+                :currentVisitors="current_visitors"
+                :totalPageviews="total_pageviews"
+                :uniqueVisitors="unique_visitors"
+                :bounceRate="bounce_rate"
+                :avgDuration="avg_duration"
             />
 
-            <!-- Interactive Chart -->
+            <!-- Interactive Chart — render immediately -->
             <AnalyticsChart
-                :dailyPageviews="overview.daily_pageviews"
+                :dailyPageviews="daily_pageviews"
                 :showViews="showViews"
                 :showVisitors="showVisitors"
                 :hoveredDay="hoveredDay"
@@ -259,106 +293,139 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 @toggleVisitors="toggleVisitors"
             />
 
-            <!-- Detail Grid Row 1: Top Pages, Top Referrers, Device Types -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <AnalyticsBreakdownCard
-                    title="Top Pages"
-                    filterKey="path"
-                    typeKey="pages"
-                    colorScheme="indigo"
-                    :items="topPagesItems"
-                    :totalItems="overview.top_pages?.length"
-                    :siteDomain="site.domain"
-                    :canFilter="canFilter"
-                    :canExpand="canExpand"
-                    @filter="addFilter"
-                    @expand="openModal"
-                />
+            <!-- Breakdown Cards Row 1: deferred together for consistent render -->
+            <Deferred :data="['top_pages', 'top_referrers', 'device_breakdown']">
+                <template #fallback>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div v-for="i in 3" :key="i" class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="h-4 w-24 bg-muted animate-pulse rounded-md"></div>
+                                <div class="h-4 w-16 bg-muted animate-pulse rounded-md"></div>
+                            </div>
+                            <div v-for="j in 5" :key="j" class="h-8 bg-muted/60 animate-pulse rounded-lg" :style="{ opacity: 1 - j * 0.15 }"></div>
+                        </div>
+                    </div>
+                </template>
 
-                <AnalyticsBreakdownCard
-                    title="Top Referrers"
-                    filterKey="referrer"
-                    typeKey="referrers"
-                    colorScheme="emerald"
-                    :items="topReferrersItems"
-                    :totalItems="overview.top_referrers?.length"
-                    :canFilter="canFilter"
-                    :canExpand="canExpand"
-                    @filter="addFilter"
-                    @expand="openModal"
-                />
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <AnalyticsBreakdownCard
+                        title="Top Pages"
+                        filterKey="path"
+                        typeKey="pages"
+                        colorScheme="indigo"
+                        :items="topPagesItems"
+                        :totalItems="top_pages?.length"
+                        :siteDomain="site.domain"
+                        :canFilter="canFilter"
+                        :canExpand="canExpand"
+                        @filter="addFilter"
+                        @expand="openModal"
+                    />
+                    <AnalyticsBreakdownCard
+                        title="Top Referrers"
+                        filterKey="referrer"
+                        typeKey="referrers"
+                        colorScheme="emerald"
+                        :items="topReferrersItems"
+                        :totalItems="top_referrers?.length"
+                        :canFilter="canFilter"
+                        :canExpand="canExpand"
+                        @filter="addFilter"
+                        @expand="openModal"
+                    />
+                    <AnalyticsBreakdownCard
+                        title="Device Types"
+                        filterKey="device"
+                        typeKey="devices"
+                        colorScheme="amber"
+                        :items="deviceItems"
+                        :totalItems="device_breakdown?.length"
+                        :canFilter="canFilter"
+                        :canExpand="canExpand"
+                        @filter="addFilter"
+                        @expand="openModal"
+                    />
+                </div>
+            </Deferred>
 
-                <AnalyticsBreakdownCard
-                    title="Device Types"
-                    filterKey="device"
-                    typeKey="devices"
-                    colorScheme="amber"
-                    :items="deviceItems"
-                    :totalItems="overview.device_breakdown?.length"
-                    :canFilter="canFilter"
-                    :canExpand="canExpand"
-                    @filter="addFilter"
-                    @expand="openModal"
-                />
-            </div>
+            <!-- Breakdown Cards Row 2: deferred together -->
+            <Deferred :data="['top_browsers', 'top_os', 'top_countries']">
+                <template #fallback>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div v-for="i in 3" :key="i" class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="h-4 w-28 bg-muted animate-pulse rounded-md"></div>
+                                <div class="h-4 w-14 bg-muted animate-pulse rounded-md"></div>
+                            </div>
+                            <div v-for="j in 5" :key="j" class="h-8 bg-muted/60 animate-pulse rounded-lg" :style="{ opacity: 1 - j * 0.15 }"></div>
+                        </div>
+                    </div>
+                </template>
 
-            <!-- Detail Grid Row 2: Top Browsers, Top OS, Top Locations -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <AnalyticsBreakdownCard
-                    title="Top Browsers"
-                    filterKey="browser"
-                    typeKey="browsers"
-                    colorScheme="sky"
-                    :items="topBrowsersItems"
-                    :totalItems="overview.top_browsers?.length"
-                    :canFilter="canFilter"
-                    :canExpand="canExpand"
-                    @filter="addFilter"
-                    @expand="openModal"
-                />
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <AnalyticsBreakdownCard
+                        title="Top Browsers"
+                        filterKey="browser"
+                        typeKey="browsers"
+                        colorScheme="sky"
+                        :items="topBrowsersItems"
+                        :totalItems="top_browsers?.length"
+                        :canFilter="canFilter"
+                        :canExpand="canExpand"
+                        @filter="addFilter"
+                        @expand="openModal"
+                    />
+                    <AnalyticsBreakdownCard
+                        title="Top Operating Systems"
+                        filterKey="os"
+                        typeKey="os"
+                        colorScheme="purple"
+                        :items="topOsItems"
+                        :totalItems="top_os?.length"
+                        :canFilter="canFilter"
+                        :canExpand="canExpand"
+                        @filter="addFilter"
+                        @expand="openModal"
+                    />
+                    <AnalyticsBreakdownCard
+                        title="Top Locations"
+                        filterKey="country"
+                        typeKey="locations"
+                        colorScheme="rose"
+                        :items="topCountriesItems"
+                        :totalItems="top_countries?.length"
+                        :canFilter="canFilter"
+                        :canExpand="canExpand"
+                        @filter="addFilter"
+                        @expand="openModal"
+                    />
+                </div>
+            </Deferred>
 
-                <AnalyticsBreakdownCard
-                    title="Top Operating Systems"
-                    filterKey="os"
-                    typeKey="os"
-                    colorScheme="purple"
-                    :items="topOsItems"
-                    :totalItems="overview.top_os?.length"
-                    :canFilter="canFilter"
-                    :canExpand="canExpand"
-                    @filter="addFilter"
-                    @expand="openModal"
-                />
+            <!-- UTM Campaigns Card — deferred -->
+            <Deferred data="utm_campaigns">
+                <template #fallback>
+                    <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm space-y-3">
+                        <div class="h-4 w-32 bg-muted animate-pulse rounded-md"></div>
+                        <div v-for="i in 3" :key="i" class="h-8 bg-muted/60 animate-pulse rounded-lg"></div>
+                    </div>
+                </template>
 
-                <AnalyticsBreakdownCard
-                    title="Top Locations"
-                    filterKey="country"
-                    typeKey="locations"
-                    colorScheme="rose"
-                    :items="topCountriesItems"
-                    :totalItems="overview.top_countries?.length"
-                    :canFilter="canFilter"
-                    :canExpand="canExpand"
-                    @filter="addFilter"
-                    @expand="openModal"
-                />
-            </div>
-
-            <!-- UTM Campaigns Card (If available) -->
-            <div v-if="overview.utm_campaigns && overview.utm_campaigns.length > 0">
-                <AnalyticsBreakdownCard
-                    title="UTM Campaigns"
-                    filterKey="utm_campaign"
-                    typeKey="utm"
-                    colorScheme="indigo"
-                    :items="overview.utm_campaigns.map((u: any) => ({ idKey: u.utm_campaign, label: u.utm_campaign, count: u.count, percentage: u.percentage }))"
-                    :totalItems="overview.utm_campaigns.length"
-                    :canFilter="canFilter"
-                    :canExpand="canExpand"
-                    @filter="addFilter"
-                    @expand="openModal"
-                />
-            </div>
+                <div v-if="utm_campaigns && utm_campaigns.length > 0">
+                    <AnalyticsBreakdownCard
+                        title="UTM Campaigns"
+                        filterKey="utm_campaign"
+                        typeKey="utm"
+                        colorScheme="indigo"
+                        :items="utm_campaigns.map((u: any) => ({ idKey: u.campaign || u.utm_campaign, label: u.campaign || u.utm_campaign, count: u.count, percentage: u.percentage }))"
+                        :totalItems="utm_campaigns.length"
+                        :canFilter="canFilter"
+                        :canExpand="canExpand"
+                        @filter="addFilter"
+                        @expand="openModal"
+                    />
+                </div>
+            </Deferred>
         </div>
 
         <!-- Custom Events Tab -->
@@ -385,7 +452,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
             :modalData="modalData"
             :isLoading="isLoadingModal"
             :totalCount="modalTotalCount"
-            :overview="overview"
+            :overview="overviewRef"
             :siteDomain="site.domain"
             :canFilter="canFilter"
             @close="closeModal"

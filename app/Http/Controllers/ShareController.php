@@ -58,7 +58,21 @@ class ShareController extends Controller
         ];
 
         if ($activeTab === 'overview') {
-            $data['overview'] = $analytics->getOverview($site, $start, $end, $filters);
+            $kpis = $analytics->getKpis($site, $start, $end, $filters);
+
+            // Merge KPI props at the top level so they're available immediately.
+            $data = array_merge($data, $kpis);
+
+            // Breakdown cards are deferred — they load after the KPIs render.
+            $data['top_pages'] = Inertia::defer(fn () => $analytics->getTopPages($site, $start, $end, 50, $filters));
+            $data['top_referrers'] = Inertia::defer(fn () => $analytics->getTopReferrers($site, $start, $end, 50, $filters));
+            $data['device_breakdown'] = Inertia::defer(fn () => $analytics->getDeviceBreakdown($site, $start, $end, $filters));
+            $data['top_browsers'] = Inertia::defer(fn () => $analytics->getTopBrowsers($site, $start, $end, 50, $filters));
+            $data['top_os'] = Inertia::defer(fn () => $analytics->getTopOperatingSystems($site, $start, $end, 50, $filters));
+            $data['top_countries'] = Inertia::defer(fn () => $analytics->getTopCountries($site, $start, $end, 50, $filters));
+            $data['utm_campaigns'] = Inertia::defer(fn () => $analytics->getUtmCampaigns($site, $start, $end, 50, $filters));
+            $data['custom_events'] = Inertia::defer(fn () => $analytics->getCustomEvents($site, $start, $end, 50, $filters));
+            $data['goals'] = Inertia::defer(fn () => $analytics->getGoals($site, $start, $end, $filters));
         } elseif ($activeTab === 'events') {
             $selectedEvent = $request->query('event');
             $selectedPropertyKey = $request->query('property');
