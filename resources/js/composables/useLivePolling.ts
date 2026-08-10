@@ -11,10 +11,22 @@ export function useLivePolling(options: UseLivePollingOptions = {}) {
     const isRefreshing = ref(false);
     let pollInterval: ReturnType<typeof setInterval> | null = null;
 
+    // Only refresh the props that genuinely change in real time.
+    // Breakdown cards (top_pages, browsers, countries…) are stable over
+    // a 30-second window and are expensive to recompute — skip them.
+    const LIVE_PROPS = options.only ?? [
+        'total_pageviews',
+        'unique_visitors',
+        'current_visitors',
+        'bounce_rate',
+        'avg_duration',
+        'daily_pageviews',
+    ];
+
     const refreshData = () => {
         isRefreshing.value = true;
         router.reload({
-            only: options.only || ['overview'],
+            only: LIVE_PROPS,
             onFinish: () => {
                 isRefreshing.value = false;
             },

@@ -129,15 +129,7 @@ const {
     maxDaily,
 } = useAnalyticsChart(dailyPageviewsRef);
 
-const { isLive, isRefreshing, toggleLive, refreshData } = useLivePolling({
-    only: [
-        'total_pageviews', 'unique_visitors', 'current_visitors',
-        'bounce_rate', 'avg_duration', 'daily_pageviews',
-        'top_pages', 'top_referrers', 'device_breakdown',
-        'top_browsers', 'top_os', 'top_countries',
-        'utm_campaigns', 'custom_events', 'goals',
-    ],
-});
+const { isLive, isRefreshing, toggleLive, refreshData } = useLivePolling();
 
 const breakdownEndpointRef = computed(
     () => props.breakdownUrl || `${props.baseUrl}/breakdown`
