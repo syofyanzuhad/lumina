@@ -484,6 +484,27 @@ class AnalyticsService
             ->count('visitor_hash');
     }
 
+    public function getUniqueVisitors(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): int
+    {
+        $cacheKey = $this->cacheKey($site->id, 'unique_visitors', $start, $end, $filters);
+
+        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
+            if (empty($filters)) {
+                return (int) DB::table('daily_visitor_stats')
+                    ->where('site_id', $site->id)
+                    ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+                    ->distinct('visitor_hash')
+                    ->count('visitor_hash');
+            }
+
+            return Event::where('site_id', $site->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
+                ->distinct('visitor_hash')
+                ->count('visitor_hash');
+        });
+    }
+
     /**
      * Get bounce rate (percentage of single-pageview visitor sessions).
      */
@@ -492,6 +513,24 @@ class AnalyticsService
         $cacheKey = $this->cacheKey($site->id, 'bounce_rate', $start, $end, $filters);
 
         return (float) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
+            if (empty($filters)) {
+                $visitorCounts = DB::table('daily_visitor_stats')
+                    ->where('site_id', $site->id)
+                    ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+                    ->select('visitor_hash', DB::raw('SUM(views) as views'))
+                    ->groupBy('visitor_hash')
+                    ->get();
+
+                $totalVisitors = $visitorCounts->count();
+                if ($totalVisitors === 0) {
+                    return 0.0;
+                }
+
+                $bounces = $visitorCounts->where('views', 1)->count();
+
+                return round(($bounces / $totalVisitors) * 100, 1);
+            }
+
             $visitorCounts = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->tap(fn ($q) => $this->applyFilters($q, $filters))
