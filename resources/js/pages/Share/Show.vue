@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
 import { Lock, ShieldCheck, Globe, Copy, Check } from '@lucide/vue';
+import { ref } from 'vue';
+import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard.vue';
 
 interface SiteItem {
     id?: number;
@@ -50,7 +50,7 @@ const props = defineProps<{
 }>();
 
 defineOptions({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     layout: null as any,
 });
 
@@ -59,7 +59,10 @@ const passwordForm = useForm({
 });
 
 const submitPassword = () => {
-    if (!props.site.share_token) return;
+    if (!props.site.share_token) {
+return;
+}
+
     passwordForm.post(`/share/${props.site.share_token}/password`, {
         preserveScroll: true,
     });
@@ -69,8 +72,12 @@ const windowOrigin = typeof window !== 'undefined' ? window.location.origin : ''
 const copiedPublicUrl = ref(false);
 
 const copyPublicShareUrl = async () => {
-    if (!props.site.share_token) return;
+    if (!props.site.share_token) {
+return;
+}
+
     const url = `${windowOrigin}/share/${props.site.share_token}`;
+
     try {
         await navigator.clipboard.writeText(url);
         copiedPublicUrl.value = true;

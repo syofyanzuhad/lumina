@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { update } from '@/actions/App/Http/Controllers/ActiveSiteController';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePage, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { update } from '@/actions/App/Http/Controllers/ActiveSiteController';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const page = usePage();
 const sites = computed(() => page.props.sites as { id: number; domain: string }[]);

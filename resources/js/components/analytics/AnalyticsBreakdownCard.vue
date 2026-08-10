@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Component } from 'vue';
 import { Maximize2, Filter, ExternalLink, Globe, Laptop } from '@lucide/vue';
+import type { Component } from 'vue';
 import { formatNumber, getCountryFlag } from '@/composables/useAnalyticsFormatters';
 
 export interface BreakdownCardItem {

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
+import { Copy, Check, Plus, Pencil, Trash2, Share2, RefreshCw, Lock, Unlock, ExternalLink } from '@lucide/vue';
+import { computed, ref, onMounted, watch } from 'vue';
+import { toast } from 'vue-sonner';
+import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from '@/components/ui/select';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Copy, Check, Plus, Pencil, Trash2, Share2, RefreshCw, Lock, Unlock, ExternalLink } from '@lucide/vue';
-import { computed, ref, onMounted, watch } from 'vue';
-import Heading from '@/components/Heading.vue';
-import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     site: {
@@ -38,6 +38,7 @@ defineOptions({
 
 const snippet = computed(() => {
     const origin = window.location.origin;
+
     return `<script defer data-domain="${props.site.domain}" src="${origin}/js/script.js"><\/script>`;
 });
 
@@ -78,12 +79,18 @@ watch(() => props.site.is_public, (val) => {
 const copiedShareUrl = ref(false);
 
 const shareUrl = computed(() => {
-    if (!props.site.share_token) return '';
+    if (!props.site.share_token) {
+return '';
+}
+
     return `${window.location.origin}/share/${props.site.share_token}`;
 });
 
 const copyShareUrl = async () => {
-    if (!shareUrl.value) return;
+    if (!shareUrl.value) {
+return;
+}
+
     try {
         await navigator.clipboard.writeText(shareUrl.value);
         copiedShareUrl.value = true;
@@ -111,7 +118,10 @@ const togglePublicSharing = () => {
 };
 
 const saveSharePassword = () => {
-    if (!shareForm.share_password) return;
+    if (!shareForm.share_password) {
+return;
+}
+
     shareForm.clear_password = false;
     shareForm.put(`/sites/${props.site.id}/share`, {
         preserveScroll: true,
@@ -145,8 +155,12 @@ const isRegeneratingToken = ref(false);
 const regenerateToken = () => {
     router.post(`/sites/${props.site.id}/share/regenerate`, {}, {
         preserveScroll: true,
-        onStart: () => { isRegeneratingToken.value = true; },
-        onFinish: () => { isRegeneratingToken.value = false; },
+        onStart: () => {
+ isRegeneratingToken.value = true; 
+},
+        onFinish: () => {
+ isRegeneratingToken.value = false; 
+},
         onSuccess: () => {
             toast.success('Share link regenerated successfully');
         },
@@ -194,13 +208,17 @@ const fetchApi = async (method: string, url: string, data?: any) => {
         throw new Error('API Error');
     }
     
-    if (res.status === 204) return null;
+    if (res.status === 204) {
+return null;
+}
+
     return await res.json();
 };
 
 const fetchGoals = async () => {
     isLoadingGoals.value = true;
     isErrorGoals.value = false;
+
     try {
         const data = await fetchApi('GET', `/sites/${props.site.id}/goals`);
         goals.value = data;
@@ -246,6 +264,7 @@ const saveGoal = async () => {
             await fetchApi('POST', `/sites/${props.site.id}/goals`, goalForm.value);
             toast.success('Goal created successfully');
         }
+
         isGoalModalOpen.value = false;
         fetchGoals();
     } catch (err) {
@@ -254,7 +273,10 @@ const saveGoal = async () => {
 };
 
 const deleteGoal = async () => {
-    if (!goalToDelete.value) return;
+    if (!goalToDelete.value) {
+return;
+}
+
     try {
         await fetchApi('DELETE', `/sites/${props.site.id}/goals/${goalToDelete.value.id}`);
         toast.success('Goal deleted successfully');

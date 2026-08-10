@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Filter, ExternalLink, Globe, Laptop } from '@lucide/vue';
 import {
     Sheet,
     SheetContent,
@@ -6,7 +7,6 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
-import { Filter, ExternalLink, Globe, Laptop } from '@lucide/vue';
 import {
     formatNumber,
     getCountryFlag,
@@ -60,7 +60,10 @@ const getItemLabel = (item: any, type: string) => {
 };
 
 const getFallbackData = (type: string) => {
-    if (!props.overview) return [];
+    if (!props.overview) {
+return [];
+}
+
     switch (type) {
         case 'pages': return props.overview.top_pages || [];
         case 'referrers': return props.overview.top_referrers || [];

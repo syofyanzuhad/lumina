@@ -51,6 +51,7 @@ export function useLivePolling(options: UseLivePollingOptions = {}) {
 
     const toggleLive = () => {
         isLive.value = !isLive.value;
+
         if (isLive.value) {
             startPolling();
         } else {

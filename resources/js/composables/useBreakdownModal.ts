@@ -1,4 +1,5 @@
-import { ref, computed, type Ref, unref } from 'vue';
+import { ref, computed,  unref } from 'vue';
+import type {Ref} from 'vue';
 
 export interface UseBreakdownModalOptions {
     breakdownEndpoint: string | Ref<string>;
@@ -25,11 +26,13 @@ export function useBreakdownModal(options: UseBreakdownModalOptions) {
             const siteId = unref(options.siteId);
 
             let url = `${endpoint}?period=${period}&type=${type}&limit=50`;
+
             if (siteId) {
                 url += `&site_id=${siteId}`;
             }
 
             const res = await fetch(url);
+
             if (res.ok) {
                 const json = await res.json();
                 modalData.value = json.data;
@@ -57,8 +60,12 @@ export function useBreakdownModal(options: UseBreakdownModalOptions) {
             activeModal.value === 'devices' ? 'device_breakdown' : 'utm_campaigns'
         ] : null);
 
-        if (!list || !Array.isArray(list)) return null;
+        if (!list || !Array.isArray(list)) {
+return null;
+}
+
         const total = list.reduce((sum, item) => sum + (item.count || 0), 0);
+
         return {
             itemCount: list.length,
             totalSum: total,

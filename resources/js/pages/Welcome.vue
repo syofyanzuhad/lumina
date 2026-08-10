@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
 import { Eye, Users, Shield, Zap, Package, ArrowRight, BarChart3, Globe, Sparkles, CheckCircle2, Copy, Check, Terminal, ShieldCheck, HelpCircle, XCircle, Sun, Moon, Target, Download, Share2, Smartphone } from '@lucide/vue';
-import { dashboard, login, register } from '@/routes';
-import { useAppearance } from '@/composables/useAppearance';
+import { ref } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import { useAppearance } from '@/composables/useAppearance';
+import { dashboard, login, register } from '@/routes';
 
 const { appearance, updateAppearance } = useAppearance();
 

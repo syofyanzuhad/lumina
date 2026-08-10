@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Globe } from '@lucide/vue';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { destroy, show } from '@/actions/App/Http/Controllers/SiteController';
 import Heading from '@/components/Heading.vue';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 
 defineOptions({
     layout: {

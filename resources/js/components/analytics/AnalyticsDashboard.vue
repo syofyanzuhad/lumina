@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue';
 import { router, Deferred } from '@inertiajs/vue3';
-import CustomEventsTab from '@/components/CustomEventsTab.vue';
+import { computed, toRef } from 'vue';
+import AnalyticsBreakdownCard from '@/components/analytics/AnalyticsBreakdownCard.vue';
+import type {BreakdownCardItem} from '@/components/analytics/AnalyticsBreakdownCard.vue';
+import AnalyticsBreakdownDrawer from '@/components/analytics/AnalyticsBreakdownDrawer.vue';
+import AnalyticsChart from '@/components/analytics/AnalyticsChart.vue';
 import AnalyticsControlBar from '@/components/analytics/AnalyticsControlBar.vue';
 import AnalyticsFiltersBar from '@/components/analytics/AnalyticsFiltersBar.vue';
 import AnalyticsKpiCards from '@/components/analytics/AnalyticsKpiCards.vue';
-import AnalyticsChart from '@/components/analytics/AnalyticsChart.vue';
-import AnalyticsBreakdownCard, { type BreakdownCardItem } from '@/components/analytics/AnalyticsBreakdownCard.vue';
-import AnalyticsBreakdownDrawer from '@/components/analytics/AnalyticsBreakdownDrawer.vue';
+import CustomEventsTab from '@/components/CustomEventsTab.vue';
 
-import { useAnalyticsFilters } from '@/composables/useAnalyticsFilters';
-import { useAnalyticsPeriod } from '@/composables/useAnalyticsPeriod';
 import { useAnalyticsChart } from '@/composables/useAnalyticsChart';
-import { useLivePolling } from '@/composables/useLivePolling';
-import { useBreakdownModal } from '@/composables/useBreakdownModal';
+import { useAnalyticsFilters } from '@/composables/useAnalyticsFilters';
 import {
     getCountryFlag,
     getDeviceIcon,
@@ -21,6 +19,9 @@ import {
     getBrowserIcon,
     getOsIcon,
 } from '@/composables/useAnalyticsFormatters';
+import { useAnalyticsPeriod } from '@/composables/useAnalyticsPeriod';
+import { useBreakdownModal } from '@/composables/useBreakdownModal';
+import { useLivePolling } from '@/composables/useLivePolling';
 
 export interface AnalyticsDashboardProps {
     baseUrl: string;
@@ -156,13 +157,20 @@ const setTab = (newTab: string) => {
         tab: newTab,
         ...(props.filters || {}),
     };
-    if (props.site?.id) params.site_id = props.site.id;
+
+    if (props.site?.id) {
+params.site_id = props.site.id;
+}
+
     router.get(props.baseUrl, params, { preserveState: true, preserveScroll: true });
 };
 
 // Item Mapping Helpers for Breakdown Cards
 const topPagesItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.top_pages) return [];
+    if (!props.top_pages) {
+return [];
+}
+
     return props.top_pages.map((p: any) => ({
         idKey: p.path,
         label: p.path,
@@ -173,7 +181,10 @@ const topPagesItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const topReferrersItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.top_referrers) return [];
+    if (!props.top_referrers) {
+return [];
+}
+
     return props.top_referrers.map((r: any) => ({
         idKey: r.referrer,
         label: r.referrer,
@@ -185,7 +196,10 @@ const topReferrersItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const deviceItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.device_breakdown) return [];
+    if (!props.device_breakdown) {
+return [];
+}
+
     return props.device_breakdown.map((d: any) => ({
         idKey: d.device,
         label: d.device,
@@ -197,7 +211,10 @@ const deviceItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const topBrowsersItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.top_browsers) return [];
+    if (!props.top_browsers) {
+return [];
+}
+
     return props.top_browsers.map((b: any) => ({
         idKey: b.browser,
         label: b.browser,
@@ -209,7 +226,10 @@ const topBrowsersItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const topOsItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.top_os) return [];
+    if (!props.top_os) {
+return [];
+}
+
     return props.top_os.map((o: any) => ({
         idKey: o.os,
         label: o.os,
@@ -221,7 +241,10 @@ const topOsItems = computed<BreakdownCardItem[]>(() => {
 });
 
 const topCountriesItems = computed<BreakdownCardItem[]>(() => {
-    if (!props.top_countries) return [];
+    if (!props.top_countries) {
+return [];
+}
+
     return props.top_countries.map((c: any) => ({
         idKey: c.code || c.name,
         label: c.name || c.code,

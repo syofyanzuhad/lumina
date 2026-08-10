@@ -1,8 +1,7 @@
 <script setup lang="ts">
+import { CalendarDays, Download, RefreshCw, Sparkles } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,7 +10,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CalendarDays, Download, RefreshCw, Sparkles } from '@lucide/vue';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 withDefaults(
     defineProps<{

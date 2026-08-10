@@ -2,10 +2,14 @@
   'use strict';
 
   var scriptEl = document.currentScript || document.querySelector('script[data-domain]');
-  if (!scriptEl) return;
+
+  if (!scriptEl) {
+return;
+}
 
   var domain = scriptEl.getAttribute('data-domain');
   var apiEndpoint = scriptEl.getAttribute('data-api');
+
   if (!apiEndpoint) {
     try {
       apiEndpoint = new URL('/api/collect', scriptEl.src).href;
@@ -13,7 +17,10 @@
       apiEndpoint = '/api/collect';
     }
   }
-  if (!domain) return;
+
+  if (!domain) {
+return;
+}
 
   var excludePattern = scriptEl.getAttribute('data-exclude');
 
@@ -27,24 +34,36 @@
     if (excludePattern) {
       var currentPath = window.location.pathname;
       var patterns = excludePattern.split(',');
+
       for (var i = 0; i < patterns.length; i++) {
         var p = patterns[i].trim();
-        if (!p) continue;
+
+        if (!p) {
+continue;
+}
+
         if (p.indexOf('*') !== -1) {
           var regex = new RegExp('^' + p.replace(/[-[\]{}()+?.,\\^$|#\s]/g, '\\$&').replace(/\*/g, '.*') + '$');
-          if (regex.test(currentPath)) return true;
+
+          if (regex.test(currentPath)) {
+return true;
+}
         } else if (currentPath === p || currentPath.indexOf(p) === 0) {
           return true;
         }
       }
     }
+
     return false;
   }
 
   var lastPath = '';
 
   function sendEvent(eventName, props) {
-    if (isExcluded()) return;
+    if (isExcluded()) {
+return;
+}
+
     try {
       var currentPath = window.location.pathname + window.location.search;
       var payload = {
@@ -73,16 +92,22 @@
 
   function trackPageview() {
     var currentPath = window.location.pathname + window.location.search;
-    if (currentPath === lastPath) return;
+
+    if (currentPath === lastPath) {
+return;
+}
+
     lastPath = currentPath;
     sendEvent(null, null);
   }
 
   function wrapHistory(type) {
     var orig = history[type];
+
     return function () {
       var rv = orig.apply(this, arguments);
       trackPageview();
+
       return rv;
     };
   }

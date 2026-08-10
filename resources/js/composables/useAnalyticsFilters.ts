@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/vue3';
-import { type Ref, unref } from 'vue';
+import {  unref } from 'vue';
+import type {Ref} from 'vue';
 
 export interface UseAnalyticsFiltersOptions {
     baseUrl: string | Ref<string>;
@@ -18,16 +19,27 @@ export function useAnalyticsFilters(options: UseAnalyticsFiltersOptions) {
         const period = unref(options.currentPeriod);
         const tab = unref(options.currentTab);
 
-        if (siteId) params.site_id = siteId;
-        if (period) params.period = period;
-        if (tab) params.tab = tab;
+        if (siteId) {
+params.site_id = siteId;
+}
+
+        if (period) {
+params.period = period;
+}
+
+        if (tab) {
+params.tab = tab;
+}
 
         return params;
     };
 
     const addFilter = (key: string, value: string) => {
         const url = getBaseUrl();
-        if (!url) return;
+
+        if (!url) {
+return;
+}
 
         const current = { ...(unref(options.currentFilters) || {}) };
         current[key] = value;
@@ -40,7 +52,10 @@ export function useAnalyticsFilters(options: UseAnalyticsFiltersOptions) {
 
     const removeFilter = (key: string) => {
         const url = getBaseUrl();
-        if (!url) return;
+
+        if (!url) {
+return;
+}
 
         const current = { ...(unref(options.currentFilters) || {}) };
         delete current[key];
@@ -53,7 +68,10 @@ export function useAnalyticsFilters(options: UseAnalyticsFiltersOptions) {
 
     const clearFilters = () => {
         const url = getBaseUrl();
-        if (!url) return;
+
+        if (!url) {
+return;
+}
 
         router.get(url, buildParams({}), {
             preserveState: true,

@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/vue3';
-import { ref, type Ref, unref } from 'vue';
+import { ref,  unref } from 'vue';
+import type {Ref} from 'vue';
 
 export interface UseAnalyticsPeriodOptions {
     baseUrl: string | Ref<string>;
@@ -16,7 +17,10 @@ export function useAnalyticsPeriod(options: UseAnalyticsPeriodOptions) {
 
     const setPeriod = (newPeriod: string) => {
         const url = getBaseUrl();
-        if (!url) return;
+
+        if (!url) {
+return;
+}
 
         const siteId = unref(options.siteId);
         const tab = unref(options.currentTab);
@@ -26,8 +30,14 @@ export function useAnalyticsPeriod(options: UseAnalyticsPeriodOptions) {
             period: newPeriod,
             ...filters,
         };
-        if (siteId) params.site_id = siteId;
-        if (tab) params.tab = tab;
+
+        if (siteId) {
+params.site_id = siteId;
+}
+
+        if (tab) {
+params.tab = tab;
+}
 
         router.get(url, params, {
             preserveState: true,
@@ -37,7 +47,10 @@ export function useAnalyticsPeriod(options: UseAnalyticsPeriodOptions) {
 
     const applyCustomDateRange = () => {
         const url = getBaseUrl();
-        if (!url || !customStartDate.value || !customEndDate.value) return;
+
+        if (!url || !customStartDate.value || !customEndDate.value) {
+return;
+}
 
         const siteId = unref(options.siteId);
         const tab = unref(options.currentTab);
@@ -49,8 +62,14 @@ export function useAnalyticsPeriod(options: UseAnalyticsPeriodOptions) {
             end_date: customEndDate.value,
             ...filters,
         };
-        if (siteId) params.site_id = siteId;
-        if (tab) params.tab = tab;
+
+        if (siteId) {
+params.site_id = siteId;
+}
+
+        if (tab) {
+params.tab = tab;
+}
 
         router.get(url, params, {
             preserveState: true,

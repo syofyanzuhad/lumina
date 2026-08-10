@@ -1,4 +1,5 @@
-import { ref, computed, type Ref } from 'vue';
+import { ref, computed  } from 'vue';
+import type {Ref} from 'vue';
 
 export interface DailyChartItem {
     date: string;
@@ -21,23 +22,43 @@ export function useAnalyticsChart(dailyPageviews: Ref<DailyChartItem[] | undefin
 
     const viewsMax = computed(() => {
         const list = dailyPageviews.value;
-        if (!list || !list.length) return 1;
+
+        if (!list || !list.length) {
+return 1;
+}
+
         const m = Math.max(...list.map((d) => d.pageviews));
+
         return m > 0 ? m : 1;
     });
 
     const visitorsMax = computed(() => {
         const list = dailyPageviews.value;
-        if (!list || !list.length) return 1;
+
+        if (!list || !list.length) {
+return 1;
+}
+
         const m = Math.max(...list.map((d) => d.visitors));
+
         return m > 0 ? m : 1;
     });
 
     const maxDaily = computed(() => {
         const vals: number[] = [];
-        if (showViews.value) vals.push(viewsMax.value);
-        if (showVisitors.value) vals.push(visitorsMax.value);
-        if (!vals.length) return 1;
+
+        if (showViews.value) {
+vals.push(viewsMax.value);
+}
+
+        if (showVisitors.value) {
+vals.push(visitorsMax.value);
+}
+
+        if (!vals.length) {
+return 1;
+}
+
         return Math.max(...vals);
     });
 

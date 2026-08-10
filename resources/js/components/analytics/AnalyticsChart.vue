@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { formatDateLabel, formatNumber } from '@/composables/useAnalyticsFormatters';
 import type { DailyChartItem } from '@/composables/useAnalyticsChart';
+import { formatDateLabel, formatNumber } from '@/composables/useAnalyticsFormatters';
 
 defineProps<{
     dailyPageviews?: DailyChartItem[];

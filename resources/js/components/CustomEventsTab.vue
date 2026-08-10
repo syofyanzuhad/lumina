@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Sparkles, Calendar, Filter, Activity, BarChart2, ListTodo, Hash } from '@lucide/vue';
+import { computed, ref } from 'vue';
 
 interface CustomEventSummary {
     total_custom_events: number;
@@ -58,8 +58,12 @@ const props = defineProps<{
 const formatNumber = (num: number) => new Intl.NumberFormat().format(num);
 
 const maxDaily = computed(() => {
-    if (!props.timeline || props.timeline.length === 0) return 1;
+    if (!props.timeline || props.timeline.length === 0) {
+return 1;
+}
+
     const max = Math.max(...props.timeline.map(d => d.count));
+
     return max > 0 ? max : 1;
 });
 

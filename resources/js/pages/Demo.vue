@@ -17,7 +17,7 @@ const props = defineProps<{
 }>();
 
 defineOptions({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     layout: null as any,
 });
 </script>
