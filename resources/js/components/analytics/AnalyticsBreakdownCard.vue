@@ -81,7 +81,12 @@ const colorClasses: Record<string, { bg: string; hoverBg: string; text: string }
             <h3 class="text-sm font-bold text-foreground">{{ title }}</h3>
             <div class="flex items-center gap-2">
                 <span v-if="items && totalItems !== undefined" class="text-xs text-muted-foreground font-mono">
-                    {{ Math.min(10, totalItems) }} of {{ totalItems }} entries
+                    <template v-if="totalItems <= 10 || (items.length && items.length === totalItems)">
+                        {{ totalItems }} {{ totalItems === 1 ? 'entry' : 'entries' }}
+                    </template>
+                    <template v-else>
+                        {{ Math.min(10, items.length || totalItems) }} of {{ totalItems }} entries
+                    </template>
                 </span>
                 <button
                     v-if="canExpand"
