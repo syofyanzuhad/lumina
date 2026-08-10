@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Console\Commands\BackfillDailyVisitorStats;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Lumina\Core\Models\Goal;
 use Lumina\Core\Models\Site;
@@ -190,6 +190,6 @@ class DatabaseSeeder extends Seeder
         }
 
         // Populate daily_visitor_stats for seeded data
-        $this->call(BackfillDailyVisitorStats::class);
+        Artisan::call('lumina:backfill-visitor-stats');
     }
 }
