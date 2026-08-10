@@ -136,7 +136,7 @@ class DatabaseSeeder extends Seeder
 
         // Insert 140,000 additional events in batch chunks of 2,000 for maximum seeding speed
         $records = [];
-        for ($i = 0; $i < 140000; $i++) {
+        for ($i = 0; $i < 1_000; $i++) {
             $daysAgo = rand(0, 364);
             $createdAt = now()->subDays($daysAgo)->subHours(rand(0, 23))->subMinutes(rand(0, 59))->subSeconds(rand(0, 59));
             $country = $countries[array_rand($countries)];
