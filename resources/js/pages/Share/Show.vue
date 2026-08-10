@@ -50,7 +50,8 @@ const props = defineProps<{
 }>();
 
 defineOptions({
-    layout: null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    layout: null as any,
 });
 
 const passwordForm = useForm({

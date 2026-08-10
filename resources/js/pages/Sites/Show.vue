@@ -55,6 +55,15 @@ const copyToClipboard = async () => {
     }
 };
 
+const copyApiToken = async () => {
+    try {
+        await navigator.clipboard.writeText(props.site.api_token || '');
+        toast.success('API token copied to clipboard');
+    } catch (err) {
+        console.error('Failed to copy API token', err);
+    }
+};
+
 // Public Sharing Management
 const shareForm = useForm({
     is_public: props.site.is_public ?? false,
@@ -420,7 +429,7 @@ const deleteGoal = async () => {
                                 readonly
                                 class="font-mono text-sm bg-muted/80 text-foreground font-semibold flex-1 select-all"
                             />
-                            <Button variant="secondary" @click="navigator.clipboard.writeText(props.site.api_token || ''); toast.success('API token copied to clipboard');">
+                            <Button variant="secondary" @click="copyApiToken">
                                 <Copy class="h-4 w-4 mr-2" />
                                 Copy
                             </Button>
