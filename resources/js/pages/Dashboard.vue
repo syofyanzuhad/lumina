@@ -387,41 +387,10 @@ const getOsIcon = (os: string): string | null => {
     return null;
 };
 
-const activeModal = ref<string | null>(null);
-const modalTitle = ref<string>('');
-const modalData = ref<any[]>([]);
-const modalLoading = ref<boolean>(false);
+const modalTotalCount = computed(() => {
+    return modalData.value.reduce((acc, item) => acc + (item.count || 0), 0);
+});
 
-const openModal = async (type: string, title: string) => {
-    activeModal.value = type;
-    modalTitle.value = title;
-    modalData.value = [];
-    modalLoading.value = true;
-
-    try {
-        const params = new URLSearchParams({
-            site_id: String(props.activeSite.id),
-            period: props.period,
-            type: type,
-            limit: '50',
-            ...props.filters,
-        });
-        if (customStartDate.value && customEndDate.value) {
-            params.append('start_date', customStartDate.value);
-            params.append('end_date', customEndDate.value);
-        }
-
-        const res = await fetch(`/dashboard/breakdown?${params.toString()}`);
-        if (res.ok) {
-            const json = await res.json();
-            modalData.value = json.data || [];
-        }
-    } catch (e) {
-        console.error('Failed to fetch breakdown data', e);
-    } finally {
-        modalLoading.value = false;
-    }
-};
 
 const customStartDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
 const customEndDate = ref(new Date().toISOString().split('T')[0]);
@@ -1229,6 +1198,12 @@ const applyCustomDateRange = () => {
                     </div>
 
                     <template v-else>
+                        <!-- Total Sum Summary Card -->
+                        <div v-if="modalData.length > 0" class="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-sidebar-border/60 mb-3 text-xs">
+                            <span class="text-muted-foreground font-medium">Total ({{ modalData.length }} items)</span>
+                            <span class="font-bold font-mono text-foreground text-sm">{{ formatNumber(modalTotalCount) }}</span>
+                        </div>
+
                         <!-- Top Pages Modal -->
                         <template v-if="activeModal === 'pages'">
                             <div
