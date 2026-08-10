@@ -578,6 +578,22 @@ class AnalyticsService
     }
 
     /**
+     * Get fast KPI metrics only (pageviews, visitors, current, bounce, duration, daily chart).
+     * Intentionally excludes breakdown cards — those are deferred separately.
+     */
+    public function getKpis(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): array
+    {
+        return [
+            'total_pageviews' => $this->getPageviews($site, $start, $end, $filters),
+            'unique_visitors' => $this->getUniqueVisitors($site, $start, $end, $filters),
+            'current_visitors' => $this->getCurrentVisitors($site),
+            'bounce_rate' => $this->getBounceRate($site, $start, $end, $filters),
+            'avg_duration' => $this->getAvgVisitDuration($site, $start, $end, $filters),
+            'daily_pageviews' => $this->getDailyPageviews($site, $start, $end, $filters),
+        ];
+    }
+
+    /**
      * Get complete dashboard overview payload.
      */
     public function getOverview(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): array
