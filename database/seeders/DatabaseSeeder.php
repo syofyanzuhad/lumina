@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Lumina\Core\Models\Event;
 use Lumina\Core\Models\Goal;
 use Lumina\Core\Models\Site;
 
@@ -57,24 +56,27 @@ class DatabaseSeeder extends Seeder
         // 4. Seed Super Heavy Demo Analytics Data (150,000 records) across 365 days
         $paths = [
             '/', '/', '/', '/', '/pricing', '/pricing', '/features', '/docs', '/docs/installation',
-            '/docs/laravel-setup', '/docs/api-reference', '/docs/webhooks', '/docs/security',
+            '/docs/laravel-setup', '/docs/api-reference', '/docs/webhooks', '/docs/security', '/docs/authentication',
             '/blog/laravel-13-analytics', '/blog/privacy-first-tracking', '/blog/building-fast-dashboards',
             '/blog/scaling-postgres-timescale', '/blog/cookieless-future-2026', '/blog/open-source-analytics',
+            '/blog/gdpr-compliance-guide', '/blog/migrating-from-google-analytics', '/blog/event-tracking-best-practices',
             '/signup', '/signup', '/login', '/dashboard', '/settings', '/integrations', '/changelog',
-            '/case-studies/acme-corp', '/case-studies/techstart', '/case-studies/global-fintech',
-            '/api-reference', '/downloads', '/careers', '/about', '/contact'
+            '/case-studies/acme-corp', '/case-studies/techstart', '/case-studies/global-fintech', '/case-studies/ecommerce-giant',
+            '/api-reference', '/downloads', '/careers', '/about', '/contact', '/privacy', '/terms', '/security-overview',
         ];
 
         $browsers = [
-            'Chrome', 'Chrome', 'Chrome', 'Chrome', 'Safari', 'Safari', 'Safari', 'Firefox', 'Edge', 'Brave', 'Opera', 'Samsung Internet', 'Vivaldi'
+            'Chrome', 'Chrome', 'Chrome', 'Chrome', 'Safari', 'Safari', 'Safari', 'Firefox', 'Edge', 'Brave', 'Opera',
+            'Samsung Internet', 'Vivaldi', 'UC Browser', 'Arc', 'DuckDuckGo Browser', 'Yandex Browser', 'Tor Browser',
+            'Sogou Explorer', 'QQ Browser', 'Pale Moon', 'Waterfox',
         ];
 
         $operatingSystems = [
-            'macOS', 'macOS', 'Windows', 'Windows', 'Windows', 'iOS', 'iOS', 'Android', 'Android', 'Linux', 'Ubuntu'
+            'macOS', 'macOS', 'Windows', 'Windows', 'Windows', 'iOS', 'iOS', 'Android', 'Android', 'Linux', 'Ubuntu',
+            'Debian', 'Fedora', 'Arch Linux', 'Chrome OS', 'FreeBSD', 'Windows Phone', 'CentOS', 'Rocky Linux', 'Alpine Linux',
         ];
 
         $countries = [
-            ['code' => 'US', 'name' => 'United States'],
             ['code' => 'US', 'name' => 'United States'],
             ['code' => 'US', 'name' => 'United States'],
             ['code' => 'GB', 'name' => 'United Kingdom'],
@@ -96,28 +98,40 @@ class DatabaseSeeder extends Seeder
             ['code' => 'VN', 'name' => 'Vietnam'],
             ['code' => 'MY', 'name' => 'Malaysia'],
             ['code' => 'PH', 'name' => 'Philippines'],
+            ['code' => 'MX', 'name' => 'Mexico'],
+            ['code' => 'PL', 'name' => 'Poland'],
+            ['code' => 'NO', 'name' => 'Norway'],
+            ['code' => 'NZ', 'name' => 'New Zealand'],
         ];
 
         $referrers = [
-            'https://google.com', 'https://google.com', 'https://google.com', 'https://google.com',
-            'https://github.com', 'https://github.com', 'https://github.com',
-            'https://x.com', 'https://x.com', 'https://x.com',
+            'https://google.com', 'https://google.com', 'https://google.com',
+            'https://github.com', 'https://github.com',
+            'https://x.com', 'https://x.com',
             'https://news.ycombinator.com', 'https://news.ycombinator.com',
             'https://producthunt.com', 'https://reddit.com/r/laravel', 'https://reddit.com/r/webdev',
             'https://dev.to', 'https://medium.com', 'https://indiehackers.com',
-            'https://youtube.com', 'https://linkedin.com', 'Direct', 'Direct', 'Direct'
+            'https://youtube.com', 'https://linkedin.com', 'https://bing.com', 'https://duckduckgo.com',
+            'https://facebook.com', 'https://instagram.com', 'https://tiktok.com', 'https://t.co',
+            'https://hashnode.com', 'https://substack.com', 'Direct', 'Direct', 'Direct',
         ];
 
         $customEvents = [
             'signup_completed', 'checkout_started', 'button_clicked', 'video_watched',
             'code_copied', 'demo_requested', 'export_pdf', 'api_key_created',
-            'dark_mode_toggled', 'filter_applied', 'invite_sent'
+            'dark_mode_toggled', 'filter_applied', 'invite_sent', 'webhook_added',
+            'billing_plan_upgraded', 'password_reset_requested', 'team_member_added',
+            'report_generated', 'search_performed', 'theme_changed', 'feedback_submitted', 'app_downloaded',
         ];
 
         $utmCampaigns = [
             'summer_sale_2026', 'product_hunt_launch', 'black_friday_deals',
             'newsletter_august', 'twitter_ads_q3', 'google_search_brand',
-            'laravel_news_sponsorship', 'github_sponsors_promo'
+            'laravel_news_sponsorship', 'github_sponsors_promo', 'devto_banner_ad',
+            'youtube_influencer_q3', 'podcasts_sponsorship', 'reddit_promoted_post',
+            'linkedin_b2b_outreach', 'hacker_news_show_hn', 'indie_hackers_spotlight',
+            'retargeting_campaign_v2', 'influencer_partner_code', 'spring_discount_2026',
+            'webinar_registration_q3', 'community_giveaway',
         ];
 
         // Insert 140,000 additional events in batch chunks of 2,000 for maximum seeding speed
@@ -170,7 +184,7 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        if (!empty($records)) {
+        if (! empty($records)) {
             DB::table('events')->insert($records);
         }
     }
