@@ -90,6 +90,47 @@ class ShareController extends Controller
     }
 
     /**
+     * Get detailed breakdown items for side modal.
+     */
+    public function breakdown(Request $request, string $token, AnalyticsService $analytics)
+    {
+        $site = Site::where('share_token', $token)
+            ->where('is_public', true)
+            ->firstOrFail();
+
+        if ($site->hasSharePassword() && ! session("share_auth_{$site->id}")) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $period = $request->query('period', '30d');
+        [$start, $end] = $this->resolveDateRange($period, $request->query('start_date'), $request->query('end_date'));
+
+        $type = $request->query('type');
+        $limit = (int) $request->query('limit', 50);
+
+        $filters = $request->only([
+            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_campaign',
+        ]);
+        $filters = array_filter($filters, fn ($val) => ! is_null($val) && $val !== '');
+
+        $data = match ($type) {
+            'pages' => $analytics->getTopPages($site, $start, $end, $limit, $filters),
+            'referrers' => $analytics->getTopReferrers($site, $start, $end, $limit, $filters),
+            'browsers' => $analytics->getTopBrowsers($site, $start, $end, $limit, $filters),
+            'os' => $analytics->getTopOperatingSystems($site, $start, $end, $limit, $filters),
+            'locations' => $analytics->getTopCountries($site, $start, $end, $limit, $filters),
+            'utm' => $analytics->getUtmCampaigns($site, $start, $end, $limit, $filters),
+            'devices' => $analytics->getDeviceBreakdown($site, $start, $end, $filters),
+            default => [],
+        };
+
+        return response()->json([
+            'type' => $type,
+            'data' => $data,
+        ]);
+    }
+
+    /**
      * Authenticate visitor with password for shared site.
      */
     public function authenticate(Request $request, string $token): RedirectResponse

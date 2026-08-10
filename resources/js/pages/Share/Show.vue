@@ -352,11 +352,50 @@ const getOsIcon = (os: string): string | null => {
 
 const activeModal = ref<string | null>(null);
 const modalTitle = ref<string>('');
+const modalData = ref<any[] | null>(null);
+const isLoadingModal = ref(false);
 
-const openModal = (type: string, title: string) => {
+const openModal = async (type: string, title: string) => {
     activeModal.value = type;
     modalTitle.value = title;
+    modalData.value = null;
+    isLoadingModal.value = true;
+
+    try {
+        const endpoint = props.site.share_token
+            ? `/share/${props.site.share_token}/breakdown`
+            : `/dashboard/breakdown`;
+        const res = await fetch(
+            `${endpoint}?period=${props.period}&type=${type}&limit=50`
+        );
+        if (res.ok) {
+            const json = await res.json();
+            modalData.value = json.data;
+        }
+    } catch (err) {
+        console.error('Failed to load breakdown modal data', err);
+    } finally {
+        isLoadingModal.value = false;
+    }
 };
+
+const modalTotalCount = computed(() => {
+    const list = modalData.value || (activeModal.value && props.overview ? (props.overview as any)[
+        activeModal.value === 'pages' ? 'top_pages' :
+        activeModal.value === 'referrers' ? 'top_referrers' :
+        activeModal.value === 'browsers' ? 'top_browsers' :
+        activeModal.value === 'os' ? 'top_os' :
+        activeModal.value === 'locations' ? 'top_countries' :
+        activeModal.value === 'devices' ? 'device_breakdown' : 'utm_campaigns'
+    ] : null);
+
+    if (!list || !Array.isArray(list)) return null;
+    const total = list.reduce((sum, item) => sum + (item.count || 0), 0);
+    return {
+        itemCount: list.length,
+        totalSum: total,
+    };
+});
 
 const isCustomDateModalOpen = ref(false);
 const customStartDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
@@ -778,7 +817,7 @@ const applyCustomDateRange = () => {
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Pages</h3>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs text-muted-foreground">{{ overview.top_pages.length }} entries</span>
+                                    <span class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_pages.length) }}</span>
                                     <button
                                         @click="openModal('pages', 'Top Pages Breakdown')"
                                         title="Expand Details"
@@ -791,7 +830,7 @@ const applyCustomDateRange = () => {
 
                             <div class="space-y-2">
                                 <div
-                                    v-for="page in overview.top_pages"
+                                    v-for="page in overview.top_pages.slice(0, 10)"
                                     :key="page.path"
                                     @click="addFilter('path', page.path)"
                                     :title="`Click to filter dashboard by path: ${page.path}`"
@@ -827,7 +866,7 @@ const applyCustomDateRange = () => {
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Referrers</h3>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs text-muted-foreground">{{ overview.top_referrers.length }} entries</span>
+                                    <span class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_referrers.length) }}</span>
                                     <button
                                         @click="openModal('referrers', 'Top Referrers Breakdown')"
                                         title="Expand Details"
@@ -840,7 +879,7 @@ const applyCustomDateRange = () => {
 
                             <div class="space-y-2">
                                 <div
-                                    v-for="refItem in overview.top_referrers"
+                                    v-for="refItem in overview.top_referrers.slice(0, 10)"
                                     :key="refItem.referrer"
                                     @click="addFilter('referrer', refItem.referrer)"
                                     :title="`Click to filter dashboard by referrer: ${refItem.referrer}`"
@@ -874,7 +913,7 @@ const applyCustomDateRange = () => {
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Device Types</h3>
                                 <div class="flex items-center gap-2">
-                                    <span v-if="overview.device_breakdown" class="text-xs text-muted-foreground">{{ overview.device_breakdown.length }} devices</span>
+                                    <span v-if="overview.device_breakdown" class="text-xs text-muted-foreground font-mono">{{ overview.device_breakdown.length }} devices</span>
                                     <button
                                         @click="openModal('devices', 'Device Breakdown')"
                                         title="Expand Details"
@@ -917,7 +956,7 @@ const applyCustomDateRange = () => {
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Browsers</h3>
                                 <div class="flex items-center gap-2">
-                                    <span v-if="overview.top_browsers" class="text-xs text-muted-foreground">{{ overview.top_browsers.length }} browsers</span>
+                                    <span v-if="overview.top_browsers" class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_browsers.length) }}</span>
                                     <button
                                         @click="openModal('browsers', 'Top Browsers Breakdown')"
                                         title="Expand Details"
@@ -930,7 +969,7 @@ const applyCustomDateRange = () => {
 
                             <div class="space-y-2">
                                 <div
-                                    v-for="item in overview.top_browsers"
+                                    v-for="item in overview.top_browsers.slice(0, 10)"
                                     :key="item.browser"
                                     @click="addFilter('browser', item.browser)"
                                     :title="`Click to filter dashboard by browser: ${item.browser}`"
@@ -964,7 +1003,7 @@ const applyCustomDateRange = () => {
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Operating Systems</h3>
                                 <div class="flex items-center gap-2">
-                                    <span v-if="overview.top_os" class="text-xs text-muted-foreground">{{ overview.top_os.length }} OS</span>
+                                    <span v-if="overview.top_os" class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_os.length) }}</span>
                                     <button
                                         @click="openModal('os', 'Operating Systems Breakdown')"
                                         title="Expand Details"
@@ -977,7 +1016,7 @@ const applyCustomDateRange = () => {
 
                             <div class="space-y-2">
                                 <div
-                                    v-for="item in overview.top_os"
+                                    v-for="item in overview.top_os.slice(0, 10)"
                                     :key="item.os"
                                     @click="addFilter('os', item.os)"
                                     :title="`Click to filter dashboard by OS: ${item.os}`"
@@ -1011,7 +1050,7 @@ const applyCustomDateRange = () => {
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-bold text-foreground">Top Locations</h3>
                                 <div class="flex items-center gap-2">
-                                    <span v-if="overview.top_countries" class="text-xs text-muted-foreground">{{ overview.top_countries.length }} countries</span>
+                                    <span v-if="overview.top_countries" class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_countries.length) }}</span>
                                     <button
                                         @click="openModal('locations', 'Geographic Locations Breakdown')"
                                         title="Expand Details"
@@ -1024,7 +1063,7 @@ const applyCustomDateRange = () => {
 
                             <div class="space-y-2">
                                 <div
-                                    v-for="item in overview.top_countries"
+                                    v-for="item in overview.top_countries.slice(0, 10)"
                                     :key="item.code || item.name"
                                     @click="addFilter('country', item.code || item.name)"
                                     :title="`Click to filter dashboard by country: ${item.name || item.code}`"
@@ -1159,6 +1198,12 @@ const applyCustomDateRange = () => {
                     <SheetDescription class="text-xs text-muted-foreground">
                         Complete detailed breakdown for <strong class="text-foreground">{{ site.domain }}</strong>
                     </SheetDescription>
+
+                    <!-- Total Sum Summary Banner -->
+                    <div v-if="modalTotalCount" class="mt-2 pt-2 border-t border-sidebar-border/40 flex items-center justify-between text-xs font-mono">
+                        <span class="text-muted-foreground">Total ({{ modalTotalCount.itemCount }} items):</span>
+                        <span class="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">{{ formatNumber(modalTotalCount.totalSum) }}</span>
+                    </div>
                 </SheetHeader>
 
                 <div class="mt-4 space-y-2 pb-4">

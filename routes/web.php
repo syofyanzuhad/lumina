@@ -15,6 +15,7 @@ Route::get('/demo', [DemoController::class, 'index'])->name('demo')->middleware(
 // Public Share Routes
 Route::middleware(['lumina.track'])->group(function () {
     Route::get('/share/{token}', [ShareController::class, 'show'])->name('sites.share.show');
+    Route::get('/share/{token}/breakdown', [ShareController::class, 'breakdown'])->name('sites.share.breakdown');
     Route::post('/share/{token}/password', [ShareController::class, 'authenticate'])->name('sites.share.authenticate');
 });
 
