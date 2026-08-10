@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Console\Commands\BackfillDailyVisitorStats;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -134,9 +135,9 @@ class DatabaseSeeder extends Seeder
             'webinar_registration_q3', 'community_giveaway',
         ];
 
-        // Insert 140,000 additional events in batch chunks of 2,000 for maximum seeding speed
+        // Insert 50,000 additional events in batch chunks of 2,000 for maximum seeding speed
         $records = [];
-        for ($i = 0; $i < 10_000; $i++) {
+        for ($i = 0; $i < 50_000; $i++) {
             $daysAgo = rand(0, 364);
             $createdAt = now()->subDays($daysAgo)->subHours(rand(0, 23))->subMinutes(rand(0, 59))->subSeconds(rand(0, 59));
             $country = $countries[array_rand($countries)];
@@ -187,5 +188,8 @@ class DatabaseSeeder extends Seeder
         if (! empty($records)) {
             DB::table('events')->insert($records);
         }
+
+        // Populate daily_visitor_stats for seeded data
+        $this->call(BackfillDailyVisitorStats::class);
     }
 }
