@@ -846,7 +846,7 @@ const applyCustomDateRange = () => {
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Pages</h3>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_pages.length) }}</span>
+                            <span class="text-xs text-muted-foreground font-mono">{{ Math.min(10, overview.top_pages.length) }} of {{ overview.top_pages.length }} pages</span>
                             <button
                                 @click="openModal('pages', 'Top Pages Breakdown')"
                                 title="Expand Details"
@@ -895,7 +895,7 @@ const applyCustomDateRange = () => {
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Referrers</h3>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_referrers.length) }}</span>
+                            <span class="text-xs text-muted-foreground font-mono">{{ Math.min(10, overview.top_referrers.length) }} of {{ overview.top_referrers.length }} referrers</span>
                             <button
                                 @click="openModal('referrers', 'Top Referrers Breakdown')"
                                 title="Expand Details"
@@ -985,7 +985,7 @@ const applyCustomDateRange = () => {
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Browsers</h3>
                         <div class="flex items-center gap-2">
-                            <span v-if="overview.top_browsers" class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_browsers.length) }}</span>
+                            <span v-if="overview.top_browsers" class="text-xs text-muted-foreground font-mono">{{ Math.min(10, overview.top_browsers.length) }} of {{ overview.top_browsers.length }} browsers</span>
                             <button
                                 @click="openModal('browsers', 'Top Browsers Breakdown')"
                                 title="Expand Details"
@@ -1032,7 +1032,7 @@ const applyCustomDateRange = () => {
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Operating Systems</h3>
                         <div class="flex items-center gap-2">
-                            <span v-if="overview.top_os" class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_os.length) }}</span>
+                            <span v-if="overview.top_os" class="text-xs text-muted-foreground font-mono">{{ Math.min(10, overview.top_os.length) }} of {{ overview.top_os.length }} OS</span>
                             <button
                                 @click="openModal('os', 'Operating Systems Breakdown')"
                                 title="Expand Details"
@@ -1079,7 +1079,7 @@ const applyCustomDateRange = () => {
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-foreground">Top Locations</h3>
                         <div class="flex items-center gap-2">
-                            <span v-if="overview.top_countries" class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.top_countries.length) }}</span>
+                            <span v-if="overview.top_countries" class="text-xs text-muted-foreground font-mono">{{ Math.min(10, overview.top_countries.length) }} of {{ overview.top_countries.length }} countries</span>
                             <button
                                 @click="openModal('locations', 'Geographic Locations Breakdown')"
                                 title="Expand Details"
@@ -1121,7 +1121,7 @@ const applyCustomDateRange = () => {
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-bold text-foreground">UTM Campaigns</h3>
                     <div class="flex items-center gap-2">
-                        <span class="text-xs text-muted-foreground font-mono">Showing Top {{ Math.min(10, overview.utm_campaigns.length) }}</span>
+                        <span class="text-xs text-muted-foreground font-mono">{{ Math.min(10, overview.utm_campaigns.length) }} of {{ overview.utm_campaigns.length }} campaigns</span>
                         <button
                             @click="openModal('utm', 'UTM Campaigns Breakdown')"
                             title="Expand Details"
