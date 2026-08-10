@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard.vue';
 
 interface SiteItem {
@@ -52,32 +52,11 @@ defineOptions({
     },
 });
 
-const changeSite = (event: Event) => {
-    const target = event.target as HTMLSelectElement;
-    const siteId = target.value;
-    router.get('/dashboard', { site_id: siteId, period: props.period, tab: props.activeTab }, { preserveState: true, preserveScroll: true });
-};
 </script>
 
 <template>
     <Head :title="`${activeSite.domain} — Analytics`" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 sm:p-6">
-        <!-- Site Switcher Bar -->
-        <div v-if="sites.length > 1" class="flex items-center justify-between bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-xl p-3 sm:p-4 shadow-sm">
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Select Site:</span>
-                <select
-                    :value="activeSite.id"
-                    @change="changeSite"
-                    class="h-8 text-xs font-semibold bg-background border border-sidebar-border rounded-lg px-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                >
-                    <option v-for="site in sites" :key="site.id" :value="site.id">
-                        {{ site.domain }}
-                    </option>
-                </select>
-            </div>
-        </div>
 
         <!-- Main Analytics Dashboard Component -->
         <AnalyticsDashboard
