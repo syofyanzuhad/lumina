@@ -397,13 +397,11 @@ const modalTotalCount = computed(() => {
     };
 });
 
-const isCustomDateModalOpen = ref(false);
 const customStartDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
 const customEndDate = ref(new Date().toISOString().split('T')[0]);
 
 const applyCustomDateRange = () => {
     if (!customStartDate.value || !customEndDate.value || !props.site.share_token) return;
-    isCustomDateModalOpen.value = false;
     router.get(
         `/share/${props.site.share_token}`,
         {

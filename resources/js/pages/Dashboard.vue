@@ -19,14 +19,6 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -149,24 +141,6 @@ defineOptions({
             },
         ],
     },
-});
-
-let pollingInterval: any = null;
-
-onMounted(() => {
-    pollingInterval = setInterval(() => {
-        router.reload({
-            only: ['overview'],
-            preserveState: true,
-            preserveScroll: true,
-        });
-    }, 15000);
-});
-
-onUnmounted(() => {
-    if (pollingInterval) {
-        clearInterval(pollingInterval);
-    }
 });
 
 const isRefreshing = ref(false);
@@ -310,6 +284,7 @@ onUnmounted(() => {
 const refreshData = () => {
     isRefreshing.value = true;
     router.reload({
+        only: ['overview'],
         onFinish: () => {
             isRefreshing.value = false;
         },
@@ -387,38 +362,50 @@ const getOsIcon = (os: string): string | null => {
     return null;
 };
 
+const activeModal = ref<string | null>(null);
+const modalTitle = ref<string>('');
+const modalData = ref<any[] | null>(null);
+const isLoadingModal = ref(false);
+
+const openModal = async (type: string, title: string) => {
+    activeModal.value = type;
+    modalTitle.value = title;
+    modalData.value = null;
+    isLoadingModal.value = true;
+
+    try {
+        const endpoint = `/dashboard/breakdown`;
+        const res = await fetch(
+            `${endpoint}?period=${props.period}&type=${type}&limit=50&site_id=${props.activeSite.id}`
+        );
+        if (res.ok) {
+            const json = await res.json();
+            modalData.value = json.data;
+        }
+    } catch (err) {
+        console.error('Failed to load breakdown modal data', err);
+    } finally {
+        isLoadingModal.value = false;
+    }
+};
+
 const modalTotalCount = computed(() => {
-    return modalData.value.reduce((acc, item) => acc + (item.count || 0), 0);
-});
+    const list = modalData.value || (activeModal.value && props.overview ? (props.overview as any)[
+        activeModal.value === 'pages' ? 'top_pages' :
+        activeModal.value === 'referrers' ? 'top_referrers' :
+        activeModal.value === 'browsers' ? 'top_browsers' :
+        activeModal.value === 'os' ? 'top_os' :
+        activeModal.value === 'locations' ? 'top_countries' :
+        activeModal.value === 'devices' ? 'device_breakdown' : 'utm_campaigns'
+    ] : null);
 
-const topPagesTotal = computed(() => {
-    return props.overview?.total_pageviews || props.overview?.top_pages?.reduce((acc, item) => acc + item.count, 0) || 0;
+    if (!list || !Array.isArray(list)) return null;
+    const total = list.reduce((sum, item) => sum + (item.count || 0), 0);
+    return {
+        itemCount: list.length,
+        totalSum: total,
+    };
 });
-
-const topReferrersTotal = computed(() => {
-    return props.overview?.top_referrers?.reduce((acc, item) => acc + item.count, 0) || 0;
-});
-
-const devicesTotal = computed(() => {
-    return props.overview?.device_breakdown?.reduce((acc, item) => acc + item.count, 0) || 0;
-});
-
-const browsersTotal = computed(() => {
-    return props.overview?.top_browsers?.reduce((acc, item) => acc + item.count, 0) || 0;
-});
-
-const osTotal = computed(() => {
-    return props.overview?.top_os?.reduce((acc, item) => acc + item.count, 0) || 0;
-});
-
-const countriesTotal = computed(() => {
-    return props.overview?.top_countries?.reduce((acc, item) => acc + item.count, 0) || 0;
-});
-
-const utmTotal = computed(() => {
-    return props.overview?.utm_campaigns?.reduce((acc, item) => acc + item.count, 0) || 0;
-});
-
 
 const customStartDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
 const customEndDate = ref(new Date().toISOString().split('T')[0]);
