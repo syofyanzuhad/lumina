@@ -57,7 +57,7 @@ defineOptions({
 <template>
     <Head :title="`${activeSite.domain} — Analytics`" />
 
-
+    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 sm:p-6">
         <!-- Main Analytics Dashboard Component -->
         <AnalyticsDashboard
             baseUrl="/dashboard"
