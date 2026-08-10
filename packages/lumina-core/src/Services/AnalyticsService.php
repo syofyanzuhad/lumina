@@ -116,6 +116,14 @@ class AnalyticsService
         $cacheKey = $this->cacheKey($site->id, 'unique_visitors', $start, $end, $filters);
 
         return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
+            if (empty($filters)) {
+                return (int) DB::table('daily_visitor_stats')
+                    ->where('site_id', $site->id)
+                    ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+                    ->distinct('visitor_hash')
+                    ->count('visitor_hash');
+            }
+
             return Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->tap(fn ($q) => $this->applyFilters($q, $filters))
@@ -482,27 +490,6 @@ class AnalyticsService
             ->where('created_at', '>=', now()->subMinutes($minutes))
             ->distinct('visitor_hash')
             ->count('visitor_hash');
-    }
-
-    public function getUniqueVisitors(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): int
-    {
-        $cacheKey = $this->cacheKey($site->id, 'unique_visitors', $start, $end, $filters);
-
-        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
-            if (empty($filters)) {
-                return (int) DB::table('daily_visitor_stats')
-                    ->where('site_id', $site->id)
-                    ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-                    ->distinct('visitor_hash')
-                    ->count('visitor_hash');
-            }
-
-            return Event::where('site_id', $site->id)
-                ->whereBetween('created_at', [$start, $end])
-                ->tap(fn ($q) => $this->applyFilters($q, $filters))
-                ->distinct('visitor_hash')
-                ->count('visitor_hash');
-        });
     }
 
     /**
