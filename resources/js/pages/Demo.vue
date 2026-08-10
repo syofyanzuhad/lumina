@@ -139,6 +139,18 @@ const formatNumber = (num: number) => {
     return new Intl.NumberFormat().format(num);
 };
 
+const topPagesTotal = computed(() => {
+    return props.overview.total_pageviews || props.overview.top_pages.reduce((acc, item) => acc + item.count, 0);
+});
+
+const topReferrersTotal = computed(() => {
+    return props.overview.top_referrers.reduce((acc, item) => acc + item.count, 0);
+});
+
+const devicesTotal = computed(() => {
+    return props.overview.device_breakdown?.reduce((acc, item) => acc + item.count, 0) || 0;
+});
+
 const getDeviceIcon = (deviceStr: string) => {
     const lower = (deviceStr || '').toLowerCase();
     if (lower.includes('mobile')) return Smartphone;
@@ -247,7 +259,7 @@ const getOsIcon = (os: string): string | null => {
                         Log in
                     </Link>
                     <Link
-                        :href="register()"
+                        href="/register"
                         class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold text-xs shadow-lg shadow-indigo-600/25 hover:from-indigo-500 hover:to-violet-500 transition-all flex items-center gap-2"
                     >
                         Get Started
@@ -472,7 +484,7 @@ const getOsIcon = (os: string): string | null => {
                 </p>
                 <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Link
-                        :href="register()"
+                        href="/register"
                         class="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 hover:from-indigo-500 hover:to-violet-500 transition-all flex items-center justify-center gap-2"
                     >
                         Create Free Account
