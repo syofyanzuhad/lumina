@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Jenssegers\Agent\Agent;
 use Lumina\Core\Enums\DeviceType;
@@ -123,5 +124,11 @@ class InsertEvent implements ShouldQueue
             'utm_content' => $utmContent,
             'metadata' => $this->metadata,
         ]);
+
+        DB::statement('
+            INSERT INTO daily_visitor_stats (site_id, date, visitor_hash, views, created_at, updated_at)
+            VALUES (?, CURRENT_DATE(), ?, 1, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE views = views + 1, updated_at = NOW()
+        ', [$this->siteId, $this->visitorHash]);
     }
 }
