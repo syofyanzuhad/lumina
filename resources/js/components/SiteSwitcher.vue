@@ -5,9 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const page = usePage();
 const sites = computed(() => page.props.sites as { id: number; domain: string }[]);
+
 const activeSiteId = computed({
     get: () => {
-        const urlParams = new URLSearchParams(window.location.search);
+        // Parse site_id from Inertia's reactive page.url
+        const search = page.url.includes('?') ? page.url.split('?')[1] : '';
+        const urlParams = new URLSearchParams(search);
         const urlSiteId = urlParams.get('site_id');
         if (urlSiteId) {
             return urlSiteId;
@@ -16,9 +19,11 @@ const activeSiteId = computed({
     },
     set: (value: string) => {
         if (value) {
-            const urlParams = new URLSearchParams(window.location.search);
+            const currentPath = page.url.split('?')[0];
+            const search = page.url.includes('?') ? page.url.split('?')[1] : '';
+            const urlParams = new URLSearchParams(search);
             urlParams.set('site_id', value);
-            const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+            const newUrl = `${currentPath}?${urlParams.toString()}`;
             router.get(newUrl, {}, {
                 preserveState: true,
                 preserveScroll: true,
