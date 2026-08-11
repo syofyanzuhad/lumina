@@ -38,16 +38,7 @@ class DashboardControllerTest extends TestCase
 
         $response = $this->actingAs($user)->get('/dashboard');
 
-        $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('sites', 1)
-            ->where('activeSite.domain', 'my-site.com')
-            ->where('period', '30d')
-            ->has('total_pageviews')
-            ->has('unique_visitors')
-            ->has('daily_pageviews')
-        );
+        $response->assertRedirect("/dashboard?site_id={$site->id}");
     }
 
     public function test_user_can_switch_active_site_via_query_parameter(): void
@@ -70,7 +61,7 @@ class DashboardControllerTest extends TestCase
         $user = User::factory()->create();
         $site = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'my-site.com']);
 
-        $response = $this->actingAs($user)->get('/dashboard?period=7d');
+        $response = $this->actingAs($user)->get("/dashboard?site_id={$site->id}&period=7d");
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
@@ -103,7 +94,7 @@ class DashboardControllerTest extends TestCase
         $user = User::factory()->create();
         $site = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'my-site.com']);
 
-        $response = $this->actingAs($user)->get('/dashboard?tab=events');
+        $response = $this->actingAs($user)->get("/dashboard?site_id={$site->id}&tab=events");
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
@@ -121,7 +112,7 @@ class DashboardControllerTest extends TestCase
         $user = User::factory()->create();
         $site = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'my-site.com']);
 
-        $response = $this->actingAs($user)->get('/dashboard?tab=events&event=purchase_click');
+        $response = $this->actingAs($user)->get("/dashboard?site_id={$site->id}&tab=events&event=purchase_click");
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
@@ -138,7 +129,7 @@ class DashboardControllerTest extends TestCase
         $user = User::factory()->create();
         $site = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'my-site.com']);
 
-        $response = $this->actingAs($user)->get('/dashboard?tab=events&event=purchase_click&property=plan');
+        $response = $this->actingAs($user)->get("/dashboard?site_id={$site->id}&tab=events&event=purchase_click&property=plan");
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page

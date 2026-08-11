@@ -1,25 +1,11 @@
 <script setup lang="ts">
 import { usePage, router, Link } from '@inertiajs/vue3';
-import { computed, watchEffect } from 'vue';
+import { computed } from 'vue';
 import { Plus } from '@lucide/vue';
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const page = usePage();
 const sites = computed(() => page.props.sites as { id: number; domain: string }[]);
-
-// Ensure site_id URL parameter is present when visiting dashboard
-watchEffect(() => {
-    if (page.url.startsWith('/dashboard')) {
-        const search = page.url.includes('?') ? page.url.split('?')[1] : '';
-        const urlParams = new URLSearchParams(search);
-        if (!urlParams.has('site_id') && page.props.active_site_id) {
-            urlParams.set('site_id', String(page.props.active_site_id));
-            const currentPath = page.url.split('?')[0];
-            const newUrl = `${currentPath}?${urlParams.toString()}`;
-            router.get(newUrl, {}, { preserveState: true, preserveScroll: true, replace: true });
-        }
-    }
-});
 
 const activeSiteId = computed({
     get: () => {

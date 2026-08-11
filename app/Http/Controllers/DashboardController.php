@@ -21,6 +21,15 @@ class DashboardController extends Controller
             return redirect()->route('sites.create');
         }
 
+        if (! $request->has('site_id')) {
+            $defaultSite = $sites->first();
+
+            return redirect()->route('dashboard', array_merge(
+                $request->query(),
+                ['site_id' => $defaultSite->id]
+            ));
+        }
+
         $activeSiteId = $request->query('site_id');
         $activeSite = $sites->firstWhere('id', (int) $activeSiteId);
 
