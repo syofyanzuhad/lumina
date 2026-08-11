@@ -1,19 +1,27 @@
 <script setup lang="ts">
 import { usePage, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { update } from '@/actions/App/Http/Controllers/ActiveSiteController';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const page = usePage();
 const sites = computed(() => page.props.sites as { id: number; domain: string }[]);
 const activeSiteId = computed({
-    get: () => page.props.active_site_id ? String(page.props.active_site_id) : '',
+    get: () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSiteId = urlParams.get('site_id');
+        if (urlSiteId) {
+            return urlSiteId;
+        }
+        return page.props.active_site_id ? String(page.props.active_site_id) : '';
+    },
     set: (value: string) => {
         if (value) {
-            router.put(update.url(), {
-                site_id: Number(value),
-            }, {
-                preserveState: false,
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('site_id', value);
+            const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+            router.get(newUrl, {}, {
+                preserveState: true,
+                preserveScroll: true,
             });
         }
     },

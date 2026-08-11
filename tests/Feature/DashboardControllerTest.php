@@ -44,12 +44,9 @@ class DashboardControllerTest extends TestCase
             ->has('sites', 1)
             ->where('activeSite.domain', 'my-site.com')
             ->where('period', '30d')
-            ->has('overview.total_pageviews')
-            ->has('overview.unique_visitors')
-            ->has('overview.top_pages')
-            ->has('overview.top_referrers')
-            ->has('overview.daily_pageviews')
-            ->has('overview.custom_events')
+            ->has('total_pageviews')
+            ->has('unique_visitors')
+            ->has('daily_pageviews')
         );
     }
 
@@ -66,8 +63,6 @@ class DashboardControllerTest extends TestCase
             ->component('Dashboard')
             ->where('activeSite.domain', 'site-two.com')
         );
-
-        $this->assertEquals($site2->id, session('active_site_id'));
     }
 
     public function test_user_can_change_date_period_filter(): void

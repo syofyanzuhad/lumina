@@ -41,12 +41,9 @@ class HandleInertiaRequests extends Middleware
         $activeSiteId = null;
 
         if ($user && $sites->isNotEmpty()) {
-            $activeSiteId = session('active_site_id');
-
-            if (! $activeSiteId || ! $sites->contains('id', $activeSiteId)) {
-                $activeSiteId = $sites->first()->id;
-                session()->put('active_site_id', $activeSiteId);
-            }
+            $requestedSiteId = $request->query('site_id');
+            $activeSite = $requestedSiteId ? $sites->firstWhere('id', (int) $requestedSiteId) : null;
+            $activeSiteId = $activeSite ? $activeSite->id : $sites->first()->id;
         }
 
         return [

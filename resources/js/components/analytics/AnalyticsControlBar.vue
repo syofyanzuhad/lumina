@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { CalendarDays, Download, RefreshCw, Sparkles } from '@lucide/vue';
+import { Link } from '@inertiajs/vue3';
+import { CalendarDays, Download, RefreshCw, Settings, Sparkles } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -231,6 +232,20 @@ const emit = defineEmits<{
                     <span :class="['relative inline-flex rounded-full h-2 w-2', isLive ? 'bg-emerald-500' : 'bg-muted-foreground/40']"></span>
                 </span>
                 <span>{{ isLive ? 'Live On' : 'Live Off' }}</span>
+            </Button>
+
+            <!-- Settings Link Button -->
+            <Button
+                variant="outline"
+                size="sm"
+                as-child
+                class="h-8 sm:h-9 text-xs font-medium gap-1.5 p-2 sm:px-3"
+                title="Dashboard Settings"
+            >
+                <Link :href="siteId ? `/sites/${siteId}` : '/settings/profile'">
+                    <Settings class="h-3.5 w-3.5" />
+                    <span class="hidden sm:inline">Settings</span>
+                </Link>
             </Button>
 
             <!-- Manual Refresh Button -->

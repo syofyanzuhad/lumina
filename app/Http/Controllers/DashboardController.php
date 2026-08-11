@@ -21,14 +21,12 @@ class DashboardController extends Controller
             return redirect()->route('sites.create');
         }
 
-        $activeSiteId = $request->query('site_id') ?? session('active_site_id');
+        $activeSiteId = $request->query('site_id');
         $activeSite = $sites->firstWhere('id', (int) $activeSiteId);
 
         if (! $activeSite) {
             $activeSite = $sites->first();
         }
-
-        session(['active_site_id' => $activeSite->id]);
 
         $period = $request->query('period', '30d');
         [$start, $end] = $this->resolveDateRange($period, $request->query('start_date'), $request->query('end_date'));
