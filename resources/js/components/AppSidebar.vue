@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, Globe } from '@lucide/vue';
+import { BookOpen, FolderGit2, LayoutGrid, Globe, Plus } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
+import CreateSiteModal from '@/components/CreateSiteModal.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -59,6 +60,19 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
+            <div class="px-3 py-2">
+                <CreateSiteModal v-slot="{ open }">
+                    <SidebarMenuButton
+                        size="default"
+                        class="w-full justify-start gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-xs"
+                        @click="open"
+                        tooltip="Add New Site"
+                    >
+                        <Plus class="h-4 w-4" />
+                        <span>New Site</span>
+                    </SidebarMenuButton>
+                </CreateSiteModal>
+            </div>
             <NavMain :items="mainNavItems" />
         </SidebarContent>
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
 import { Plus } from '@lucide/vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import CreateSiteModal from '@/components/CreateSiteModal.vue';
 import SiteSwitcher from '@/components/SiteSwitcher.vue';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -29,18 +29,18 @@ withDefaults(
         </div>
         <div class="flex items-center gap-2">
             <SiteSwitcher />
-            <Button
-                variant="outline"
-                size="sm"
-                as-child
-                class="h-9 px-2.5 sm:px-3 text-xs font-semibold gap-1.5"
-                title="Add New Site"
-            >
-                <Link href="/sites/create">
+            <CreateSiteModal v-slot="{ open }">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-9 px-2.5 sm:px-3 text-xs font-semibold gap-1.5"
+                    title="Add New Site"
+                    @click="open"
+                >
                     <Plus class="h-3.5 w-3.5" />
                     <span class="hidden sm:inline">New Site</span>
-                </Link>
-            </Button>
+                </Button>
+            </CreateSiteModal>
         </div>
     </header>
 </template>

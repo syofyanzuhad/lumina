@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { usePage, router, Link } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { Plus } from '@lucide/vue';
+import CreateSiteModal from '@/components/CreateSiteModal.vue';
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const page = usePage();
@@ -45,10 +46,16 @@ const activeSiteId = computed({
                     {{ site.domain }}
                 </SelectItem>
                 <SelectSeparator />
-                <Link href="/sites/create" class="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-sm cursor-pointer transition-colors">
-                    <Plus class="h-3.5 w-3.5" />
-                    <span>Add New Site</span>
-                </Link>
+                <CreateSiteModal v-slot="{ open }">
+                    <button
+                        type="button"
+                        @click="open"
+                        class="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-sm cursor-pointer transition-colors"
+                    >
+                        <Plus class="h-3.5 w-3.5" />
+                        <span>Add New Site</span>
+                    </button>
+                </CreateSiteModal>
             </SelectContent>
         </Select>
     </div>
