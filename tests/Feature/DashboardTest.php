@@ -10,10 +10,11 @@ test('guests are redirected to the login page', function () {
 
 test('authenticated users with sites can visit the dashboard', function () {
     $user = User::factory()->create();
-    Site::factory()->create(['owner_id' => $user->id]);
+    $site = Site::factory()->create(['owner_id' => $user->id]);
     $this->actingAs($user);
 
-    $response = $this->get(route('dashboard'));
+    // /dashboard redirects server-side to include site_id when it is absent.
+    $response = $this->get(route('dashboard', ['site_id' => $site->id]));
     $response->assertOk();
 });
 

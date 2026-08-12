@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Lumina\Core\Models\Site;
@@ -80,6 +81,9 @@ class StatsController extends Controller
         ]);
     }
 
+    /**
+     * @return array{CarbonInterface, CarbonInterface}
+     */
     protected function resolveDateRange(string $period, ?string $startDate, ?string $endDate): array
     {
         if ($period === '7d') {

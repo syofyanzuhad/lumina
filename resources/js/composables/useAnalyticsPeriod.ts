@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/vue3';
-import { ref,  unref } from 'vue';
-import type {Ref} from 'vue';
+import { ref, unref } from 'vue';
+import type { Ref } from 'vue';
 
 export interface UseAnalyticsPeriodOptions {
     baseUrl: string | Ref<string>;
@@ -10,7 +10,9 @@ export interface UseAnalyticsPeriodOptions {
 }
 
 export function useAnalyticsPeriod(options: UseAnalyticsPeriodOptions) {
-    const customStartDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
+    const customStartDate = ref(
+        new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0],
+    );
     const customEndDate = ref(new Date().toISOString().split('T')[0]);
 
     const getBaseUrl = () => unref(options.baseUrl);
@@ -19,8 +21,8 @@ export function useAnalyticsPeriod(options: UseAnalyticsPeriodOptions) {
         const url = getBaseUrl();
 
         if (!url) {
-return;
-}
+            return;
+        }
 
         const siteId = unref(options.siteId);
         const tab = unref(options.currentTab);
@@ -32,12 +34,12 @@ return;
         };
 
         if (siteId) {
-params.site_id = siteId;
-}
+            params.site_id = siteId;
+        }
 
         if (tab) {
-params.tab = tab;
-}
+            params.tab = tab;
+        }
 
         router.get(url, params, {
             preserveState: true,
@@ -49,8 +51,8 @@ params.tab = tab;
         const url = getBaseUrl();
 
         if (!url || !customStartDate.value || !customEndDate.value) {
-return;
-}
+            return;
+        }
 
         const siteId = unref(options.siteId);
         const tab = unref(options.currentTab);
@@ -64,12 +66,12 @@ return;
         };
 
         if (siteId) {
-params.site_id = siteId;
-}
+            params.site_id = siteId;
+        }
 
         if (tab) {
-params.tab = tab;
-}
+            params.tab = tab;
+        }
 
         router.get(url, params, {
             preserveState: true,

@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { CalendarDays, Download, RefreshCw, Settings, Sparkles } from '@lucide/vue';
+import {
+    CalendarDays,
+    Download,
+    RefreshCw,
+    Settings,
+    Sparkles,
+} from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,7 +42,7 @@ withDefaults(
         isLive: false,
         isRefreshing: false,
         availablePeriods: () => ['today', '7d', '30d', 'custom'],
-    }
+    },
 );
 
 const emit = defineEmits<{
@@ -51,17 +57,22 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between bg-card border border-sidebar-border/70 dark:border-sidebar-border rounded-xl p-2.5 sm:p-4 shadow-sm">
+    <div
+        class="flex flex-col gap-2.5 rounded-xl border border-sidebar-border/70 bg-card p-2.5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4 dark:border-sidebar-border"
+    >
         <!-- Tab Switcher -->
-        <div class="flex items-center justify-between sm:justify-start gap-2">
-            <div v-if="showEventsTab" class="flex items-center gap-0.5 p-0.5 sm:p-1 bg-muted rounded-lg border border-sidebar-border/50">
+        <div class="flex items-center justify-between gap-2 sm:justify-start">
+            <div
+                v-if="showEventsTab"
+                class="flex items-center gap-0.5 rounded-lg border border-sidebar-border/50 bg-muted p-0.5 sm:p-1"
+            >
                 <button
                     @click="emit('setTab', 'overview')"
                     :class="[
-                        'px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                        'rounded-md px-2.5 py-1 text-xs font-semibold transition-all sm:px-3',
                         activeTab === 'overview'
                             ? 'bg-background text-foreground shadow-xs'
-                            : 'text-muted-foreground hover:text-foreground'
+                            : 'text-muted-foreground hover:text-foreground',
                     ]"
                 >
                     Overview
@@ -69,10 +80,10 @@ const emit = defineEmits<{
                 <button
                     @click="emit('setTab', 'events')"
                     :class="[
-                        'px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5',
+                        'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-all sm:px-3',
                         activeTab === 'events'
                             ? 'bg-background text-foreground shadow-xs'
-                            : 'text-muted-foreground hover:text-foreground'
+                            : 'text-muted-foreground hover:text-foreground',
                     ]"
                 >
                     <Sparkles class="h-3 w-3 text-amber-500" />
@@ -87,17 +98,21 @@ const emit = defineEmits<{
         </div>
 
         <!-- Date Period Segment & Action Controls -->
-        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap justify-between sm:justify-end">
+        <div
+            class="flex flex-wrap items-center justify-between gap-1.5 sm:flex-nowrap sm:justify-end sm:gap-2"
+        >
             <!-- Date Segment Buttons -->
-            <div class="flex items-center gap-0.5 p-0.5 sm:p-1 bg-muted rounded-lg border border-sidebar-border/50 text-xs">
+            <div
+                class="flex items-center gap-0.5 rounded-lg border border-sidebar-border/50 bg-muted p-0.5 text-xs sm:p-1"
+            >
                 <button
                     v-if="availablePeriods.includes('today')"
                     @click="emit('setPeriod', 'today')"
                     :class="[
-                        'px-2 sm:px-2.5 py-1 font-semibold rounded-md transition-all',
+                        'rounded-md px-2 py-1 font-semibold transition-all sm:px-2.5',
                         period === 'today'
                             ? 'bg-background text-foreground shadow-xs'
-                            : 'text-muted-foreground hover:text-foreground'
+                            : 'text-muted-foreground hover:text-foreground',
                     ]"
                 >
                     Today
@@ -106,10 +121,10 @@ const emit = defineEmits<{
                     v-if="availablePeriods.includes('7d')"
                     @click="emit('setPeriod', '7d')"
                     :class="[
-                        'px-2 sm:px-2.5 py-1 font-semibold rounded-md transition-all',
+                        'rounded-md px-2 py-1 font-semibold transition-all sm:px-2.5',
                         period === '7d'
                             ? 'bg-background text-foreground shadow-xs'
-                            : 'text-muted-foreground hover:text-foreground'
+                            : 'text-muted-foreground hover:text-foreground',
                     ]"
                 >
                     7d
@@ -118,10 +133,10 @@ const emit = defineEmits<{
                     v-if="availablePeriods.includes('30d')"
                     @click="emit('setPeriod', '30d')"
                     :class="[
-                        'px-2 sm:px-2.5 py-1 font-semibold rounded-md transition-all',
+                        'rounded-md px-2 py-1 font-semibold transition-all sm:px-2.5',
                         period === '30d'
                             ? 'bg-background text-foreground shadow-xs'
-                            : 'text-muted-foreground hover:text-foreground'
+                            : 'text-muted-foreground hover:text-foreground',
                     ]"
                 >
                     30d
@@ -132,42 +147,61 @@ const emit = defineEmits<{
                     <DropdownMenuTrigger as-child>
                         <button
                             :class="[
-                                'px-2 sm:px-2.5 py-1 font-semibold rounded-md transition-all flex items-center gap-1',
+                                'flex items-center gap-1 rounded-md px-2 py-1 font-semibold transition-all sm:px-2.5',
                                 period === 'custom'
                                     ? 'bg-background text-foreground shadow-xs'
-                                    : 'text-muted-foreground hover:text-foreground'
+                                    : 'text-muted-foreground hover:text-foreground',
                             ]"
                         >
                             <CalendarDays class="h-3 w-3" />
                             <span>Custom</span>
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" class="w-72 p-4 space-y-3">
-                        <DropdownMenuLabel class="p-0 text-xs font-bold text-foreground">Custom Date Range</DropdownMenuLabel>
+                    <DropdownMenuContent align="end" class="w-72 space-y-3 p-4">
+                        <DropdownMenuLabel
+                            class="p-0 text-xs font-bold text-foreground"
+                            >Custom Date Range</DropdownMenuLabel
+                        >
                         <DropdownMenuSeparator />
                         <div class="space-y-2">
                             <div>
-                                <Label class="text-[11px] text-muted-foreground">Start Date</Label>
+                                <Label class="text-[11px] text-muted-foreground"
+                                    >Start Date</Label
+                                >
                                 <Input
                                     type="date"
                                     :value="customStartDate"
-                                    @input="emit('update:customStartDate', ($event.target as HTMLInputElement).value)"
-                                    class="h-8 text-xs mt-1"
+                                    @input="
+                                        emit(
+                                            'update:customStartDate',
+                                            ($event.target as HTMLInputElement)
+                                                .value,
+                                        )
+                                    "
+                                    class="mt-1 h-8 text-xs"
                                 />
                             </div>
                             <div>
-                                <Label class="text-[11px] text-muted-foreground">End Date</Label>
+                                <Label class="text-[11px] text-muted-foreground"
+                                    >End Date</Label
+                                >
                                 <Input
                                     type="date"
                                     :value="customEndDate"
-                                    @input="emit('update:customEndDate', ($event.target as HTMLInputElement).value)"
-                                    class="h-8 text-xs mt-1"
+                                    @input="
+                                        emit(
+                                            'update:customEndDate',
+                                            ($event.target as HTMLInputElement)
+                                                .value,
+                                        )
+                                    "
+                                    class="mt-1 h-8 text-xs"
                                 />
                             </div>
                         </div>
                         <Button
                             size="sm"
-                            class="w-full h-8 text-xs font-semibold"
+                            class="h-8 w-full text-xs font-semibold"
                             @click="emit('applyCustomRange')"
                         >
                             Apply Range
@@ -184,32 +218,54 @@ const emit = defineEmits<{
             <!-- Export Menu Dropdown -->
             <DropdownMenu v-if="showExport">
                 <DropdownMenuTrigger as-child>
-                    <Button variant="outline" size="sm" class="h-8 sm:h-9 text-xs font-medium gap-1.5">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-8 gap-1.5 text-xs font-medium sm:h-9"
+                    >
                         <Download class="h-3.5 w-3.5" />
                         <span class="hidden sm:inline">Export</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" class="w-48">
-                    <DropdownMenuLabel class="text-xs">Export Analytics Data</DropdownMenuLabel>
+                    <DropdownMenuLabel class="text-xs"
+                        >Export Analytics Data</DropdownMenuLabel
+                    >
                     <DropdownMenuSeparator />
                     <DropdownMenuItem as-child>
-                        <a :href="`/sites/${siteId}/export?type=pageviews&format=csv`" download class="cursor-pointer text-xs">
+                        <a
+                            :href="`/sites/${siteId}/export?type=pageviews&format=csv`"
+                            download
+                            class="cursor-pointer text-xs"
+                        >
                             Pageviews (CSV)
                         </a>
                     </DropdownMenuItem>
                     <DropdownMenuItem as-child>
-                        <a :href="`/sites/${siteId}/export?type=pageviews&format=json`" download class="cursor-pointer text-xs">
+                        <a
+                            :href="`/sites/${siteId}/export?type=pageviews&format=json`"
+                            download
+                            class="cursor-pointer text-xs"
+                        >
                             Pageviews (JSON)
                         </a>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem as-child>
-                        <a :href="`/sites/${siteId}/export?type=events&format=csv`" download class="cursor-pointer text-xs">
+                        <a
+                            :href="`/sites/${siteId}/export?type=events&format=csv`"
+                            download
+                            class="cursor-pointer text-xs"
+                        >
                             Events (CSV)
                         </a>
                     </DropdownMenuItem>
                     <DropdownMenuItem as-child>
-                        <a :href="`/sites/${siteId}/export?type=events&format=json`" download class="cursor-pointer text-xs">
+                        <a
+                            :href="`/sites/${siteId}/export?type=events&format=json`"
+                            download
+                            class="cursor-pointer text-xs"
+                        >
                             Events (JSON)
                         </a>
                     </DropdownMenuItem>
@@ -223,13 +279,25 @@ const emit = defineEmits<{
                 size="sm"
                 @click="emit('toggleLive')"
                 :class="[
-                    'h-8 sm:h-9 text-xs font-medium gap-1.5 transition-all',
-                    isLive ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : ''
+                    'h-8 gap-1.5 text-xs font-medium transition-all sm:h-9',
+                    isLive
+                        ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        : '',
                 ]"
             >
                 <span class="relative flex h-2 w-2">
-                    <span v-if="isLive" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span :class="['relative inline-flex rounded-full h-2 w-2', isLive ? 'bg-emerald-500' : 'bg-muted-foreground/40']"></span>
+                    <span
+                        v-if="isLive"
+                        class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+                    ></span>
+                    <span
+                        :class="[
+                            'relative inline-flex h-2 w-2 rounded-full',
+                            isLive
+                                ? 'bg-emerald-500'
+                                : 'bg-muted-foreground/40',
+                        ]"
+                    ></span>
                 </span>
                 <span>{{ isLive ? 'Live On' : 'Live Off' }}</span>
             </Button>
@@ -239,7 +307,7 @@ const emit = defineEmits<{
                 variant="outline"
                 size="sm"
                 as-child
-                class="h-8 sm:h-9 text-xs font-medium gap-1.5 p-2 sm:px-3"
+                class="h-8 gap-1.5 p-2 text-xs font-medium sm:h-9 sm:px-3"
                 title="Dashboard Settings"
             >
                 <Link :href="siteId ? `/sites/${siteId}` : '/settings/profile'">
@@ -254,10 +322,12 @@ const emit = defineEmits<{
                 size="sm"
                 @click="emit('refresh')"
                 :disabled="isRefreshing"
-                class="h-8 sm:h-9 text-xs font-medium p-2 sm:px-3"
+                class="h-8 p-2 text-xs font-medium sm:h-9 sm:px-3"
                 title="Refresh Analytics"
             >
-                <RefreshCw :class="['h-3.5 w-3.5', isRefreshing ? 'animate-spin' : '']" />
+                <RefreshCw
+                    :class="['h-3.5 w-3.5', isRefreshing ? 'animate-spin' : '']"
+                />
             </Button>
         </div>
     </div>

@@ -48,6 +48,10 @@ class ExportController extends Controller
         $callback = function () use ($site, $start, $end, $type) {
             $file = fopen('php://output', 'w');
 
+            if ($file === false) {
+                return;
+            }
+
             if ($type === 'events') {
                 fputcsv($file, ['ID', 'Event Name', 'Path', 'Metadata', 'Referrer', 'Device Type', 'Created At']);
 
@@ -65,7 +69,7 @@ class ExportController extends Controller
                             $event->path,
                             $metaJson,
                             $event->referrer,
-                            $event->device_type->value ?? 'unknown',
+                            is_object($event->device_type) ? $event->device_type->value : (string) $event->device_type,
                             $event->created_at->toDateTimeString(),
                         ]);
                     }
@@ -83,7 +87,7 @@ class ExportController extends Controller
                             $event->id,
                             $event->path,
                             $event->referrer,
-                            $event->device_type->value ?? 'unknown',
+                            is_object($event->device_type) ? $event->device_type->value : (string) $event->device_type,
                             $event->browser ?? '',
                             $event->os ?? '',
                             $event->country ?? '',
@@ -113,6 +117,11 @@ class ExportController extends Controller
 
         $callback = function () use ($site, $start, $end, $type) {
             $out = fopen('php://output', 'w');
+
+            if ($out === false) {
+                return;
+            }
+
             fwrite($out, "[\n");
 
             $query = Event::where('site_id', $site->id)
@@ -131,7 +140,11 @@ class ExportController extends Controller
                         fwrite($out, ",\n");
                     }
                     $first = false;
-                    fwrite($out, json_encode($event->toArray()));
+                    $encoded = json_encode($event->toArray());
+
+                    if ($encoded !== false) {
+                        fwrite($out, $encoded);
+                    }
                 }
             });
 
@@ -166,6 +179,11 @@ class ExportController extends Controller
 
         return response()->stream(function () use ($overview) {
             $file = fopen('php://output', 'w');
+
+            if ($file === false) {
+                return;
+            }
+
             fputcsv($file, ['Metric', 'Value']);
             fputcsv($file, ['Total Pageviews', $overview['total_pageviews'] ?? 0]);
             fputcsv($file, ['Unique Visitors', $overview['unique_visitors'] ?? 0]);
@@ -213,6 +231,9 @@ class ExportController extends Controller
         }, 200, $headers);
     }
 
+    /**
+     * @return array{CarbonInterface, CarbonInterface}
+     */
     protected function resolveDateRange(string $period, ?string $startDate, ?string $endDate): array
     {
         if ($period === '7d') {

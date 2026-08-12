@@ -9,5 +9,9 @@ parameters:
         - config/
         - database/
         - routes/
+        - packages/lumina-core/src/
 
+    # Note: the analysis memory limit lives in the `composer types:check`
+    # script (phpstan analyse --memory-limit=2G) — PHPStan 2.x removed the
+    # `memoryLimit` config parameter, so a CLI flag is the only supported way.
     level: 7

@@ -86,6 +86,51 @@ class InsertEventJobTest extends TestCase
         $this->assertSame(2, DB::table('daily_visitor_stats')->where('site_id', $site->id)->value('views'));
     }
 
+    public function test_daily_visitor_stats_keys_by_resolved_identity_in_mixed_population(): void
+    {
+        $site = Site::factory()->create();
+
+        // JS visitor: opaque client ID takes precedence over the fallback hash.
+        InsertEvent::dispatchSync(
+            siteId: $site->id,
+            path: '/home',
+            referrer: null,
+            visitorHash: 'fallback-hash-for-js-visitor',
+            visitorId: 'js-visitor-1',
+            deviceType: DeviceType::Desktop,
+        );
+        InsertEvent::dispatchSync(
+            siteId: $site->id,
+            path: '/pricing',
+            referrer: null,
+            visitorHash: 'fallback-hash-for-js-visitor',
+            visitorId: 'js-visitor-1',
+            deviceType: DeviceType::Desktop,
+        );
+
+        // Non-JS visitor: falls back to the server-side hash as its identity.
+        InsertEvent::dispatchSync(
+            siteId: $site->id,
+            path: '/blog',
+            referrer: null,
+            visitorHash: 'non-js-hash-1',
+            deviceType: DeviceType::Mobile,
+        );
+
+        // The aggregate must be keyed by the resolved identity
+        // (COALESCE(visitor_id, visitor_hash)) so a mixed JS/non-JS population
+        // never double-counts: two rows (js-visitor-1 with 2 views, and
+        // non-js-hash-1 with 1 view), not three.
+        $stats = DB::table('daily_visitor_stats')
+            ->where('site_id', $site->id)
+            ->orderBy('visitor_hash')
+            ->get(['visitor_hash', 'views']);
+
+        $this->assertCount(2, $stats);
+        $this->assertSame(2, (int) $stats->firstWhere('visitor_hash', 'js-visitor-1')->views);
+        $this->assertSame(1, (int) $stats->firstWhere('visitor_hash', 'non-js-hash-1')->views);
+    }
+
     public function test_stores_visitor_and_session_identity(): void
     {
         $site = Site::factory()->create();

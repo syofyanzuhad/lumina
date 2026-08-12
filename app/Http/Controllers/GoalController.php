@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Lumina\Core\Models\Goal;
 use Lumina\Core\Models\Site;
 
 class GoalController extends Controller
 {
-    public function index(Request $request, Site $site)
+    public function index(Request $request, Site $site): JsonResponse
     {
         Gate::authorize('view', $site);
 
         return response()->json($site->goals);
     }
 
-    public function store(Request $request, Site $site)
+    public function store(Request $request, Site $site): JsonResponse
     {
         Gate::authorize('update', $site);
 
@@ -31,7 +33,7 @@ class GoalController extends Controller
         return response()->json($goal, 201);
     }
 
-    public function update(Request $request, Site $site, Goal $goal)
+    public function update(Request $request, Site $site, Goal $goal): JsonResponse
     {
         Gate::authorize('update', $site);
 
@@ -50,7 +52,7 @@ class GoalController extends Controller
         return response()->json($goal);
     }
 
-    public function destroy(Request $request, Site $site, Goal $goal)
+    public function destroy(Request $request, Site $site, Goal $goal): Response
     {
         Gate::authorize('update', $site);
 

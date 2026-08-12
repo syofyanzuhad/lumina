@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(
             at: array_values(array_filter(array_map(
                 'trim',
+                // The config repository is not yet registered when bootstrap/app.php
+                // runs, so config() is unavailable here — env() is required.
+                // @phpstan-ignore larastan.noEnvCallsOutsideOfConfig
                 explode(',', (string) env('TRUSTED_PROXIES', ''))
             ))),
         );

@@ -7,18 +7,20 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
+use Inertia\Response;
 use Lumina\Core\Models\Site;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SiteController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         return Inertia::render('Sites/Index', [
             'sites' => $request->user()->sites()->orderBy('created_at', 'desc')->get(),
         ]);
     }
 
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('Sites/Create');
     }
@@ -33,7 +35,7 @@ class SiteController extends Controller
         return redirect()->route('sites.show', $site);
     }
 
-    public function show(Site $site)
+    public function show(Site $site): Response
     {
         Gate::authorize('view', $site);
 
@@ -55,7 +57,7 @@ class SiteController extends Controller
         return redirect()->route('sites.index');
     }
 
-    public function export(Site $site)
+    public function export(Site $site): StreamedResponse
     {
         Gate::authorize('view', $site);
 
@@ -69,6 +71,11 @@ class SiteController extends Controller
 
         $callback = function () use ($site) {
             $file = fopen('php://output', 'w');
+
+            if ($file === false) {
+                return;
+            }
+
             fputcsv($file, ['ID', 'Path', 'Referrer', 'Device Type', 'Created At']);
 
             $site->events()->chunk(1000, function ($events) use ($file) {
@@ -77,7 +84,7 @@ class SiteController extends Controller
                         $event->id,
                         $event->path,
                         $event->referrer,
-                        $event->device_type->value ?? 'unknown',
+                        is_object($event->device_type) ? $event->device_type->value : (string) $event->device_type,
                         $event->created_at->toDateTimeString(),
                     ]);
                 }

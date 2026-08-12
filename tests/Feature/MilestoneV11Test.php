@@ -35,9 +35,11 @@ class MilestoneV11Test extends TestCase
         // Step 2: Ingest event with UA + GeoIP via POST /api/collect (Custom event & Path tracking)
         $uaHeader = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
+        // X-Country is the first-party override that is honored regardless of
+        // proxy trust (CF-IPCountry would be ignored without TRUSTED_PROXIES).
         $collectResponse = $this->withHeaders([
             'User-Agent' => $uaHeader,
-            'CF-IPCountry' => 'US',
+            'X-Country' => 'US',
         ])->postJson('/api/collect', [
             'domain' => 'v11-demo.com',
             'path' => '/signup',

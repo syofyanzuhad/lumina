@@ -12,21 +12,30 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <div v-if="filters && Object.keys(filters).length > 0" class="flex flex-wrap items-center gap-2 bg-muted/60 border border-sidebar-border/60 rounded-xl p-3">
-        <span class="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+    <div
+        v-if="filters && Object.keys(filters).length > 0"
+        class="flex flex-wrap items-center gap-2 rounded-xl border border-sidebar-border/60 bg-muted/60 p-3"
+    >
+        <span
+            class="flex items-center gap-1 text-xs font-semibold text-muted-foreground"
+        >
             <Filter class="h-3.5 w-3.5" />
             Active Filters:
         </span>
         <span
             v-for="(val, key) in filters"
             :key="key"
-            class="inline-flex items-center gap-1 text-xs font-mono bg-background border border-sidebar-border px-2.5 py-1 rounded-md text-foreground shadow-2xs"
+            class="inline-flex items-center gap-1 rounded-md border border-sidebar-border bg-background px-2.5 py-1 font-mono text-xs text-foreground shadow-2xs"
         >
-            <span class="text-muted-foreground capitalize font-sans">{{ key }}:</span>
-            <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ val }}</span>
+            <span class="font-sans text-muted-foreground capitalize"
+                >{{ key }}:</span
+            >
+            <span class="font-bold text-indigo-600 dark:text-indigo-400">{{
+                val
+            }}</span>
             <button
                 @click="emit('removeFilter', String(key))"
-                class="hover:text-destructive text-muted-foreground/70 transition-colors ml-0.5 p-0.5 rounded-sm"
+                class="ml-0.5 rounded-sm p-0.5 text-muted-foreground/70 transition-colors hover:text-destructive"
                 title="Remove filter"
             >
                 <X class="h-3 w-3" />
@@ -34,7 +43,7 @@ const emit = defineEmits<{
         </span>
         <button
             @click="emit('clearFilters')"
-            class="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 ml-auto font-medium transition-colors"
+            class="ml-auto text-xs font-medium text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
         >
             Clear all
         </button>

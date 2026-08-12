@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -31,11 +33,9 @@ class DashboardController extends Controller
         }
 
         $activeSiteId = $request->query('site_id');
-        $activeSite = $sites->firstWhere('id', (int) $activeSiteId);
 
-        if (! $activeSite) {
-            $activeSite = $sites->first();
-        }
+        /** @var Site $activeSite */
+        $activeSite = $sites->firstWhere('id', (int) $activeSiteId) ?? $sites->first();
 
         $period = $request->query('period', '30d');
         [$start, $end] = $this->resolveDateRange($period, $request->query('start_date'), $request->query('end_date'));
@@ -72,8 +72,8 @@ class DashboardController extends Controller
             $data['custom_events'] = Inertia::defer(fn () => $analytics->getCustomEvents($activeSite, $start, $end, 50, $filters));
             $data['goals'] = Inertia::defer(fn () => $analytics->getGoals($activeSite, $start, $end, $filters));
         } elseif ($activeTab === 'events') {
-            $selectedEvent = $request->query('event');
-            $selectedPropertyKey = $request->query('property');
+            $selectedEvent = is_string($request->query('event')) ? $request->query('event') : null;
+            $selectedPropertyKey = is_string($request->query('property')) ? $request->query('property') : null;
 
             $data['selectedEvent'] = $selectedEvent;
             $data['selectedPropertyKey'] = $selectedPropertyKey;
@@ -101,10 +101,10 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', $data);
     }
 
-    public function breakdown(Request $request, AnalyticsService $analytics)
+    public function breakdown(Request $request, AnalyticsService $analytics): JsonResponse
     {
         $user = $request->user();
-        $siteId = $request->query('site_id');
+        $siteId = (int) $request->query('site_id');
         $site = Site::where('owner_id', $user->id)->findOrFail($siteId);
 
         $period = $request->query('period', '30d');
@@ -135,6 +135,9 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * @return array{CarbonInterface, CarbonInterface}
+     */
     protected function resolveDateRange(string $period, ?string $startDate, ?string $endDate): array
     {
         if ($period === 'today') {

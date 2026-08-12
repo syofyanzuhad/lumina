@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { Maximize2, Filter, ExternalLink, Globe, Laptop } from '@lucide/vue';
 import type { Component } from 'vue';
-import { formatNumber, getCountryFlag } from '@/composables/useAnalyticsFormatters';
+import {
+    formatNumber,
+    getCountryFlag,
+} from '@/composables/useAnalyticsFormatters';
 
 export interface BreakdownCardItem {
     idKey: string;
@@ -15,11 +18,12 @@ export interface BreakdownCardItem {
     referrer?: string;
 }
 
-const props = withDefaults(
+withDefaults(
     defineProps<{
         title: string;
         items?: BreakdownCardItem[];
-        colorScheme?: 'indigo' | 'emerald' | 'amber' | 'sky' | 'purple' | 'rose';
+        colorScheme?:
+            'indigo' | 'emerald' | 'amber' | 'sky' | 'purple' | 'rose';
         totalItems?: number;
         filterKey: string;
         typeKey: string;
@@ -33,7 +37,7 @@ const props = withDefaults(
         canFilter: true,
         canExpand: true,
         emptyText: 'No data recorded yet.',
-    }
+    },
 );
 
 const emit = defineEmits<{
@@ -41,15 +45,20 @@ const emit = defineEmits<{
     (e: 'expand', type: string, title: string): void;
 }>();
 
-const colorClasses: Record<string, { bg: string; hoverBg: string; text: string }> = {
+const colorClasses: Record<
+    string,
+    { bg: string; hoverBg: string; text: string }
+> = {
     indigo: {
         bg: 'bg-indigo-100/70 dark:bg-indigo-500/15',
-        hoverBg: 'group-hover:bg-indigo-200/80 dark:group-hover:bg-indigo-500/25',
+        hoverBg:
+            'group-hover:bg-indigo-200/80 dark:group-hover:bg-indigo-500/25',
         text: 'group-hover:text-indigo-700 dark:group-hover:text-indigo-300',
     },
     emerald: {
         bg: 'bg-emerald-100/70 dark:bg-emerald-500/15',
-        hoverBg: 'group-hover:bg-emerald-200/80 dark:group-hover:bg-emerald-500/25',
+        hoverBg:
+            'group-hover:bg-emerald-200/80 dark:group-hover:bg-emerald-500/25',
         text: 'group-hover:text-emerald-700 dark:group-hover:text-emerald-300',
     },
     amber: {
@@ -64,7 +73,8 @@ const colorClasses: Record<string, { bg: string; hoverBg: string; text: string }
     },
     purple: {
         bg: 'bg-purple-100/70 dark:bg-purple-500/15',
-        hoverBg: 'group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25',
+        hoverBg:
+            'group-hover:bg-purple-200/80 dark:group-hover:bg-purple-500/25',
         text: 'group-hover:text-purple-700 dark:group-hover:text-purple-300',
     },
     rose: {
@@ -76,23 +86,35 @@ const colorClasses: Record<string, { bg: string; hoverBg: string; text: string }
 </script>
 
 <template>
-    <div class="group/card rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
+    <div
+        class="group/card rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
+    >
+        <div class="mb-4 flex items-center justify-between">
             <h3 class="text-sm font-bold text-foreground">{{ title }}</h3>
             <div class="flex items-center gap-2">
-                <span v-if="items && totalItems !== undefined" class="text-xs text-muted-foreground font-mono">
-                    <template v-if="totalItems <= 10 || (items.length && items.length === totalItems)">
-                        {{ totalItems }} {{ totalItems === 1 ? 'entry' : 'entries' }}
+                <span
+                    v-if="items && totalItems !== undefined"
+                    class="font-mono text-xs text-muted-foreground"
+                >
+                    <template
+                        v-if="
+                            totalItems <= 10 ||
+                            (items.length && items.length === totalItems)
+                        "
+                    >
+                        {{ totalItems }}
+                        {{ totalItems === 1 ? 'entry' : 'entries' }}
                     </template>
                     <template v-else>
-                        {{ Math.min(10, items.length || totalItems) }} of {{ totalItems }} entries
+                        {{ Math.min(10, items.length || totalItems) }} of
+                        {{ totalItems }} entries
                     </template>
                 </span>
                 <button
                     v-if="canExpand"
                     @click="emit('expand', typeKey, `${title} Breakdown`)"
                     title="Expand Details"
-                    class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                    class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
                 >
                     <Maximize2 class="h-3.5 w-3.5" />
                 </button>
@@ -103,33 +125,52 @@ const colorClasses: Record<string, { bg: string; hoverBg: string; text: string }
             <div
                 v-for="item in (items || []).slice(0, 10)"
                 :key="item.idKey"
-                @click="canFilter ? emit('filter', filterKey, item.label) : null"
-                :title="canFilter ? `Click to filter dashboard by ${filterKey}: ${item.label}` : undefined"
+                @click="
+                    canFilter ? emit('filter', filterKey, item.label) : null
+                "
+                :title="
+                    canFilter
+                        ? `Click to filter dashboard by ${filterKey}: ${item.label}`
+                        : undefined
+                "
                 :class="[
-                    'group relative flex justify-between items-center text-xs font-medium p-2 rounded-lg transition-all overflow-hidden',
-                    canFilter ? 'hover:opacity-90 cursor-pointer' : 'cursor-default'
+                    'group relative flex items-center justify-between overflow-hidden rounded-lg p-2 text-xs font-medium transition-all',
+                    canFilter
+                        ? 'cursor-pointer hover:opacity-90'
+                        : 'cursor-default',
                 ]"
             >
                 <!-- Percentage Background Bar -->
                 <div
                     class="absolute inset-y-0 left-0 rounded-lg transition-all duration-500"
-                    :class="[colorClasses[colorScheme].bg, colorClasses[colorScheme].hoverBg]"
+                    :class="[
+                        colorClasses[colorScheme].bg,
+                        colorClasses[colorScheme].hoverBg,
+                    ]"
                     :style="{ width: `${item.percentage}%` }"
                 ></div>
 
                 <span
-                    class="relative z-10 truncate font-mono text-foreground font-medium transition-colors mr-2 flex items-center gap-1.5 min-w-0"
+                    class="relative z-10 mr-2 flex min-w-0 items-center gap-1.5 truncate font-mono font-medium text-foreground transition-colors"
                     :class="[colorClasses[colorScheme].text]"
                 >
                     <!-- Flag Icon for Country -->
-                    <span v-if="typeKey === 'locations' && item.code" class="text-base leading-none select-none">{{ getCountryFlag(item.code) }}</span>
-                    <span v-if="typeKey === 'locations' && item.code" class="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase">{{ item.code }}</span>
+                    <span
+                        v-if="typeKey === 'locations' && item.code"
+                        class="text-base leading-none select-none"
+                        >{{ getCountryFlag(item.code) }}</span
+                    >
+                    <span
+                        v-if="typeKey === 'locations' && item.code"
+                        class="rounded bg-muted px-1 py-0.5 text-[10px] font-bold text-muted-foreground uppercase"
+                        >{{ item.code }}</span
+                    >
 
                     <!-- Component Icon (e.g. Lucide Device Icon) -->
                     <component
                         v-if="item.isComponentIcon && item.icon"
                         :is="item.icon"
-                        class="h-3.5 w-3.5 text-amber-500 shrink-0"
+                        class="h-3.5 w-3.5 shrink-0 text-amber-500"
                     />
 
                     <!-- String URL Icon (e.g. Favicon / Devicon) -->
@@ -137,13 +178,24 @@ const colorClasses: Record<string, { bg: string; hoverBg: string; text: string }
                         v-else-if="!item.isComponentIcon && item.icon"
                         :src="String(item.icon)"
                         :alt="item.label"
-                        class="h-3.5 w-3.5 rounded-sm shrink-0 object-contain dark:invert dark:brightness-200"
-                        @error="($event.target as HTMLImageElement).style.display = 'none'"
+                        class="h-3.5 w-3.5 shrink-0 rounded-sm object-contain dark:brightness-200 dark:invert"
+                        @error="
+                            ($event.target as HTMLImageElement).style.display =
+                                'none'
+                        "
                     />
 
                     <!-- Default Fallback Icons -->
-                    <Globe v-else-if="typeKey === 'referrers' || typeKey === 'browsers'" class="h-3 w-3 shrink-0 text-muted-foreground/60" />
-                    <Laptop v-else-if="typeKey === 'os'" class="h-3 w-3 shrink-0 text-muted-foreground/60" />
+                    <Globe
+                        v-else-if="
+                            typeKey === 'referrers' || typeKey === 'browsers'
+                        "
+                        class="h-3 w-3 shrink-0 text-muted-foreground/60"
+                    />
+                    <Laptop
+                        v-else-if="typeKey === 'os'"
+                        class="h-3 w-3 shrink-0 text-muted-foreground/60"
+                    />
 
                     <!-- Item Label -->
                     <span class="truncate">{{ item.label }}</span>
@@ -156,22 +208,35 @@ const colorClasses: Record<string, { bg: string; hoverBg: string; text: string }
                         rel="noopener noreferrer"
                         @click.stop
                         title="Open page in new tab"
-                        class="p-0.5 rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/80 transition-colors shrink-0 inline-flex items-center justify-center"
+                        class="inline-flex shrink-0 items-center justify-center rounded p-0.5 text-muted-foreground/60 transition-colors hover:bg-muted/80 hover:text-foreground"
                     >
                         <ExternalLink class="h-3 w-3" />
                     </a>
 
                     <!-- Filter Icon on Hover -->
-                    <Filter v-if="canFilter" class="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-0.5" />
+                    <Filter
+                        v-if="canFilter"
+                        class="ml-0.5 h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60"
+                    />
                 </span>
 
-                <span class="relative z-10 shrink-0 text-muted-foreground font-mono text-[11px]">
-                    <span class="text-muted-foreground/70 opacity-0 group-hover/card:opacity-100 transition-opacity mr-1.5">{{ item.percentage }}%</span>
+                <span
+                    class="relative z-10 shrink-0 font-mono text-[11px] text-muted-foreground"
+                >
+                    <span
+                        class="mr-1.5 text-muted-foreground/70 opacity-0 transition-opacity group-hover/card:opacity-100"
+                        >{{ item.percentage }}%</span
+                    >
                     {{ formatNumber(item.count) }}
                 </span>
             </div>
 
-            <p v-if="!items || items.length === 0" class="text-xs text-muted-foreground">{{ emptyText }}</p>
+            <p
+                v-if="!items || items.length === 0"
+                class="text-xs text-muted-foreground"
+            >
+                {{ emptyText }}
+            </p>
         </div>
     </div>
 </template>

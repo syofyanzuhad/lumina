@@ -4,6 +4,7 @@ namespace Lumina\Core;
 
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -18,6 +19,10 @@ class LuminaCoreServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'lumina');
 
         if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/lumina.php' => config_path('lumina.php'),
+            ], 'lumina-core-config');
+
             $this->publishes([
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'lumina-core-migrations');
@@ -52,11 +57,12 @@ class LuminaCoreServiceProvider extends ServiceProvider
 
     protected function registerMiddlewareAlias(): void
     {
-        $this->app['router']->aliasMiddleware('lumina.track', TrackPageview::class);
+        $this->app->make(Router::class)->aliasMiddleware('lumina.track', TrackPageview::class);
     }
 
     public function register(): void
     {
+        $this->mergeConfigFrom(__DIR__.'/../config/lumina.php', 'lumina');
         $this->registerMiddlewareAlias();
     }
 }

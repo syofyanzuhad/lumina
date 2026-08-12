@@ -21,12 +21,26 @@ defineProps<Props>();
         v-bind="$attrs"
     >
         <defs>
-            <linearGradient id="lumina-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+            <linearGradient
+                id="lumina-gradient"
+                x1="2"
+                y1="2"
+                x2="22"
+                y2="22"
+                gradientUnits="userSpaceOnUse"
+            >
                 <stop offset="0%" stop-color="#6366F1" />
                 <stop offset="50%" stop-color="#8B5CF6" />
                 <stop offset="100%" stop-color="#EC4899" />
             </linearGradient>
-            <linearGradient id="lumina-gradient-inner" x1="6" y1="6" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+            <linearGradient
+                id="lumina-gradient-inner"
+                x1="6"
+                y1="6"
+                x2="18"
+                y2="18"
+                gradientUnits="userSpaceOnUse"
+            >
                 <stop offset="0%" stop-color="#A5B4FC" />
                 <stop offset="100%" stop-color="#F472B6" />
             </linearGradient>

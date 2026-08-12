@@ -34,5 +34,13 @@ jobs:
       - name: Setup Application
         run: composer setup
 
+      - name: Verify tracker bundle is reproducible from source
+        # The checked-in public/js/script.js must be byte-identical to a fresh
+        # terser build so the tracker is reproducible and TrackerScriptSizeTest
+        # always reflects the committed artifact.
+        run: |
+          npm run build:tracker
+          git diff --exit-code -- public/js/script.js
+
       - name: Run CI Checks
         run: composer ci:check

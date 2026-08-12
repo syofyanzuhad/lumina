@@ -60,7 +60,11 @@ export function useLivePolling(options: UseLivePollingOptions = {}) {
     };
 
     const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible' && isLive.value && !isRefreshing.value) {
+        if (
+            document.visibilityState === 'visible' &&
+            isLive.value &&
+            !isRefreshing.value
+        ) {
             refreshData();
         }
     };
@@ -71,7 +75,10 @@ export function useLivePolling(options: UseLivePollingOptions = {}) {
 
     onUnmounted(() => {
         stopPolling();
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        document.removeEventListener(
+            'visibilitychange',
+            handleVisibilityChange,
+        );
     });
 
     return {

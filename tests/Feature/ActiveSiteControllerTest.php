@@ -34,7 +34,8 @@ test('inertia share exposes sites and active_site_id', function () {
     $site1 = Site::factory()->create(['owner_id' => $user->id]);
     $site2 = Site::factory()->create(['owner_id' => $user->id]);
 
-    $response = $this->actingAs($user)->get('/dashboard');
+    // /dashboard redirects server-side to include site_id when it is absent.
+    $response = $this->actingAs($user)->get('/dashboard?site_id='.$site1->id);
     $response->assertOk();
 
     $response->assertInertia(fn (AssertableInertia $page) => $page

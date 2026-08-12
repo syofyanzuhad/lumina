@@ -20,6 +20,9 @@ class CollectController extends Controller
 
     private const IP_DECAY_SECONDS = 60;
 
+    /**
+     * @return array<string, string>
+     */
     protected function getCorsHeaders(Request $request): array
     {
         $origin = $request->headers->get('Origin')
@@ -98,7 +101,7 @@ class CollectController extends Controller
                 ?? $request->header('X-Vercel-IP-Country');
         }
 
-        $cleanPath = parse_url($validated['path'], PHP_URL_PATH) ?? '/';
+        $cleanPath = parse_url($validated['path'], PHP_URL_PATH) ?: '/';
         $path = '/'.ltrim($cleanPath, '/');
 
         $metadata = null;

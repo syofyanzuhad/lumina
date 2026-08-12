@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -74,8 +76,8 @@ class ShareController extends Controller
             $data['custom_events'] = Inertia::defer(fn () => $analytics->getCustomEvents($site, $start, $end, 50, $filters));
             $data['goals'] = Inertia::defer(fn () => $analytics->getGoals($site, $start, $end, $filters));
         } elseif ($activeTab === 'events') {
-            $selectedEvent = $request->query('event');
-            $selectedPropertyKey = $request->query('property');
+            $selectedEvent = is_string($request->query('event')) ? $request->query('event') : null;
+            $selectedPropertyKey = is_string($request->query('property')) ? $request->query('property') : null;
 
             $data['selectedEvent'] = $selectedEvent;
             $data['selectedPropertyKey'] = $selectedPropertyKey;
@@ -106,7 +108,7 @@ class ShareController extends Controller
     /**
      * Get detailed breakdown items for side modal.
      */
-    public function breakdown(Request $request, string $token, AnalyticsService $analytics)
+    public function breakdown(Request $request, string $token, AnalyticsService $analytics): JsonResponse
     {
         $site = Site::where('share_token', $token)
             ->where('is_public', true)
@@ -215,6 +217,8 @@ class ShareController extends Controller
 
     /**
      * Resolve start and end dates from period string.
+     *
+     * @return array{CarbonInterface, CarbonInterface}
      */
     protected function resolveDateRange(string $period, ?string $startDate, ?string $endDate): array
     {

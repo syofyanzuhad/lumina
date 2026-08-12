@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -126,6 +127,9 @@ class DemoController extends Controller
 
     }
 
+    /**
+     * @return array{CarbonInterface, CarbonInterface}
+     */
     protected function resolveDateRange(string $period): array
     {
         if ($period === '7d') {

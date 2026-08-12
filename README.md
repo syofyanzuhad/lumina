@@ -67,6 +67,28 @@
    stopwaitsecs=360
    ```
 
+3. Register the Laravel scheduler (required — it drives data retention pruning and
+   `daily_visitor_stats` reconciliation):
+   ```cron
+   * * * * * cd /path/to/lumina && php artisan schedule:run >> /dev/null 2>&1
+   ```
+   Scheduled tasks: `lumina:prune-events` (hourly — deletes raw events older than each
+   site's retention period, keeping anonymous aggregates) and `lumina:backfill-visitor-stats`
+   (nightly — reconciles `daily_visitor_stats`).
+
+---
+
+## 🖥️ Dashboard Surfaces (canonical vs. embedded)
+
+The **standalone Vue 3 + Inertia SPA dashboard** (`resources/js/pages/Dashboard.vue`) is the
+**canonical product surface** — it is where new analytics features ship first and where metric
+logic is defined (`AnalyticsService`, aggregated in SQL with tagged caching).
+
+The embedded package (`packages/lumina-core`) additionally ships a Livewire dashboard and a
+Filament plugin for host apps. These are **thin renderers over `AnalyticsService` only** — they
+never re-implement metric logic. When a metric changes, update `AnalyticsService` once; all
+surfaces inherit it.
+
 ---
 
 ## 📦 Embedded Package Mode (`lumina/core`)
@@ -150,6 +172,12 @@ php artisan test
 
 # Run package-core tests
 vendor/bin/pest packages/lumina-core/tests/
+
+# Run frontend component/composable/tracker tests (Vitest)
+npm run test:frontend
+
+# Full local gate — lint, format, types, frontend tests, PHP tests, PHPStan
+composer ci:check
 ```
 
 ---

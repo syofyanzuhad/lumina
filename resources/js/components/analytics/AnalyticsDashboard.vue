@@ -2,7 +2,7 @@
 import { router, Deferred } from '@inertiajs/vue3';
 import { computed, toRef } from 'vue';
 import AnalyticsBreakdownCard from '@/components/analytics/AnalyticsBreakdownCard.vue';
-import type {BreakdownCardItem} from '@/components/analytics/AnalyticsBreakdownCard.vue';
+import type { BreakdownCardItem } from '@/components/analytics/AnalyticsBreakdownCard.vue';
 import AnalyticsBreakdownDrawer from '@/components/analytics/AnalyticsBreakdownDrawer.vue';
 import AnalyticsChart from '@/components/analytics/AnalyticsChart.vue';
 import AnalyticsControlBar from '@/components/analytics/AnalyticsControlBar.vue';
@@ -13,7 +13,6 @@ import CustomEventsTab from '@/components/CustomEventsTab.vue';
 import { useAnalyticsChart } from '@/composables/useAnalyticsChart';
 import { useAnalyticsFilters } from '@/composables/useAnalyticsFilters';
 import {
-    getCountryFlag,
     getDeviceIcon,
     getReferrerFavicon,
     getBrowserIcon,
@@ -113,12 +112,13 @@ const { addFilter, removeFilter, clearFilters } = useAnalyticsFilters({
     currentTab: tabRef,
 });
 
-const { customStartDate, customEndDate, setPeriod, applyCustomDateRange } = useAnalyticsPeriod({
-    baseUrl: baseUrlRef,
-    siteId: siteIdRef,
-    currentFilters: filtersRef,
-    currentTab: tabRef,
-});
+const { customStartDate, customEndDate, setPeriod, applyCustomDateRange } =
+    useAnalyticsPeriod({
+        baseUrl: baseUrlRef,
+        siteId: siteIdRef,
+        currentFilters: filtersRef,
+        currentTab: tabRef,
+    });
 
 const dailyPageviewsRef = computed(() => props.daily_pageviews);
 const {
@@ -133,7 +133,7 @@ const {
 const { isLive, isRefreshing, toggleLive, refreshData } = useLivePolling();
 
 const breakdownEndpointRef = computed(
-    () => props.breakdownUrl || `${props.baseUrl}/breakdown`
+    () => props.breakdownUrl || `${props.baseUrl}/breakdown`,
 );
 
 const {
@@ -159,17 +159,20 @@ const setTab = (newTab: string) => {
     };
 
     if (props.site?.id) {
-params.site_id = props.site.id;
-}
+        params.site_id = props.site.id;
+    }
 
-    router.get(props.baseUrl, params, { preserveState: true, preserveScroll: true });
+    router.get(props.baseUrl, params, {
+        preserveState: true,
+        preserveScroll: true,
+    });
 };
 
 // Item Mapping Helpers for Breakdown Cards
 const topPagesItems = computed<BreakdownCardItem[]>(() => {
     if (!props.top_pages) {
-return [];
-}
+        return [];
+    }
 
     return props.top_pages.map((p: any) => ({
         idKey: p.path,
@@ -182,8 +185,8 @@ return [];
 
 const topReferrersItems = computed<BreakdownCardItem[]>(() => {
     if (!props.top_referrers) {
-return [];
-}
+        return [];
+    }
 
     return props.top_referrers.map((r: any) => ({
         idKey: r.referrer,
@@ -197,8 +200,8 @@ return [];
 
 const deviceItems = computed<BreakdownCardItem[]>(() => {
     if (!props.device_breakdown) {
-return [];
-}
+        return [];
+    }
 
     return props.device_breakdown.map((d: any) => ({
         idKey: d.device,
@@ -212,8 +215,8 @@ return [];
 
 const topBrowsersItems = computed<BreakdownCardItem[]>(() => {
     if (!props.top_browsers) {
-return [];
-}
+        return [];
+    }
 
     return props.top_browsers.map((b: any) => ({
         idKey: b.browser,
@@ -227,8 +230,8 @@ return [];
 
 const topOsItems = computed<BreakdownCardItem[]>(() => {
     if (!props.top_os) {
-return [];
-}
+        return [];
+    }
 
     return props.top_os.map((o: any) => ({
         idKey: o.os,
@@ -242,8 +245,8 @@ return [];
 
 const topCountriesItems = computed<BreakdownCardItem[]>(() => {
     if (!props.top_countries) {
-return [];
-}
+        return [];
+    }
 
     return props.top_countries.map((c: any) => ({
         idKey: c.code || c.name,
@@ -309,20 +312,39 @@ return [];
             />
 
             <!-- Breakdown Cards Row 1: deferred together for consistent render -->
-            <Deferred :data="['top_pages', 'top_referrers', 'device_breakdown']">
+            <Deferred
+                :data="['top_pages', 'top_referrers', 'device_breakdown']"
+            >
                 <template #fallback>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div v-for="i in 3" :key="i" class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm space-y-3">
+                    <div
+                        class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                    >
+                        <div
+                            v-for="i in 3"
+                            :key="i"
+                            class="space-y-3 rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
+                        >
                             <div class="flex items-center justify-between">
-                                <div class="h-4 w-24 bg-muted animate-pulse rounded-md"></div>
-                                <div class="h-4 w-16 bg-muted animate-pulse rounded-md"></div>
+                                <div
+                                    class="h-4 w-24 animate-pulse rounded-md bg-muted"
+                                ></div>
+                                <div
+                                    class="h-4 w-16 animate-pulse rounded-md bg-muted"
+                                ></div>
                             </div>
-                            <div v-for="j in 5" :key="j" class="h-8 bg-muted/60 animate-pulse rounded-lg" :style="{ opacity: 1 - j * 0.15 }"></div>
+                            <div
+                                v-for="j in 5"
+                                :key="j"
+                                class="h-8 animate-pulse rounded-lg bg-muted/60"
+                                :style="{ opacity: 1 - j * 0.15 }"
+                            ></div>
                         </div>
                     </div>
                 </template>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div
+                    class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                >
                     <AnalyticsBreakdownCard
                         title="Top Pages"
                         filterKey="path"
@@ -366,18 +388,35 @@ return [];
             <!-- Breakdown Cards Row 2: deferred together -->
             <Deferred :data="['top_browsers', 'top_os', 'top_countries']">
                 <template #fallback>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div v-for="i in 3" :key="i" class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm space-y-3">
+                    <div
+                        class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                    >
+                        <div
+                            v-for="i in 3"
+                            :key="i"
+                            class="space-y-3 rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
+                        >
                             <div class="flex items-center justify-between">
-                                <div class="h-4 w-28 bg-muted animate-pulse rounded-md"></div>
-                                <div class="h-4 w-14 bg-muted animate-pulse rounded-md"></div>
+                                <div
+                                    class="h-4 w-28 animate-pulse rounded-md bg-muted"
+                                ></div>
+                                <div
+                                    class="h-4 w-14 animate-pulse rounded-md bg-muted"
+                                ></div>
                             </div>
-                            <div v-for="j in 5" :key="j" class="h-8 bg-muted/60 animate-pulse rounded-lg" :style="{ opacity: 1 - j * 0.15 }"></div>
+                            <div
+                                v-for="j in 5"
+                                :key="j"
+                                class="h-8 animate-pulse rounded-lg bg-muted/60"
+                                :style="{ opacity: 1 - j * 0.15 }"
+                            ></div>
                         </div>
                     </div>
                 </template>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div
+                    class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                >
                     <AnalyticsBreakdownCard
                         title="Top Browsers"
                         filterKey="browser"
@@ -420,9 +459,17 @@ return [];
             <!-- UTM Campaigns Card — deferred -->
             <Deferred data="utm_campaigns">
                 <template #fallback>
-                    <div class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-card p-6 shadow-sm space-y-3">
-                        <div class="h-4 w-32 bg-muted animate-pulse rounded-md"></div>
-                        <div v-for="i in 3" :key="i" class="h-8 bg-muted/60 animate-pulse rounded-lg"></div>
+                    <div
+                        class="space-y-3 rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
+                    >
+                        <div
+                            class="h-4 w-32 animate-pulse rounded-md bg-muted"
+                        ></div>
+                        <div
+                            v-for="i in 3"
+                            :key="i"
+                            class="h-8 animate-pulse rounded-lg bg-muted/60"
+                        ></div>
                     </div>
                 </template>
 
@@ -432,7 +479,14 @@ return [];
                         filterKey="utm_campaign"
                         typeKey="utm"
                         colorScheme="indigo"
-                        :items="utm_campaigns.map((u: any) => ({ idKey: u.campaign || u.utm_campaign, label: u.campaign || u.utm_campaign, count: u.count, percentage: u.percentage }))"
+                        :items="
+                            utm_campaigns.map((u: any) => ({
+                                idKey: u.campaign || u.utm_campaign,
+                                label: u.campaign || u.utm_campaign,
+                                count: u.count,
+                                percentage: u.percentage,
+                            }))
+                        "
                         :totalItems="utm_campaigns.length"
                         :canFilter="canFilter"
                         :canExpand="canExpand"

@@ -1,5 +1,5 @@
-import { ref, computed,  unref } from 'vue';
-import type {Ref} from 'vue';
+import { ref, computed, unref } from 'vue';
+import type { Ref } from 'vue';
 
 export interface UseBreakdownModalOptions {
     breakdownEndpoint: string | Ref<string>;
@@ -51,18 +51,29 @@ export function useBreakdownModal(options: UseBreakdownModalOptions) {
 
     const modalTotalCount = computed(() => {
         const ov = unref(options.overview);
-        const list = modalData.value || (activeModal.value && ov ? ov[
-            activeModal.value === 'pages' ? 'top_pages' :
-            activeModal.value === 'referrers' ? 'top_referrers' :
-            activeModal.value === 'browsers' ? 'top_browsers' :
-            activeModal.value === 'os' ? 'top_os' :
-            activeModal.value === 'locations' ? 'top_countries' :
-            activeModal.value === 'devices' ? 'device_breakdown' : 'utm_campaigns'
-        ] : null);
+        const list =
+            modalData.value ||
+            (activeModal.value && ov
+                ? ov[
+                      activeModal.value === 'pages'
+                          ? 'top_pages'
+                          : activeModal.value === 'referrers'
+                            ? 'top_referrers'
+                            : activeModal.value === 'browsers'
+                              ? 'top_browsers'
+                              : activeModal.value === 'os'
+                                ? 'top_os'
+                                : activeModal.value === 'locations'
+                                  ? 'top_countries'
+                                  : activeModal.value === 'devices'
+                                    ? 'device_breakdown'
+                                    : 'utm_campaigns'
+                  ]
+                : null);
 
         if (!list || !Array.isArray(list)) {
-return null;
-}
+            return null;
+        }
 
         const total = list.reduce((sum, item) => sum + (item.count || 0), 0);
 

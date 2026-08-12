@@ -82,10 +82,14 @@
             "npm run lint:check",
             "npm run format:check",
             "npm run types:check",
+            "npm run test:frontend",
             "@test"
         ],
+        "test:tracker-size": [
+            "@php artisan test --filter=TrackerScriptSizeTest"
+        ],
         "types:check": [
-            "phpstan analyse"
+            "phpstan analyse --memory-limit=2G"
         ],
         "test": [
             "@php artisan config:clear --ansi",

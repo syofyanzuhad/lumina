@@ -26,12 +26,13 @@ class ShareControllerTest extends TestCase
         $response = $this->get('/share/valid-share-token-1234567890123');
 
         $response->assertStatus(200);
+        // KPI props are merged at the top level (same contract as the dashboard).
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Share/Show')
             ->where('requiresPassword', false)
             ->where('site.domain', 'shared-site.com')
-            ->has('overview.total_pageviews')
-            ->has('overview.unique_visitors')
+            ->has('total_pageviews')
+            ->has('unique_visitors')
         );
     }
 

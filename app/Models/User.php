@@ -52,6 +52,8 @@ class User extends Authenticatable implements PasskeyUser
 
     /**
      * Get the sites owned by the user.
+     *
+     * @return HasMany<Site, $this>
      */
     public function sites(): HasMany
     {

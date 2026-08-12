@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Lumina\Core\Models\Site;
 
 class ActiveSiteController extends Controller
 {
@@ -18,6 +19,7 @@ class ActiveSiteController extends Controller
             ],
         ]);
 
+        /** @var Site $site */
         $site = $request->user()->sites()->findOrFail($validated['site_id']);
 
         session()->put('active_site_id', $site->id);

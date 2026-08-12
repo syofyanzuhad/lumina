@@ -5,6 +5,7 @@ namespace Lumina\Core\Services;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,8 @@ class AnalyticsService
      * goal matching, and the path filter. Prefers the `clean_path` column (set
      * at ingestion) and falls back to the raw `path` with the query string
      * stripped for legacy rows where `clean_path` is still NULL.
+     *
+     * @return literal-string
      */
     protected function pathExpression(): string
     {
@@ -74,6 +77,8 @@ class AnalyticsService
     /**
      * SQL expression extracting the custom event name from the `metadata` JSON
      * column, with per-driver JSON path syntax.
+     *
+     * @return literal-string
      */
     protected function eventNameExpression(): string
     {
@@ -85,6 +90,8 @@ class AnalyticsService
     /**
      * SQL expression formatting a timestamp as a day-level date string
      * (identical semantics to `getDailyPageviews`).
+     *
+     * @return literal-string
      */
     protected function dateExpression(): string
     {
@@ -97,6 +104,8 @@ class AnalyticsService
      * SQL expression resolving the canonical visitor identity. New rows carry
      * `visitor_id` (client-provided opaque ID or stable salted hash); legacy
      * rows fall back to `visitor_hash`.
+     *
+     * @return literal-string
      */
     protected function visitorExpression(): string
     {
@@ -107,13 +116,22 @@ class AnalyticsService
      * SQL expression resolving the session grouping key. Rows with a real
      * `session_id` are grouped per session; legacy rows (no session identity)
      * degrade to one "session" per visitor, matching historical behavior.
+     *
+     * @return literal-string
      */
     protected function sessionExpression(): string
     {
         return 'COALESCE(session_id, visitor_hash)';
     }
 
-    protected function applyFilters($query, array $filters)
+    /**
+     * Apply the active dashboard filters to an events query.
+     *
+     * @param  Builder<Event>  $query
+     * @param  array<string, mixed>  $filters
+     * @return Builder<Event>
+     */
+    protected function applyFilters(Builder $query, array $filters): Builder
     {
         if (! empty($filters['path'])) {
             $query->whereRaw($this->pathExpression().' = ?', [$filters['path']]);
@@ -193,6 +211,8 @@ class AnalyticsService
 
     /**
      * Get total pageviews for site and date range.
+     *
+     * @param  array<string, mixed>  $filters
      */
     public function getPageviews(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): int
     {
@@ -208,6 +228,8 @@ class AnalyticsService
 
     /**
      * Get unique visitors count for site and date range.
+     *
+     * @param  array<string, mixed>  $filters
      */
     public function getUniqueVisitors(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): int
     {
@@ -232,11 +254,15 @@ class AnalyticsService
 
     /**
      * Get top pages for site and date range.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getTopPages(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, "top_pages_{$limit}", $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
             $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
@@ -268,11 +294,15 @@ class AnalyticsService
 
     /**
      * Get top referrers for site and date range.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getTopReferrers(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, "top_referrers_{$limit}", $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
             $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
@@ -323,12 +353,16 @@ class AnalyticsService
 
     /**
      * Get pageview timeseries for site and date range (hourly if range <= 2 days, daily otherwise).
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getDailyPageviews(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): Collection
     {
         $isHourly = $start->diffInHours($end) <= 48;
         $cacheKey = $this->cacheKey($site->id, $isHourly ? 'hourly_pageviews' : 'daily_pageviews', $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters, $isHourly) {
             $isSqlite = DB::getDriverName() === 'sqlite';
 
@@ -394,11 +428,15 @@ class AnalyticsService
 
     /**
      * Get device breakdown (desktop, mobile, tablet, etc.).
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getDeviceBreakdown(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, 'device_breakdown', $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
             $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
@@ -426,11 +464,15 @@ class AnalyticsService
 
     /**
      * Get top browsers for site and date range.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getTopBrowsers(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, "top_browsers_{$limit}", $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
             $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
@@ -462,11 +504,15 @@ class AnalyticsService
 
     /**
      * Get top operating systems for site and date range.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getTopOperatingSystems(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, "top_os_{$limit}", $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
             $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
@@ -498,11 +544,15 @@ class AnalyticsService
 
     /**
      * Get top countries for site and date range.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getTopCountries(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, "top_countries_{$limit}", $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
             $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
@@ -553,11 +603,15 @@ class AnalyticsService
 
     /**
      * Get custom event breakdown from metadata column.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getCustomEvents(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, "custom_events_{$limit}", $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
             $nameExpr = $this->eventNameExpression();
 
@@ -599,6 +653,8 @@ class AnalyticsService
      * Session-based via `session_id`, with a documented visitor-level fallback
      * for legacy rows that predate the session column
      * (`COALESCE(session_id, visitor_hash)`). Aggregated entirely in SQL.
+     *
+     * @param  array<string, mixed>  $filters
      */
     public function getBounceRate(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): float
     {
@@ -635,6 +691,8 @@ class AnalyticsService
      * one pageview in the range (MAX(created_at) − MIN(created_at) per
      * session). Session-based via `session_id`, falling back to the visitor
      * key for legacy rows. Aggregated entirely in SQL.
+     *
+     * @param  array<string, mixed>  $filters
      */
     public function getAvgVisitDuration(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): int
     {
@@ -666,11 +724,15 @@ class AnalyticsService
 
     /**
      * Get UTM campaign breakdown for site and date range.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getUtmCampaigns(Site $site, CarbonInterface $start, CarbonInterface $end, int $limit = 10, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, "utm_campaigns_{$limit}", $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
             $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
@@ -704,6 +766,9 @@ class AnalyticsService
     /**
      * Get fast KPI metrics only (pageviews, visitors, current, bounce, duration, daily chart).
      * Intentionally excludes breakdown cards — those are deferred separately.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
      */
     public function getKpis(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): array
     {
@@ -719,6 +784,9 @@ class AnalyticsService
 
     /**
      * Get complete dashboard overview payload.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
      */
     public function getOverview(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): array
     {
@@ -748,6 +816,9 @@ class AnalyticsService
      * same day but differ in time-of-day can never collide. Filters are
      * canonicalized by sorting keys, and extra parameters are sorted, so
      * semantically identical calls always map to one key.
+     *
+     * @param  array<string, mixed>  $filters
+     * @param  array<int, mixed>  $extra
      */
     protected function cacheKey(int $siteId, string $metric, CarbonInterface $start, CarbonInterface $end, array $filters = [], array $extra = []): string
     {
@@ -758,7 +829,7 @@ class AnalyticsService
 
         if (! empty($filters)) {
             ksort($filters);
-            $key .= ':f_'.md5(json_encode($filters));
+            $key .= ':f_'.md5((string) json_encode($filters));
         }
 
         if (! empty($extra)) {
@@ -771,6 +842,8 @@ class AnalyticsService
 
     /**
      * Get summary KPIs for custom events.
+     *
+     * @return array<string, mixed>
      */
     public function getCustomEventSummary(Site $site, CarbonInterface $start, CarbonInterface $end, ?string $selectedEvent = null): array
     {
@@ -808,11 +881,14 @@ class AnalyticsService
 
     /**
      * Get list of all distinct custom event names with counts.
+     *
+     * @return Collection<int, array<string, mixed>>
      */
     public function getCustomEventsList(Site $site, CarbonInterface $start, CarbonInterface $end): Collection
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_events_list', $start, $end);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
             $nameExpr = $this->eventNameExpression();
 
@@ -845,11 +921,14 @@ class AnalyticsService
 
     /**
      * Get daily timeseries for custom events.
+     *
+     * @return Collection<int, array<string, mixed>>
      */
     public function getCustomEventTimeline(Site $site, CarbonInterface $start, CarbonInterface $end, ?string $eventName = null): Collection
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_event_timeline', $start, $end, [], [$eventName ?? 'all']);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $eventName) {
             $nameExpr = $this->eventNameExpression();
 
@@ -891,6 +970,8 @@ class AnalyticsService
 
     /**
      * Get property keys for a custom event.
+     *
+     * @return array<int, string>
      */
     public function getCustomEventPropertyKeys(Site $site, string $eventName, CarbonInterface $start, CarbonInterface $end): array
     {
@@ -919,17 +1000,20 @@ class AnalyticsService
                 );
             }
 
-            return collect($rows)->pluck('prop_key')->map(fn ($key) => (string) $key)->values()->all();
+            return collect($rows)->map(fn ($row) => (string) $row->prop_key)->values()->all();
         }, $this->shortTtl);
     }
 
     /**
      * Get property value breakdown.
+     *
+     * @return Collection<int, array<string, mixed>>
      */
     public function getCustomEventPropertyBreakdown(Site $site, string $eventName, string $propertyKey, CarbonInterface $start, CarbonInterface $end, int $limit = 10): Collection
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_event_property_breakdown', $start, $end, [], [$eventName, $propertyKey, $limit]);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $eventName, $propertyKey, $limit) {
 
             // json_encode() yields a quoted JSON string (e.g. "\"plan\""), which
@@ -977,11 +1061,14 @@ class AnalyticsService
 
     /**
      * Get custom event logs.
+     *
+     * @return Collection<int, array<string, mixed>>
      */
     public function getCustomEventLogs(Site $site, CarbonInterface $start, CarbonInterface $end, ?string $eventName = null, int $limit = 50): Collection
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_event_logs', $start, $end, [], [$eventName ?? 'all', $limit]);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $eventName, $limit) {
 
             $nameExpr = $this->eventNameExpression();
@@ -1013,7 +1100,7 @@ class AnalyticsService
                     'event_name' => $e->metadata['name'],
                     'props' => $props,
                 ];
-            })->values()->toArray();
+            })->toArray();
         }, $this->shortTtl);
 
         return collect($data ?? []);
@@ -1027,11 +1114,15 @@ class AnalyticsService
      * active filters — repeated completions by the same visitor never inflate
      * conversion. Path goals match on the same `clean_path` semantics used by
      * page analytics.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
      */
     public function getGoals(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, 'goals', $start, $end, $filters);
 
+        /** @var array<int, array<string, mixed>>|null $data */
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
             // Fresh-load instead of using $site->goals so a previously resolved
             // (possibly stale) relation on the model instance is never reused.
@@ -1148,6 +1239,8 @@ class AnalyticsService
      * `lumina:site:{id}` so clearCache() can invalidate it. On non-tag drivers
      * `$nonTagTtl` may be used to bound staleness for keys the clearCache()
      * fallback loop cannot enumerate (see `$shortTtl`).
+     *
+     * @param  Closure(): mixed  $callback
      */
     protected function rememberCache(int $siteId, string $key, Closure $callback, ?int $nonTagTtl = null): mixed
     {

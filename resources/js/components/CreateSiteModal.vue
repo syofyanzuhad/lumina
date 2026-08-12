@@ -57,7 +57,8 @@ defineExpose({
             <DialogHeader>
                 <DialogTitle>Add a new site</DialogTitle>
                 <DialogDescription>
-                    Enter the domain of the site you want to track. Do not include http:// or www.
+                    Enter the domain of the site you want to track. Do not
+                    include http:// or www.
                 </DialogDescription>
             </DialogHeader>
 

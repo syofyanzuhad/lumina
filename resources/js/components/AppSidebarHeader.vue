@@ -21,7 +21,7 @@ withDefaults(
     <header
         class="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/70 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4"
     >
-        <div class="flex items-center gap-2 flex-1">
+        <div class="flex flex-1 items-center gap-2">
             <SidebarTrigger class="-ml-1" />
             <template v-if="breadcrumbs && breadcrumbs.length > 0">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
@@ -33,7 +33,7 @@ withDefaults(
                 <Button
                     variant="outline"
                     size="sm"
-                    class="h-9 px-2.5 sm:px-3 text-xs font-semibold gap-1.5"
+                    class="h-9 gap-1.5 px-2.5 text-xs font-semibold sm:px-3"
                     title="Add New Site"
                     @click="open"
                 >

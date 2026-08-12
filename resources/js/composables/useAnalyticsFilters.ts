@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/vue3';
-import {  unref } from 'vue';
-import type {Ref} from 'vue';
+import { unref } from 'vue';
+import type { Ref } from 'vue';
 
 export interface UseAnalyticsFiltersOptions {
     baseUrl: string | Ref<string>;
@@ -20,16 +20,16 @@ export function useAnalyticsFilters(options: UseAnalyticsFiltersOptions) {
         const tab = unref(options.currentTab);
 
         if (siteId) {
-params.site_id = siteId;
-}
+            params.site_id = siteId;
+        }
 
         if (period) {
-params.period = period;
-}
+            params.period = period;
+        }
 
         if (tab) {
-params.tab = tab;
-}
+            params.tab = tab;
+        }
 
         return params;
     };
@@ -38,8 +38,8 @@ params.tab = tab;
         const url = getBaseUrl();
 
         if (!url) {
-return;
-}
+            return;
+        }
 
         const current = { ...(unref(options.currentFilters) || {}) };
         current[key] = value;
@@ -54,8 +54,8 @@ return;
         const url = getBaseUrl();
 
         if (!url) {
-return;
-}
+            return;
+        }
 
         const current = { ...(unref(options.currentFilters) || {}) };
         delete current[key];
@@ -70,8 +70,8 @@ return;
         const url = getBaseUrl();
 
         if (!url) {
-return;
-}
+            return;
+        }
 
         router.get(url, buildParams({}), {
             preserveState: true,

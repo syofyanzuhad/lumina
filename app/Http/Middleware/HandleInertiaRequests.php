@@ -37,7 +37,9 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
-        $sites = $user ? $user->sites()->select('id', 'domain')->get() : [];
+        // Always a Collection (never a bare array) so callers get a consistent
+        // API regardless of whether the user is authenticated.
+        $sites = $user ? $user->sites()->select('id', 'domain')->get() : collect();
         $activeSiteId = null;
 
         if ($user && $sites->isNotEmpty()) {

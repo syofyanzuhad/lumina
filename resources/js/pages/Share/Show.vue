@@ -50,7 +50,6 @@ const props = defineProps<{
 }>();
 
 defineOptions({
-     
     layout: null as any,
 });
 
@@ -60,21 +59,22 @@ const passwordForm = useForm({
 
 const submitPassword = () => {
     if (!props.site.share_token) {
-return;
-}
+        return;
+    }
 
     passwordForm.post(`/share/${props.site.share_token}/password`, {
         preserveScroll: true,
     });
 };
 
-const windowOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+const windowOrigin =
+    typeof window !== 'undefined' ? window.location.origin : '';
 const copiedPublicUrl = ref(false);
 
 const copyPublicShareUrl = async () => {
     if (!props.site.share_token) {
-return;
-}
+        return;
+    }
 
     const url = `${windowOrigin}/share/${props.site.share_token}`;
 
@@ -91,19 +91,39 @@ return;
 </script>
 
 <template>
-    <Head :title="requiresPassword ? `Protected Analytics — ${site.domain}` : `${site.domain} — Public Analytics`" />
+    <Head
+        :title="
+            requiresPassword
+                ? `Protected Analytics — ${site.domain}`
+                : `${site.domain} — Public Analytics`
+        "
+    />
 
-    <div class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased">
+    <div
+        class="flex min-h-screen flex-col bg-background font-sans text-foreground antialiased"
+    >
         <!-- Mode 1: Password Required View -->
-        <div v-if="requiresPassword" class="flex-1 flex items-center justify-center p-4">
-            <div class="w-full max-w-md bg-card border border-sidebar-border/80 dark:border-sidebar-border rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
-                <div class="text-center space-y-2">
-                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+        <div
+            v-if="requiresPassword"
+            class="flex flex-1 items-center justify-center p-4"
+        >
+            <div
+                class="w-full max-w-md space-y-6 rounded-2xl border border-sidebar-border/80 bg-card p-6 shadow-xl sm:p-8 dark:border-sidebar-border"
+            >
+                <div class="space-y-2 text-center">
+                    <div
+                        class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                    >
                         <Lock class="h-7 w-7" />
                     </div>
-                    <h1 class="text-xl font-bold text-foreground">Protected Analytics</h1>
+                    <h1 class="text-xl font-bold text-foreground">
+                        Protected Analytics
+                    </h1>
                     <p class="text-xs text-muted-foreground">
-                        Enter password to view public analytics for <span class="font-bold text-foreground">{{ site.domain }}</span>
+                        Enter password to view public analytics for
+                        <span class="font-bold text-foreground">{{
+                            site.domain
+                        }}</span>
                     </p>
                 </div>
 
@@ -118,10 +138,19 @@ return;
                             :class="{ 'border-destructive': passwordError }"
                             required
                         />
-                        <p v-if="passwordError" class="text-xs text-destructive font-medium">{{ passwordError }}</p>
+                        <p
+                            v-if="passwordError"
+                            class="text-xs font-medium text-destructive"
+                        >
+                            {{ passwordError }}
+                        </p>
                     </div>
 
-                    <Button type="submit" class="w-full h-10 font-bold text-xs uppercase tracking-wider" :disabled="passwordForm.processing">
+                    <Button
+                        type="submit"
+                        class="h-10 w-full text-xs font-bold tracking-wider uppercase"
+                        :disabled="passwordForm.processing"
+                    >
                         Unlock Analytics
                     </Button>
                 </form>
@@ -129,40 +158,60 @@ return;
         </div>
 
         <!-- Mode 2: Read-Only Public Dashboard -->
-        <div v-else class="flex-1 flex flex-col">
+        <div v-else class="flex flex-1 flex-col">
             <!-- Top Header -->
-            <header class="border-b border-sidebar-border/80 dark:border-sidebar-border bg-card/60 backdrop-blur-md sticky top-0 z-30">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <header
+                class="sticky top-0 z-30 border-b border-sidebar-border/80 bg-card/60 backdrop-blur-md dark:border-sidebar-border"
+            >
+                <div
+                    class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+                >
                     <div class="flex items-center gap-3">
-                        <div class="h-9 w-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                        <div
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                        >
                             <Globe class="h-5 w-5" />
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h1 class="text-lg font-bold text-foreground tracking-tight">{{ site.domain }}</h1>
-                                <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                <h1
+                                    class="text-lg font-bold tracking-tight text-foreground"
+                                >
+                                    {{ site.domain }}
+                                </h1>
+                                <span
+                                    class="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400"
+                                >
                                     <ShieldCheck class="h-3 w-3" /> Public Share
                                 </span>
                             </div>
-                            <p class="text-xs text-muted-foreground">Live public analytics view powered by Lumina Core</p>
+                            <p class="text-xs text-muted-foreground">
+                                Live public analytics view powered by Lumina
+                                Core
+                            </p>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2 text-xs">
                         <button
                             @click="copyPublicShareUrl"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground font-mono transition-colors border border-sidebar-border/60"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-sidebar-border/60 bg-muted/80 px-3 py-1.5 font-mono text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                             title="Copy share link"
                         >
-                            <component :is="copiedPublicUrl ? Check : Copy" class="h-3.5 w-3.5 text-emerald-500" />
-                            <span>{{ copiedPublicUrl ? 'Copied!' : 'Copy Link' }}</span>
+                            <component
+                                :is="copiedPublicUrl ? Check : Copy"
+                                class="h-3.5 w-3.5 text-emerald-500"
+                            />
+                            <span>{{
+                                copiedPublicUrl ? 'Copied!' : 'Copy Link'
+                            }}</span>
                         </button>
                     </div>
                 </div>
             </header>
 
             <!-- Main Dashboard Body -->
-            <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+            <main class="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">
                 <AnalyticsDashboard
                     :baseUrl="`/share/${site.share_token}`"
                     :breakdownUrl="`/share/${site.share_token}/breakdown`"
@@ -197,14 +246,23 @@ return;
                     :custom_events_list="custom_events_list"
                     :custom_event_timeline="custom_event_timeline"
                     :custom_event_property_keys="custom_event_property_keys"
-                    :custom_event_property_breakdown="custom_event_property_breakdown"
+                    :custom_event_property_breakdown="
+                        custom_event_property_breakdown
+                    "
                     :custom_event_logs="custom_event_logs"
                 />
             </main>
 
             <!-- Powered by Lumina Footer -->
-            <footer class="border-t border-sidebar-border/40 py-6 text-center text-xs text-muted-foreground">
-                <p>Powered by <span class="font-bold text-foreground">Lumina Analytics</span></p>
+            <footer
+                class="border-t border-sidebar-border/40 py-6 text-center text-xs text-muted-foreground"
+            >
+                <p>
+                    Powered by
+                    <span class="font-bold text-foreground"
+                        >Lumina Analytics</span
+                    >
+                </p>
             </footer>
         </div>
     </div>
