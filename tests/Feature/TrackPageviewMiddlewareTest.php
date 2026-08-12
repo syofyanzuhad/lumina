@@ -1,6 +1,9 @@
 <?php
 
+use Illuminate\Contracts\Bus\Dispatcher;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -134,4 +137,125 @@ test('it silently swallows request and skips tracking when site rate limited', f
 
     $response->assertStatus(200);
     Queue::assertNotPushed(InsertEvent::class);
+});
+
+test('rate limiter never records more hits than the cap under burst load', function () {
+    $site = Site::factory()->create(['domain' => 'burst.test']);
+    URL::forceRootUrl('http://burst.test');
+
+    Queue::fake();
+
+    // Fire cap+1 effectively-concurrent requests; the atomic attempt() must
+    // swallow the excess instead of recording more hits than the cap.
+    for ($i = 0; $i < 61; $i++) {
+        $this->withHeaders(['Host' => 'burst.test'])->get('/');
+    }
+
+    expect(RateLimiter::attempts('lumina_ip:127.0.0.1'))->toBe(60);
+    Queue::assertPushed(InsertEvent::class, 60);
+});
+
+test('site lookup is cached after the first request', function () {
+    $site = Site::factory()->create(['domain' => 'cached.test']);
+    URL::forceRootUrl('http://cached.test');
+
+    Queue::fake();
+
+    $this->withHeaders(['Host' => 'cached.test'])->get('/');
+
+    expect(Cache::has('lumina_site_lookup:cached.test'))->toBeTrue();
+
+    // Saving the site must invalidate the cached lookup.
+    $site->update(['domain' => 'cached.test']);
+    expect(Cache::has('lumina_site_lookup:cached.test'))->toBeFalse();
+});
+
+test('ignores proxy country headers unless the request is from a trusted proxy', function () {
+    $site = Site::factory()->create(['domain' => 'proxy.test']);
+    URL::forceRootUrl('http://proxy.test');
+
+    // No trusted proxies configured => CF-IPCountry is untrusted spoofable input.
+    $this->withHeaders([
+        'Host' => 'proxy.test',
+        'CF-IPCountry' => 'US',
+        'X-Vercel-IP-Country' => 'DE',
+    ])->get('/');
+
+    $event = Event::first();
+    expect($event)->not->toBeNull()
+        ->and($event->country)->toBeNull();
+});
+
+test('uses the first-party X-Country override regardless of proxy trust', function () {
+    $site = Site::factory()->create(['domain' => 'country.test']);
+    URL::forceRootUrl('http://country.test');
+
+    $this->withHeaders([
+        'Host' => 'country.test',
+        'X-Country' => 'ID',
+        'CF-IPCountry' => 'US',
+    ])->get('/');
+
+    $event = Event::first();
+    expect($event->country)->toBe('ID');
+});
+
+test('stores client-provided visitor and session identity', function () {
+    $site = Site::factory()->create(['domain' => 'identity.test']);
+    URL::forceRootUrl('http://identity.test');
+
+    $this->withHeaders([
+        'Host' => 'identity.test',
+        'X-Lumina-Visitor' => 'opaque-visitor-123',
+        'X-Lumina-Session' => 'session-abc',
+    ])->get('/');
+
+    $event = Event::first();
+
+    expect($event->visitor_id)->toBe('opaque-visitor-123')
+        ->and($event->session_id)->toBe('session-abc')
+        ->and($event->visitor_hash)->toBe('opaque-visitor-123');
+});
+
+test('derives a stable cross-day visitor hash from ip+ua (no daily salt)', function () {
+    $site = Site::factory()->create(['domain' => 'stable.test']);
+    URL::forceRootUrl('http://stable.test');
+
+    $ua = 'TestBrowser/1.0';
+
+    // Day 1
+    $this->withServerVariables(['REMOTE_ADDR' => '192.168.1.100'])
+        ->withHeaders(['Host' => 'stable.test', 'User-Agent' => $ua])
+        ->get('/');
+
+    // Day 2: same IP + UA must resolve to the same visitor hash, so cross-day
+    // unique visitors stay exact. (Sync queue in beforeEach actually persists
+    // the events; the salt is stable, unlike the old daily-rotating salt.)
+    Carbon::setTestNow(now()->addDay());
+    $this->withServerVariables(['REMOTE_ADDR' => '192.168.1.100'])
+        ->withHeaders(['Host' => 'stable.test', 'User-Agent' => $ua])
+        ->get('/');
+    Carbon::setTestNow();
+
+    $hashes = Event::pluck('visitor_hash')->unique();
+
+    expect($hashes)->toHaveCount(1);
+});
+
+test('queue dispatch failure is reported without failing the request', function () {
+    $site = Site::factory()->create(['domain' => 'queuedown.test']);
+    URL::forceRootUrl('http://queuedown.test');
+
+    Log::spy();
+
+    // Simulate an unavailable queue connection at the dispatcher seam.
+    $this->mock(
+        Dispatcher::class,
+        fn ($mock) => $mock->shouldReceive('dispatch')->andThrow(new RuntimeException('queue down'))
+    );
+
+    $response = $this->withHeaders(['Host' => 'queuedown.test'])->get('/');
+
+    $response->assertStatus(200);
+    Log::shouldHaveReceived('error')->once();
 });

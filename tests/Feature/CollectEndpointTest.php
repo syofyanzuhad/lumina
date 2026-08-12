@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\RateLimiter;
 use Lumina\Core\Enums\DeviceType;
 use Lumina\Core\Jobs\InsertEvent;
 use Lumina\Core\Models\Site;
@@ -143,5 +144,34 @@ class CollectEndpointTest extends TestCase
         $response->assertStatus(204);
         $response->assertHeader('Access-Control-Allow-Origin', 'https://syofyanzuhad.dev');
         $response->assertHeader('Access-Control-Allow-Credentials', 'true');
+    }
+
+    public function test_collect_endpoint_is_rate_limited_per_ip(): void
+    {
+        Queue::fake();
+
+        // Exhaust the per-IP budget by filling the limiter key up to the cap
+        // (attempt() returns false once attempts >= max).
+        $key = 'lumina_collect:127.0.0.1';
+        RateLimiter::clear($key);
+        for ($i = 0; $i < 120; $i++) {
+            RateLimiter::hit($key, 60);
+        }
+
+        $this->postJson('/api/collect', [
+            'domain' => 'example.com',
+            'path' => '/page1',
+        ])->assertStatus(204); // silently swallowed, never a hard error
+
+        // No job is pushed while the IP is over its budget.
+        Queue::assertNothingPushed();
+
+        // A different IP is not affected.
+        $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.99'])->postJson('/api/collect', [
+            'domain' => 'example.com',
+            'path' => '/page2',
+        ])->assertStatus(204);
+
+        Queue::assertPushed(InsertEvent::class, 1);
     }
 }

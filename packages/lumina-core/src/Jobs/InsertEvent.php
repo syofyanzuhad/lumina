@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Jenssegers\Agent\Agent;
 use Lumina\Core\Enums\DeviceType;
 use Lumina\Core\Models\Event;
@@ -32,6 +33,9 @@ class InsertEvent implements ShouldQueue
         public ?array $metadata = null,
         public ?string $userAgent = null,
         public ?string $ip = null,
+        public ?string $visitorId = null,
+        public ?string $sessionId = null,
+        public ?string $eventId = null,
     ) {}
 
     /**
@@ -39,6 +43,13 @@ class InsertEvent implements ShouldQueue
      */
     public function handle(): void
     {
+        // Referrer truncation is handled here (single choke point for both the
+        // middleware and the collect endpoint) so an over-long referrer can
+        // never fail the insert.
+        $referrer = $this->referrer !== null
+            ? Str::limit($this->referrer, 255, '')
+            : null;
+
         $browser = null;
         $browserVersion = null;
         $os = null;
@@ -82,7 +93,13 @@ class InsertEvent implements ShouldQueue
 
         $countryName = CountryHelper::getName($countryCode);
 
-        $cleanPath = parse_url($this->path, PHP_URL_PATH) ?? '/';
+        // Bound the path to the column width (varchar 255) so an over-long
+        // middleware-tracked URL can never fail the insert. The collect
+        // endpoint additionally validates max:255, making this the single
+        // choke point for both ingestion paths.
+        $path = Str::limit($this->path, 255, '');
+
+        $cleanPath = parse_url($path, PHP_URL_PATH) ?? '/';
 
         $cleanPath = '/'.ltrim($cleanPath, '/');
 
@@ -103,12 +120,15 @@ class InsertEvent implements ShouldQueue
             $utmContent = isset($queryParams['utm_content']) ? substr((string) $queryParams['utm_content'], 0, 255) : null;
         }
 
-        Event::create([
+        $attributes = [
             'site_id' => $this->siteId,
-            'path' => $this->path,
+            'path' => $path,
             'clean_path' => $cleanPath,
-            'referrer' => $this->referrer,
+            'referrer' => $referrer,
             'visitor_hash' => $this->visitorHash,
+            'visitor_id' => $this->visitorId ?? $this->visitorHash,
+            'session_id' => $this->sessionId,
+            'event_id' => $this->eventId,
             'device_type' => $this->deviceType,
             'country' => $countryCode,
             'browser' => $browser,
@@ -123,12 +143,51 @@ class InsertEvent implements ShouldQueue
             'utm_term' => $utmTerm,
             'utm_content' => $utmContent,
             'metadata' => $this->metadata,
-        ]);
+        ];
 
-        DB::statement('
-            INSERT INTO daily_visitor_stats (site_id, date, visitor_hash, views, created_at, updated_at)
-            VALUES (?, CURRENT_DATE(), ?, 1, NOW(), NOW())
-            ON DUPLICATE KEY UPDATE views = views + 1, updated_at = NOW()
-        ', [$this->siteId, $this->visitorHash]);
+        // Idempotent insertion: an event_id generated at tracking time makes
+        // queue retries safe — a duplicate event_id is simply ignored, so
+        // retried jobs can never double-count pageviews. createOrFirst() is
+        // race-safe under concurrent workers (firstOrCreate would let a second
+        // worker race past the SELECT and hit the unique index).
+        if ($this->eventId !== null) {
+            $event = Event::query()->createOrFirst(
+                ['event_id' => $this->eventId],
+                $attributes
+            );
+
+            if (! $event->wasRecentlyCreated) {
+                return;
+            }
+        } else {
+            $event = Event::create($attributes);
+        }
+
+        $this->recordDailyVisitorStats($event);
+    }
+
+    /**
+     * Maintain the daily_visitor_stats aggregate with a portable upsert that
+     * works on both MySQL (ON DUPLICATE KEY UPDATE) and SQLite (ON CONFLICT).
+     */
+    protected function recordDailyVisitorStats(Event $event): void
+    {
+        $date = $event->created_at->toDateString();
+
+        DB::table('daily_visitor_stats')->upsert(
+            [
+                'site_id' => $this->siteId,
+                'date' => $date,
+                'visitor_hash' => $this->visitorHash,
+                'views' => 1,
+                'created_at' => $event->created_at,
+                'updated_at' => $event->created_at,
+            ],
+            ['site_id', 'date', 'visitor_hash'],
+            [
+                'views' => DB::raw('views + 1'),
+                'updated_at' => $event->created_at,
+            ]
+        );
     }
 }

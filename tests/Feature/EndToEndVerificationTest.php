@@ -75,7 +75,7 @@ class EndToEndVerificationTest extends TestCase
         $dashboardResponse->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
             ->where('activeSite.domain', 'lumina-demo.com')
-            ->where('overview.total_pageviews', 2)
+            ->where('total_pageviews', 2)
         );
     }
 }
