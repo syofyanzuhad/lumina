@@ -191,5 +191,8 @@ class DatabaseSeeder extends Seeder
 
         // Populate daily_visitor_stats for seeded data
         Artisan::call('lumina:backfill-visitor-stats');
+
+        // Populate clean_path for seeded data
+        Artisan::call('lumina:backfill-clean-path');
     }
 }

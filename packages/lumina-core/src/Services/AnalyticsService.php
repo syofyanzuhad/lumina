@@ -4,6 +4,7 @@ namespace Lumina\Core\Services;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Closure;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -12,16 +13,110 @@ use Lumina\Core\Models\Site;
 use Lumina\Core\Support\CountryHelper;
 use Lumina\Core\Support\ReferrerHelper;
 
+/**
+ * Analytics metrics service for Lumina.
+ *
+ * Date-range convention: all date ranges are **inclusive on both ends**
+ * (`created_at >= start AND created_at <= end`). Callers are expected to
+ * normalize boundaries to `startOfDay()`/`endOfDay()` before calling into this
+ * service (see `resolveDateRange` in the dashboard/share controllers).
+ *
+ * Identity & sessions: rows ingested before the identity migration carry only
+ * `visitor_hash`; newer rows also carry `visitor_id` and `session_id`. All
+ * visitor-level metrics use `COALESCE(visitor_id, visitor_hash)`, and bounce
+ * rate / average visit duration group by `COALESCE(session_id, visitor_hash)`
+ * — genuinely session-based for new data, with a documented visitor-level
+ * fallback for legacy rows that have no session identity.
+ *
+ * Goal semantics: `completions` counts raw goal events (GA4-style), while
+ * `conversion_rate` is `unique converters / unique visitors`, with **both**
+ * sides scoped to the active filters. A visitor completing the same goal
+ * repeatedly therefore never inflates conversion rate. Goal matching uses the
+ * same `clean_path` semantics as page analytics (with a legacy fallback for
+ * rows ingested before the `clean_path` column existed).
+ *
+ * Caching: every metric routes through `rememberCache()` and is tagged with
+ * `lumina:site:{id}` when the driver supports tags; `clearCache()` flushes
+ * those tags. On drivers without tag support (file, database), invalidation
+ * falls back to forgetting known keys for common periods, and the five
+ * parameterized custom-event metrics additionally use a short TTL to bound
+ * staleness (see `clearCache()`).
+ */
 class AnalyticsService
 {
+    /**
+     * Cache TTL in seconds (default: 60).
+     */
+    protected int $ttl = 60;
+
+    /**
+     * Short TTL in seconds for parameterized custom-event metrics on cache
+     * drivers that do not support tags. Their keys embed event names, property
+     * keys, and limits, so the untagged `clearCache()` fallback loop cannot
+     * enumerate them — a short TTL bounds staleness instead. Deliberate
+     * tradeoff, not an oversight.
+     */
+    protected int $shortTtl = 15;
+
+    /**
+     * SQL expression resolving the normalized page path used by page analytics,
+     * goal matching, and the path filter. Prefers the `clean_path` column (set
+     * at ingestion) and falls back to the raw `path` with the query string
+     * stripped for legacy rows where `clean_path` is still NULL.
+     */
+    protected function pathExpression(): string
+    {
+        return DB::getDriverName() === 'sqlite'
+            ? "COALESCE(clean_path, CASE WHEN instr(path, '?') > 0 THEN substr(path, 1, instr(path, '?') - 1) ELSE path END)"
+            : 'COALESCE(clean_path, SUBSTRING_INDEX(path, \'?\', 1))';
+    }
+
+    /**
+     * SQL expression extracting the custom event name from the `metadata` JSON
+     * column, with per-driver JSON path syntax.
+     */
+    protected function eventNameExpression(): string
+    {
+        return DB::getDriverName() === 'sqlite'
+            ? "json_extract(metadata, '$.name')"
+            : "JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.name'))";
+    }
+
+    /**
+     * SQL expression formatting a timestamp as a day-level date string
+     * (identical semantics to `getDailyPageviews`).
+     */
+    protected function dateExpression(): string
+    {
+        return DB::getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m-%d', created_at)"
+            : 'DATE(created_at)';
+    }
+
+    /**
+     * SQL expression resolving the canonical visitor identity. New rows carry
+     * `visitor_id` (client-provided opaque ID or stable salted hash); legacy
+     * rows fall back to `visitor_hash`.
+     */
+    protected function visitorExpression(): string
+    {
+        return 'COALESCE(visitor_id, visitor_hash)';
+    }
+
+    /**
+     * SQL expression resolving the session grouping key. Rows with a real
+     * `session_id` are grouped per session; legacy rows (no session identity)
+     * degrade to one "session" per visitor, matching historical behavior.
+     */
+    protected function sessionExpression(): string
+    {
+        return 'COALESCE(session_id, visitor_hash)';
+    }
+
     protected function applyFilters($query, array $filters)
     {
         if (! empty($filters['path'])) {
-            if (DB::getDriverName() === 'sqlite') {
-                $query->whereRaw("COALESCE(clean_path, CASE WHEN instr(path, '?') > 0 THEN substr(path, 1, instr(path, '?') - 1) ELSE path END) = ?", [$filters['path']]);
-            } else {
-                $query->whereRaw("COALESCE(clean_path, SUBSTRING_INDEX(path, '?', 1)) = ?", [$filters['path']]);
-            }
+            $query->whereRaw($this->pathExpression().' = ?', [$filters['path']]);
         }
         if (! empty($filters['referrer'])) {
             $query->where('referrer', $filters['referrer']);
@@ -36,7 +131,7 @@ class AnalyticsService
             $query->where('os', $filters['os']);
         }
         if (! empty($filters['device'])) {
-            $query->where('device', $filters['device']);
+            $query->where('device_type', $filters['device']);
         }
         if (! empty($filters['utm_campaign'])) {
             $query->where('utm_campaign', $filters['utm_campaign']);
@@ -44,11 +139,6 @@ class AnalyticsService
 
         return $query;
     }
-
-    /**
-     * Cache TTL in seconds (default: 60).
-     */
-    protected int $ttl = 60;
 
     /**
      * Clear cached analytics metrics for a specific site.
@@ -61,7 +151,13 @@ class AnalyticsService
             return;
         }
 
-        // For cache drivers without tags support (e.g. file, database default), clear common date ranges/keys
+        // Fallback for cache drivers without tag support (file, database).
+        // Best-effort: only common periods and the fixed metric keys below can
+        // be forgotten. Filtered variants and the five parameterized
+        // custom-event metrics (custom_event_summary, custom_event_timeline,
+        // custom_event_property_keys, custom_event_property_breakdown,
+        // custom_event_logs) embed arbitrary parameters in their keys and cannot
+        // be enumerated here — those rely on `$shortTtl` to bound staleness.
         $commonPeriods = [
             [now()->subDays(6)->startOfDay(), now()->endOfDay()],
             [now()->subDays(29)->startOfDay(), now()->endOfDay()],
@@ -82,6 +178,8 @@ class AnalyticsService
             'custom_events_list',
             'custom_event_summary',
             'custom_event_timeline',
+            'custom_event_property_keys',
+            'custom_event_property_breakdown',
             'custom_event_logs',
             'goals',
         ];
@@ -124,11 +222,11 @@ class AnalyticsService
                     ->count('visitor_hash');
             }
 
-            return Event::where('site_id', $site->id)
+            return (int) Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->tap(fn ($q) => $this->applyFilters($q, $filters))
-                ->distinct('visitor_hash')
-                ->count('visitor_hash');
+                ->distinct()
+                ->count(DB::raw($this->visitorExpression()));
         });
     }
 
@@ -142,9 +240,7 @@ class AnalyticsService
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
             $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
-            $pathExpr = DB::getDriverName() === 'sqlite'
-                ? DB::raw("COALESCE(clean_path, CASE WHEN instr(path, '?') > 0 THEN substr(path, 1, instr(path, '?') - 1) ELSE path END) as target_path")
-                : DB::raw("COALESCE(clean_path, SUBSTRING_INDEX(path, '?', 1)) as target_path");
+            $pathExpr = DB::raw($this->pathExpression().' as target_path');
 
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
@@ -180,6 +276,11 @@ class AnalyticsService
         $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
             $totalPageviews = $this->getPageviews($site, $start, $end, $filters);
 
+            // Referrer platform names are normalized in PHP (ReferrerHelper), so
+            // multiple raw referrer URLs can collapse into one platform. Fetch a
+            // bounded superset at the database level (the schema has no
+            // denormalized referrer_name column) and apply the real limit after
+            // grouping, so memory stays bounded.
             $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->tap(fn ($q) => $this->applyFilters($q, $filters))
@@ -188,6 +289,7 @@ class AnalyticsService
                 ->select('referrer', DB::raw('count(*) as count'))
                 ->groupBy('referrer')
                 ->orderByDesc('count')
+                ->limit($limit * 4)
                 ->get();
 
             $grouped = $results->groupBy(function ($row) {
@@ -235,9 +337,7 @@ class AnalyticsService
                     ? DB::raw("strftime('%Y-%m-%d %H:00', created_at) as date")
                     : DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d %H:00') as date");
             } else {
-                $dateExpr = $isSqlite
-                    ? DB::raw("strftime('%Y-%m-%d', created_at) as date")
-                    : DB::raw('DATE(created_at) as date');
+                $dateExpr = DB::raw($this->dateExpression().' as date');
             }
 
             $results = Event::where('site_id', $site->id)
@@ -246,7 +346,7 @@ class AnalyticsService
                 ->select(
                     $dateExpr,
                     DB::raw('count(*) as pageviews'),
-                    DB::raw('count(distinct visitor_hash) as visitors')
+                    DB::raw('count(distinct '.$this->visitorExpression().') as visitors')
                 )
                 ->groupBy('date')
                 ->get()
@@ -458,24 +558,25 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, "custom_events_{$limit}", $start, $end, $filters);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $limit, $filters) {
-            $events = Event::where('site_id', $site->id)
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $limit, $filters) {
+            $nameExpr = $this->eventNameExpression();
+
+            $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->tap(fn ($q) => $this->applyFilters($q, $filters))
                 ->whereNotNull('metadata')
+                ->whereRaw($nameExpr.' IS NOT NULL')
+                ->selectRaw("{$nameExpr} as event_name, count(*) as count")
+                ->groupBy('event_name')
+                ->orderByDesc('count')
+                ->orderBy('event_name')
+                ->limit($limit)
                 ->get();
 
-            return $events
-                ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']))
-                ->groupBy(fn ($e) => $e->metadata['name'])
-                ->map(fn ($group, $name) => [
-                    'name' => (string) $name,
-                    'count' => $group->count(),
-                ])
-                ->sortByDesc('count')
-                ->take($limit)
-                ->values()
-                ->toArray();
+            return $results->map(fn ($row) => [
+                'name' => (string) $row->event_name,
+                'count' => (int) $row->count,
+            ])->toArray();
         });
 
         return collect($data ?? []);
@@ -488,81 +589,78 @@ class AnalyticsService
     {
         return (int) Event::where('site_id', $site->id)
             ->where('created_at', '>=', now()->subMinutes($minutes))
-            ->distinct('visitor_hash')
-            ->count('visitor_hash');
+            ->distinct()
+            ->count(DB::raw($this->visitorExpression()));
     }
 
     /**
-     * Get bounce rate (percentage of single-pageview visitor sessions).
+     * Get bounce rate — percentage of sessions with exactly one pageview.
+     *
+     * Session-based via `session_id`, with a documented visitor-level fallback
+     * for legacy rows that predate the session column
+     * (`COALESCE(session_id, visitor_hash)`). Aggregated entirely in SQL.
      */
     public function getBounceRate(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): float
     {
         $cacheKey = $this->cacheKey($site->id, 'bounce_rate', $start, $end, $filters);
 
         return (float) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
-            if (empty($filters)) {
-                $visitorCounts = DB::table('daily_visitor_stats')
-                    ->where('site_id', $site->id)
-                    ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-                    ->select('visitor_hash', DB::raw('SUM(views) as views'))
-                    ->groupBy('visitor_hash')
-                    ->get();
+            $sessionExpr = $this->sessionExpression();
 
-                $totalVisitors = $visitorCounts->count();
-                if ($totalVisitors === 0) {
-                    return 0.0;
-                }
-
-                $bounces = $visitorCounts->where('views', 1)->count();
-
-                return round(($bounces / $totalVisitors) * 100, 1);
-            }
-
-            $visitorCounts = Event::where('site_id', $site->id)
+            $baseQuery = fn () => Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
-                ->tap(fn ($q) => $this->applyFilters($q, $filters))
-                ->select('visitor_hash', DB::raw('count(*) as views'))
-                ->groupBy('visitor_hash')
-                ->get();
+                ->tap(fn ($q) => $this->applyFilters($q, $filters));
 
-            $totalVisitors = $visitorCounts->count();
-            if ($totalVisitors === 0) {
+            $totalSessions = (int) $baseQuery()
+                ->distinct()
+                ->count(DB::raw($sessionExpr));
+
+            if ($totalSessions === 0) {
                 return 0.0;
             }
 
-            $bounces = $visitorCounts->where('views', 1)->count();
+            $inner = $baseQuery()
+                ->select(DB::raw($sessionExpr.' as session_key'))
+                ->groupBy('session_key')
+                ->havingRaw('COUNT(*) = 1');
 
-            return round(($bounces / $totalVisitors) * 100, 1);
+            $bounces = (int) DB::query()->from($inner, 'bounces')->count();
+
+            return round(($bounces / $totalSessions) * 100, 1);
         });
     }
 
     /**
-     * Get average visit duration in seconds across visitor sessions.
+     * Get average session duration in seconds across sessions with more than
+     * one pageview in the range (MAX(created_at) − MIN(created_at) per
+     * session). Session-based via `session_id`, falling back to the visitor
+     * key for legacy rows. Aggregated entirely in SQL.
      */
-    public function getAvgVisitDuration(Site $site, CarbonInterface $start, CarbonInterface $end): int
+    public function getAvgVisitDuration(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): int
     {
-        $cacheKey = $this->cacheKey($site->id, 'avg_visit_duration', $start, $end);
+        $cacheKey = $this->cacheKey($site->id, 'avg_visit_duration', $start, $end, $filters);
 
-        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
-            $sessions = Event::where('site_id', $site->id)
+        return (int) $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
+            $sessionExpr = $this->sessionExpression();
+
+            $inner = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
-                ->select('visitor_hash', DB::raw('MIN(created_at) as first_seen'), DB::raw('MAX(created_at) as last_seen'))
-                ->groupBy('visitor_hash')
-                ->get();
+                ->tap(fn ($q) => $this->applyFilters($q, $filters))
+                ->select(DB::raw($sessionExpr.' as session_key'))
+                ->selectRaw('MIN(created_at) as first_seen, MAX(created_at) as last_seen')
+                ->groupBy('session_key')
+                ->havingRaw('MIN(created_at) <> MAX(created_at)');
 
-            $multiEventSessions = $sessions->filter(function ($s) {
-                return $s->first_seen !== $s->last_seen;
-            });
+            $durationExpr = DB::getDriverName() === 'sqlite'
+                ? 'AVG((julianday(last_seen) - julianday(first_seen)) * 86400)'
+                : 'AVG(TIMESTAMPDIFF(SECOND, first_seen, last_seen))';
 
-            if ($multiEventSessions->isEmpty()) {
-                return 0;
-            }
+            $avgDuration = DB::query()
+                ->from($inner, 'durations')
+                ->selectRaw("{$durationExpr} as avg_duration")
+                ->value('avg_duration');
 
-            $totalDuration = $multiEventSessions->sum(function ($s) {
-                return Carbon::parse($s->last_seen)->diffInSeconds(Carbon::parse($s->first_seen));
-            });
-
-            return (int) round($totalDuration / $multiEventSessions->count());
+            return $avgDuration ? (int) round((float) $avgDuration) : 0;
         });
     }
 
@@ -645,11 +743,16 @@ class AnalyticsService
 
     /**
      * Generate deterministic cache key.
+     *
+     * Full timestamps (not just dates) are included so ranges that share the
+     * same day but differ in time-of-day can never collide. Filters are
+     * canonicalized by sorting keys, and extra parameters are sorted, so
+     * semantically identical calls always map to one key.
      */
     protected function cacheKey(int $siteId, string $metric, CarbonInterface $start, CarbonInterface $end, array $filters = [], array $extra = []): string
     {
-        $sStr = $start->format('Y-m-d');
-        $eStr = $end->format('Y-m-d');
+        $sStr = $start->format('Y-m-d H:i:s');
+        $eStr = $end->format('Y-m-d H:i:s');
 
         $key = "lumina:analytics:{$siteId}:{$metric}:{$sStr}:{$eStr}";
 
@@ -659,6 +762,7 @@ class AnalyticsService
         }
 
         if (! empty($extra)) {
+            sort($extra);
             $key .= ':'.implode(':', $extra);
         }
 
@@ -672,32 +776,34 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_event_summary', $start, $end, [], [$selectedEvent ?? 'all']);
 
-        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $selectedEvent) {
+        return $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $selectedEvent) {
+            $nameExpr = $this->eventNameExpression();
+
             $query = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
-                ->whereNotNull('metadata');
-
-            $events = $query->get()->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']));
+                ->whereNotNull('metadata')
+                ->whereRaw($nameExpr.' IS NOT NULL');
 
             if ($selectedEvent) {
-                $events = $events->filter(fn ($e) => $e->metadata['name'] === $selectedEvent);
+                $query->whereRaw($nameExpr.' = ?', [$selectedEvent]);
             }
 
-            $totalEvents = $events->count();
-            $grouped = $events->groupBy(fn ($e) => $e->metadata['name']);
-            $uniqueEventNames = $grouped->keys()->count();
+            $totalEvents = (clone $query)->count();
+            $uniqueEventNames = (clone $query)->distinct()->count(DB::raw($nameExpr));
 
-            $topEventName = null;
-            if ($uniqueEventNames > 0) {
-                $topEventName = $grouped->map->count()->sortDesc()->keys()->first();
-            }
+            $topEvent = (clone $query)
+                ->selectRaw("{$nameExpr} as name, count(*) as count")
+                ->groupBy('name')
+                ->orderByDesc('count')
+                ->orderBy('name')
+                ->first();
 
             return [
                 'total_custom_events' => $totalEvents,
                 'unique_event_names' => $uniqueEventNames,
-                'top_event_name' => $topEventName,
+                'top_event_name' => $topEvent ? (string) $topEvent->name : null,
             ];
-        });
+        }, $this->shortTtl);
     }
 
     /**
@@ -707,30 +813,31 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_events_list', $start, $end);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end) {
-            $events = Event::where('site_id', $site->id)
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end) {
+            $nameExpr = $this->eventNameExpression();
+
+            $results = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->whereNotNull('metadata')
-                ->get()
-                ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']));
+                ->whereRaw($nameExpr.' IS NOT NULL')
+                ->selectRaw("{$nameExpr} as name, count(*) as count, MAX(created_at) as last_seen")
+                ->groupBy('name')
+                ->orderByDesc('count')
+                ->orderBy('name')
+                ->get();
 
-            $totalEvents = $events->count();
+            $totalEvents = (int) $results->sum('count');
 
-            return $events
-                ->groupBy(fn ($e) => $e->metadata['name'])
-                ->map(function ($group, $name) use ($totalEvents) {
-                    $count = $group->count();
+            return $results->map(function ($row) use ($totalEvents) {
+                $count = (int) $row->count;
 
-                    return [
-                        'name' => (string) $name,
-                        'count' => $count,
-                        'percentage' => $totalEvents > 0 ? round(($count / $totalEvents) * 100, 1) : 0.0,
-                        'last_seen' => $group->sortByDesc('created_at')->first()->created_at->toDateTimeString(),
-                    ];
-                })
-                ->sortByDesc('count')
-                ->values()
-                ->toArray();
+                return [
+                    'name' => (string) $row->name,
+                    'count' => $count,
+                    'percentage' => $totalEvents > 0 ? round(($count / $totalEvents) * 100, 1) : 0.0,
+                    'last_seen' => Carbon::parse($row->last_seen)->toDateTimeString(),
+                ];
+            })->toArray();
         });
 
         return collect($data ?? []);
@@ -743,18 +850,23 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_event_timeline', $start, $end, [], [$eventName ?? 'all']);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName) {
-            $events = Event::where('site_id', $site->id)
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $eventName) {
+            $nameExpr = $this->eventNameExpression();
+
+            $query = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->whereNotNull('metadata')
-                ->get()
-                ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']));
+                ->whereRaw($nameExpr.' IS NOT NULL');
 
             if ($eventName) {
-                $events = $events->filter(fn ($e) => $e->metadata['name'] === $eventName);
+                $query->whereRaw($nameExpr.' = ?', [$eventName]);
             }
 
-            $grouped = $events->groupBy(fn ($e) => $e->created_at->format('Y-m-d'));
+            $results = $query
+                ->selectRaw($this->dateExpression().' as date, count(*) as count')
+                ->groupBy('date')
+                ->get()
+                ->keyBy('date');
 
             $series = [];
             $curr = $start->copy()->startOfDay();
@@ -762,16 +874,17 @@ class AnalyticsService
 
             while ($curr->lte($last)) {
                 $dateStr = $curr->format('Y-m-d');
-                $dayEvents = $grouped->get($dateStr, collect());
+                $row = $results->get($dateStr);
+
                 $series[] = [
                     'date' => $dateStr,
-                    'count' => $dayEvents->count(),
+                    'count' => $row ? (int) $row->count : 0,
                 ];
                 $curr = $curr->addDay();
             }
 
             return $series;
-        });
+        }, $this->shortTtl);
 
         return collect($data ?? []);
     }
@@ -783,23 +896,31 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_event_property_keys', $start, $end, [], [$eventName]);
 
-        return Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName) {
-            $events = Event::where('site_id', $site->id)
-                ->whereBetween('created_at', [$start, $end])
-                ->whereNotNull('metadata')
-                ->get()
-                ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']) && $e->metadata['name'] === $eventName);
-
-            $keys = collect();
-
-            foreach ($events as $event) {
-                if (isset($event->metadata['props']) && is_array($event->metadata['props'])) {
-                    $keys = $keys->merge(array_keys($event->metadata['props']));
-                }
+        return $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $eventName) {
+            if (DB::getDriverName() === 'sqlite') {
+                $rows = DB::select(
+                    "SELECT DISTINCT je.key AS prop_key
+                     FROM events e, json_each(e.metadata, '$.props') je
+                     WHERE e.site_id = ? AND e.created_at BETWEEN ? AND ?
+                       AND json_extract(e.metadata, '$.name') = ?
+                       AND je.key IS NOT NULL
+                     ORDER BY prop_key",
+                    [$site->id, $start->toDateTimeString(), $end->toDateTimeString(), $eventName]
+                );
+            } else {
+                $rows = DB::select(
+                    "SELECT DISTINCT jt.prop_key
+                     FROM events e,
+                     JSON_TABLE(JSON_KEYS(JSON_EXTRACT(e.metadata, '$.props')), '$[*]' COLUMNS (prop_key VARCHAR(255) PATH '$')) jt
+                     WHERE e.site_id = ? AND e.created_at BETWEEN ? AND ?
+                       AND JSON_UNQUOTE(JSON_EXTRACT(e.metadata, '$.name')) = ?
+                     ORDER BY prop_key",
+                    [$site->id, $start->toDateTimeString(), $end->toDateTimeString(), $eventName]
+                );
             }
 
-            return $keys->unique()->sort()->values()->toArray();
-        });
+            return collect($rows)->pluck('prop_key')->map(fn ($key) => (string) $key)->values()->all();
+        }, $this->shortTtl);
     }
 
     /**
@@ -809,39 +930,47 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_event_property_breakdown', $start, $end, [], [$eventName, $propertyKey, $limit]);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName, $propertyKey, $limit) {
-            $events = Event::where('site_id', $site->id)
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $eventName, $propertyKey, $limit) {
+
+            // json_encode() yields a quoted JSON string (e.g. "\"plan\""), which
+            // is the correct JSON-path component syntax on both drivers and
+            // cannot break out of the path (injection-safe for user-supplied
+            // property keys).
+            $path = json_encode((string) $propertyKey);
+
+            $query = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->whereNotNull('metadata')
-                ->get()
-                ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']) && $e->metadata['name'] === $eventName)
-                ->filter(fn ($e) => isset($e->metadata['props']) && is_array($e->metadata['props']) && array_key_exists($propertyKey, $e->metadata['props']));
+                ->whereRaw($this->eventNameExpression().' = ?', [$eventName]);
 
-            $total = $events->count();
+            if (DB::getDriverName() === 'sqlite') {
+                $query->whereRaw("json_type(metadata, '$.props.' || ?) IS NOT NULL", [$path]);
+                $valueExpr = "COALESCE(json_extract(metadata, '$.props.' || ?), '')";
+            } else {
+                $query->whereRaw("JSON_EXTRACT(metadata, CONCAT('$.props.', ?)) IS NOT NULL", [$path]);
+                $valueExpr = "COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata, CONCAT('$.props.', ?))), '')";
+            }
 
-            return $events
-                ->groupBy(function ($e) use ($propertyKey) {
-                    $value = $e->metadata['props'][$propertyKey];
-                    if (is_scalar($value) || is_null($value)) {
-                        return (string) $value;
-                    }
+            $results = (clone $query)
+                ->selectRaw("{$valueExpr} as value, count(*) as count", [$path])
+                ->groupBy('value')
+                ->orderByDesc('count')
+                ->orderBy('value')
+                ->limit($limit)
+                ->get();
 
-                    return json_encode($value);
-                })
-                ->map(function ($group, $value) use ($total) {
-                    $count = $group->count();
+            $total = (int) $results->sum('count');
 
-                    return [
-                        'value' => $value === '' ? '(empty)' : $value,
-                        'count' => $count,
-                        'percentage' => $total > 0 ? round(($count / $total) * 100, 1) : 0.0,
-                    ];
-                })
-                ->sortByDesc('count')
-                ->take($limit)
-                ->values()
-                ->toArray();
-        });
+            return $results->map(function ($row) use ($total) {
+                $count = (int) $row->count;
+
+                return [
+                    'value' => $row->value === '' ? '(empty)' : (string) $row->value,
+                    'count' => $count,
+                    'percentage' => $total > 0 ? round(($count / $total) * 100, 1) : 0.0,
+                ];
+            })->toArray();
+        }, $this->shortTtl);
 
         return collect($data ?? []);
     }
@@ -853,19 +982,21 @@ class AnalyticsService
     {
         $cacheKey = $this->cacheKey($site->id, 'custom_event_logs', $start, $end, [], [$eventName ?? 'all', $limit]);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $eventName, $limit) {
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $eventName, $limit) {
+
+            $nameExpr = $this->eventNameExpression();
+
             $query = Event::where('site_id', $site->id)
                 ->whereBetween('created_at', [$start, $end])
                 ->whereNotNull('metadata')
+                ->whereRaw($nameExpr.' IS NOT NULL')
                 ->latest();
 
-            $events = $query->get()->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']));
-
             if ($eventName) {
-                $events = $events->filter(fn ($e) => $e->metadata['name'] === $eventName);
+                $query->whereRaw($nameExpr.' = ?', [$eventName]);
             }
 
-            return $events->take($limit)->map(function ($e) {
+            return $query->limit($limit)->get()->map(function ($e) {
                 $props = $e->metadata['props'] ?? null;
 
                 return [
@@ -873,6 +1004,7 @@ class AnalyticsService
                     'created_at' => $e->created_at->toDateTimeString(),
                     'path' => $e->path,
                     'visitor_hash' => $e->visitor_hash,
+                    'visitor_id' => $e->visitor_id ?? $e->visitor_hash,
                     'device_type' => is_object($e->device_type) ? $e->device_type->value : (string) $e->device_type,
                     'browser' => $e->browser,
                     'os' => $e->os,
@@ -882,26 +1014,36 @@ class AnalyticsService
                     'props' => $props,
                 ];
             })->values()->toArray();
-        });
+        }, $this->shortTtl);
 
         return collect($data ?? []);
     }
 
     /**
      * Get goals and conversion rates.
+     *
+     * `completions` counts raw matching events (GA4-style). `conversion_rate`
+     * is unique converters / unique visitors, with both sides scoped to the
+     * active filters — repeated completions by the same visitor never inflate
+     * conversion. Path goals match on the same `clean_path` semantics used by
+     * page analytics.
      */
     public function getGoals(Site $site, CarbonInterface $start, CarbonInterface $end, array $filters = []): Collection
     {
         $cacheKey = $this->cacheKey($site->id, 'goals', $start, $end, $filters);
 
-        $data = Cache::remember($cacheKey, $this->ttl, function () use ($site, $start, $end, $filters) {
-            $goals = $site->goals;
+        $data = $this->rememberCache($site->id, $cacheKey, function () use ($site, $start, $end, $filters) {
+            // Fresh-load instead of using $site->goals so a previously resolved
+            // (possibly stale) relation on the model instance is never reused.
+            $goals = $site->goals()->get();
 
             if ($goals->isEmpty()) {
                 return [];
             }
 
-            $uniqueVisitors = $this->getUniqueVisitors($site, $start, $end);
+            $uniqueVisitors = $this->getUniqueVisitors($site, $start, $end, $filters);
+            $nameExpr = $this->eventNameExpression();
+            $dateExpr = $this->dateExpression();
             $results = [];
 
             foreach ($goals as $goal) {
@@ -910,25 +1052,40 @@ class AnalyticsService
                     ->tap(fn ($q) => $this->applyFilters($q, $filters));
 
                 if ($goal->target_type === 'path') {
+                    $pathExpr = $this->pathExpression();
+
                     if (str_contains($goal->target_value, '*')) {
                         $pattern = str_replace('*', '%', $goal->target_value);
-                        $query->where('path', 'like', $pattern);
+                        $query->whereRaw($pathExpr.' LIKE ?', [$pattern]);
                     } else {
-                        $query->where('path', $goal->target_value);
+                        $query->whereRaw($pathExpr.' = ?', [$goal->target_value]);
                     }
-                    $events = $query->get();
                 } elseif ($goal->target_type === 'custom_event') {
-
-                    $events = $query->whereNotNull('metadata')->get()
-                        ->filter(fn ($e) => is_array($e->metadata) && isset($e->metadata['name']) && $e->metadata['name'] === $goal->target_value);
+                    $query->whereNotNull('metadata')
+                        ->whereRaw($nameExpr.' = ?', [$goal->target_value]);
                 } else {
-                    $events = collect();
+                    $results[] = [
+                        'id' => $goal->id,
+                        'name' => $goal->name,
+                        'target_type' => $goal->target_type,
+                        'target_value' => $goal->target_value,
+                        'completions' => 0,
+                        'conversion_rate' => 0.0,
+                        'trend' => $this->emptyTrend($start, $end),
+                    ];
+
+                    continue;
                 }
 
-                $completions = $events->count();
-                $conversionRate = $uniqueVisitors > 0 ? round(($completions / $uniqueVisitors) * 100, 1) : 0.0;
+                $completions = (clone $query)->count();
+                $converters = (clone $query)->distinct()->count(DB::raw($this->visitorExpression()));
+                $conversionRate = $uniqueVisitors > 0 ? round(($converters / $uniqueVisitors) * 100, 1) : 0.0;
 
-                $grouped = $events->groupBy(fn ($e) => $e->created_at->format('Y-m-d'));
+                $trendRows = (clone $query)
+                    ->selectRaw("{$dateExpr} as date, count(*) as completions")
+                    ->groupBy('date')
+                    ->get()
+                    ->keyBy('date');
 
                 $trend = [];
                 $curr = $start->copy()->startOfDay();
@@ -936,10 +1093,11 @@ class AnalyticsService
 
                 while ($curr->lte($last)) {
                     $dateStr = $curr->format('Y-m-d');
-                    $dayEvents = $grouped->get($dateStr, collect());
+                    $row = $trendRows->get($dateStr);
+
                     $trend[] = [
                         'date' => $dateStr,
-                        'completions' => $dayEvents->count(),
+                        'completions' => $row ? (int) $row->completions : 0,
                     ];
                     $curr = $curr->addDay();
                 }
@@ -962,14 +1120,41 @@ class AnalyticsService
     }
 
     /**
-     * Cache helper with tag support if available.
+     * Build a zero-filled daily trend for the given inclusive range.
+     *
+     * @return array<int, array{date: string, completions: int}>
      */
-    protected function rememberCache(int $siteId, string $key, \Closure $callback): mixed
+    protected function emptyTrend(CarbonInterface $start, CarbonInterface $end): array
+    {
+        $trend = [];
+        $curr = $start->copy()->startOfDay();
+        $last = $end->copy()->startOfDay();
+
+        while ($curr->lte($last)) {
+            $trend[] = [
+                'date' => $curr->format('Y-m-d'),
+                'completions' => 0,
+            ];
+            $curr = $curr->addDay();
+        }
+
+        return $trend;
+    }
+
+    /**
+     * Cache helper with tag support if available.
+     *
+     * When the driver supports tags the entry is tagged with
+     * `lumina:site:{id}` so clearCache() can invalidate it. On non-tag drivers
+     * `$nonTagTtl` may be used to bound staleness for keys the clearCache()
+     * fallback loop cannot enumerate (see `$shortTtl`).
+     */
+    protected function rememberCache(int $siteId, string $key, Closure $callback, ?int $nonTagTtl = null): mixed
     {
         if (Cache::supportsTags()) {
             return Cache::tags(["lumina:site:{$siteId}"])->remember($key, $this->ttl, $callback);
         }
 
-        return Cache::remember($key, $this->ttl, $callback);
+        return Cache::remember($key, $nonTagTtl ?? $this->ttl, $callback);
     }
 }
