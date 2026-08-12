@@ -261,4 +261,18 @@ Legend: ✅ implemented & green · ⬜ gap (not yet written) · ➖ not applicab
 
 ---
 
-*Re-run `php artisan test`, `npm run test:frontend`, and `composer ci:check` after any change to this matrix to keep it truthful.*
+## Standalone package suite
+
+`packages/lumina-core` is independently testable — **77 tests** run against an in-memory SQLite app booted by [Orchestra Testbench](https://github.com/orchestral/testbench) (no host app required):
+
+```bash
+cd packages/lumina-core
+composer install
+composer test
+```
+
+CI runs this on every push/PR in the `syofyanzuhad/lumina-core` repo (`.github/workflows/tests.yml`). `tests/TestCase.php` is dual-mode: it binds to Testbench when present (standalone) and to the host `Tests\TestCase` under the monorepo's `php artisan test` — so the same files are green in both environments. **When touching package tests or `tests/TestCase.php`, run both `composer test` (package dir) and `php artisan test` (monorepo root).**
+
+---
+
+*Re-run `php artisan test`, `npm run test:frontend`, `composer test` (package dir), and `composer ci:check` after any change to this matrix to keep it truthful.*
