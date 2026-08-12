@@ -4,16 +4,38 @@ namespace Lumina\Core\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 use Lumina\Core\Enums\DeviceType;
 use Lumina\Core\Jobs\InsertEvent;
 use Lumina\Core\Models\Site;
+use Lumina\Core\Support\TrackingIdentity;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Terminable tracking middleware.
+ *
+ * handle() returns immediately — all hashing, rate limiting, and job dispatch
+ * happen in terminate(), after the response has been sent to the browser, so
+ * tracking never adds latency to the end user's request.
+ *
+ * Deployment model (trust boundary): this middleware trusts the
+ * `X-Country` first-party override unconditionally, but only reads the
+ * `CF-IPCountry` / `X-Vercel-IP-Country` proxy headers when the request is
+ * confirmed to come from a trusted proxy (see TrustProxies configuration).
+ * If the app is reachable directly (staging, local, non-proxied paths), those
+ * proxy headers are ignored and country resolution falls back to GeoIP, so
+ * spoofable input is never silently accepted.
+ */
 class TrackPageview
 {
+    private const IP_MAX_ATTEMPTS = 60;
+
+    private const IP_DECAY_SECONDS = 60;
+
+    private const SITE_MAX_ATTEMPTS = 300;
+
+    private const SITE_DECAY_SECONDS = 300;
+
     /**
      * Handle an incoming request.
      *
@@ -21,64 +43,80 @@ class TrackPageview
      */
     public function handle(Request $request, Closure $next): Response
     {
+        return $next($request);
+    }
+
+    /**
+     * Perform tracking after the response has been sent.
+     */
+    public function terminate(Request $request, Response $response): void
+    {
+        try {
+            $this->track($request);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * Record a pageview: resolve site, apply rate limits, dispatch the job.
+     * Any failure is reported to the log rather than failing the request,
+     * which has already been served by the time this runs.
+     */
+    protected function track(Request $request): void
+    {
         $host = $request->getHost();
 
-        // 1. Resolve site by domain
-        $site = Site::where('domain', $host)->first();
+        $site = Site::cachedByDomain($host);
 
         if (! $site) {
-            return $next($request);
+            return;
         }
 
-        // 2. Check IP rate limiter (silent swallow)
+        // Check-and-increment atomically so concurrent requests can never
+        // exceed the configured caps (silent swallow when limited).
         $ipKey = 'lumina_ip:'.$request->ip();
-        if (RateLimiter::tooManyAttempts($ipKey, 60)) {
-            return $next($request);
+        if (! RateLimiter::attempt($ipKey, self::IP_MAX_ATTEMPTS, fn () => true, self::IP_DECAY_SECONDS)) {
+            return;
         }
 
-        // 3. Check site rate limiter (silent swallow)
         $siteKey = 'lumina_site:'.$host;
-        if (RateLimiter::tooManyAttempts($siteKey, 300)) {
-            return $next($request);
+        if (! RateLimiter::attempt($siteKey, self::SITE_MAX_ATTEMPTS, fn () => true, self::SITE_DECAY_SECONDS)) {
+            return;
         }
 
-        // Hit limiters
-        RateLimiter::hit($ipKey, 60);
-        RateLimiter::hit($siteKey, 300);
-
-        // 4. Calculate visitor hash with daily salt
-        $dailySalt = Cache::remember(
-            'lumina_daily_salt_'.now()->format('Y-m-d'),
-            86400,
-            fn () => Str::random(32)
-        );
+        $identity = TrackingIdentity::resolve($request, (string) $site->id);
 
         $userAgent = $request->userAgent() ?? '';
-        $visitorHash = hash('sha256', $request->ip().$userAgent.$dailySalt);
 
-        // 5. Parse device type and country
-        $deviceType = DeviceType::fromUserAgent($userAgent);
+        // Trust boundary: first-party X-Country override is always honored;
+        // edge-proxy country headers only when the request is from a trusted proxy.
+        $country = $request->header('X-Country');
+        if ($country === null && $request->isFromTrustedProxy()) {
+            $country = $request->header('CF-IPCountry')
+                ?? $request->header('X-Vercel-IP-Country');
+        }
 
-        $country = $request->header('X-Country')
-            ?? $request->header('CF-IPCountry')
-            ?? $request->header('X-Vercel-IP-Country');
+        // $request->path() is already query-string-free and method-normalized.
+        $path = '/'.ltrim($request->path(), '/');
 
-        $cleanPath = parse_url($request->path(), PHP_URL_PATH) ?? '/';
-        $path = '/'.ltrim($cleanPath, '/');
-
-        // 6. Dispatch tracking job
-        InsertEvent::dispatch(
-            siteId: $site->id,
-            path: $path,
-            referrer: $request->header('referer'),
-            visitorHash: $visitorHash,
-            deviceType: $deviceType,
-            country: $country,
-            metadata: null,
-            userAgent: $request->userAgent(),
-            ip: $request->ip(),
-        );
-
-        return $next($request);
+        try {
+            InsertEvent::dispatch(
+                siteId: $site->id,
+                path: $path,
+                referrer: $request->header('referer'),
+                visitorHash: $identity['visitor_hash'],
+                visitorId: $identity['visitor_id'],
+                sessionId: $identity['session_id'],
+                eventId: $identity['event_id'],
+                deviceType: DeviceType::fromUserAgent($userAgent),
+                country: $country,
+                metadata: null,
+                userAgent: $userAgent,
+                ip: $request->ip(),
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }
