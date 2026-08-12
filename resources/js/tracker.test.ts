@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 declare global {
     interface Window {
-        lumina: ((eventName?: string, props?: unknown) => void) & { q?: unknown[] };
+        lumina: ((eventName?: string, props?: unknown) => void) & {
+            q?: unknown[];
+        };
     }
 }
 
@@ -47,7 +49,10 @@ describe('tracker.js', () => {
         expect(url).toContain('visitor=');
         expect(url).toContain('session=');
 
-        const payload = JSON.parse(await blob.text()) as Record<string, unknown>;
+        const payload = JSON.parse(await blob.text()) as Record<
+            string,
+            unknown
+        >;
         expect(payload.domain).toBe('example.com');
         expect(payload.path).toBe('/');
     });
@@ -59,7 +64,10 @@ describe('tracker.js', () => {
 
         expect(sendBeacon).toHaveBeenCalledTimes(2);
         const [, blob] = sendBeacon.mock.calls[1] as unknown as BeaconCall;
-        const payload = JSON.parse(await blob.text()) as Record<string, unknown>;
+        const payload = JSON.parse(await blob.text()) as Record<
+            string,
+            unknown
+        >;
 
         expect(payload.name).toBe('signup');
         expect(payload.metadata).toEqual({ plan: 'pro' });
