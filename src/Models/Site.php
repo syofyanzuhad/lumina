@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Lumina\Core\Database\Factories\SiteFactory;
 
@@ -52,6 +53,48 @@ class Site extends Model
     protected static function newFactory()
     {
         return SiteFactory::new();
+    }
+
+    /**
+     * Cache-aware domain lookup used by the tracking pipeline.
+     *
+     * The cached entry is invalidated automatically by the saved/deleted hooks
+     * below, so newly created or renamed sites are trackable immediately.
+     */
+    public static function cachedByDomain(string $domain): ?self
+    {
+        $domain = Str::lower($domain);
+
+        // Cache only the scalar site id (serializing an Eloquent model into a
+        // shared cache store is unreliable), then re-query the fresh model.
+        // Note: the 'lumina_site_lookup:' namespace deliberately differs from
+        // the 'lumina_site:' rate-limiter keys used by TrackPageview so the two
+        // can never collide in the cache store.
+        $siteId = Cache::remember('lumina_site_lookup:'.$domain, 3600, function () use ($domain) {
+            return static::where('domain', $domain)->value('id');
+        });
+
+        return $siteId ? static::find($siteId) : null;
+    }
+
+    /**
+     * Invalidate the cached domain lookup on any persistence change.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (self $site) {
+            Cache::forget('lumina_site_lookup:'.Str::lower($site->domain));
+        });
+
+        static::deleted(function (self $site) {
+            Cache::forget('lumina_site_lookup:'.Str::lower($site->domain));
+        });
+
+        static::updating(function (self $site) {
+            if ($site->isDirty('domain')) {
+                Cache::forget('lumina_site_lookup:'.Str::lower($site->getOriginal('domain')));
+            }
+        });
     }
 
     /**
