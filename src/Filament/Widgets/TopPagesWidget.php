@@ -36,6 +36,9 @@ class TopPagesWidget extends BaseWidget
             ]);
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     protected function getRecords(): array
     {
         if (! $this->site) {

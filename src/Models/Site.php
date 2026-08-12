@@ -9,13 +9,27 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Lumina\Core\Database\Factories\SiteFactory;
 
+/**
+ * @property int $id
+ * @property string $domain
+ * @property int $owner_id
+ * @property bool $is_public
+ * @property string|null $share_token
+ * @property string|null $share_password
+ * @property string|null $api_token
+ * @property int|null $retention_days
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 #[Fillable(['domain', 'owner_id', 'is_public', 'share_token', 'share_password', 'api_token'])]
 class Site extends Model
 {
+    /** @use HasFactory<SiteFactory> */
     use HasFactory;
 
     protected $table = 'sites';
@@ -23,7 +37,7 @@ class Site extends Model
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $hidden = [
         'share_password',
@@ -32,7 +46,7 @@ class Site extends Model
     /**
      * The accessors to append to the model's array form.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $appends = [
         'has_password',
@@ -50,7 +64,7 @@ class Site extends Model
         ];
     }
 
-    protected static function newFactory()
+    protected static function newFactory(): SiteFactory
     {
         return SiteFactory::new();
     }
@@ -74,7 +88,10 @@ class Site extends Model
             return static::where('domain', $domain)->value('id');
         });
 
-        return $siteId ? static::find($siteId) : null;
+        /** @var static|null $site */
+        $site = $siteId ? static::find($siteId) : null;
+
+        return $site;
     }
 
     /**
@@ -104,10 +121,10 @@ class Site extends Model
      */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(
-            config('auth.providers.users.model', User::class),
-            'owner_id'
-        );
+        /** @var class-string<Model> $userModel */
+        $userModel = config('auth.providers.users.model', User::class);
+
+        return $this->belongsTo($userModel, 'owner_id');
     }
 
     /**
@@ -132,6 +149,8 @@ class Site extends Model
 
     /**
      * Interact with the site's domain.
+     *
+     * @return Attribute<string, string>
      */
     protected function domain(): Attribute
     {

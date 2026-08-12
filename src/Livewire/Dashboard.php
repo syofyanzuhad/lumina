@@ -3,6 +3,8 @@
 namespace Lumina\Core\Livewire;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Lumina\Core\Models\Site;
 use Lumina\Core\Services\AnalyticsService;
@@ -50,7 +52,7 @@ class Dashboard extends Component
         $this->selectedPropertyKey = $key;
     }
 
-    public function render(AnalyticsService $analytics)
+    public function render(AnalyticsService $analytics): View
     {
         [$start, $end] = $this->resolveDateRange();
 
@@ -86,6 +88,9 @@ class Dashboard extends Component
         return view('lumina::livewire.dashboard', $data);
     }
 
+    /**
+     * @return array{CarbonInterface, CarbonInterface}
+     */
     protected function resolveDateRange(): array
     {
         if ($this->period === '7d') {

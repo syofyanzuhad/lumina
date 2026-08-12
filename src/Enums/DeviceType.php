@@ -19,7 +19,7 @@ enum DeviceType: string
             return self::Mobile;
         }
 
-        if ($width >= 768 && $width <= 1024) {
+        if ($width <= 1024) {
             return self::Tablet;
         }
 

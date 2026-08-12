@@ -7,14 +7,13 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Jenssegers\Agent\Agent;
 use Lumina\Core\Enums\DeviceType;
 use Lumina\Core\Models\Event;
 use Lumina\Core\Support\CountryHelper;
+use Lumina\Core\Support\CountryResolver;
 
 class InsertEvent implements ShouldQueue
 {
@@ -22,6 +21,8 @@ class InsertEvent implements ShouldQueue
 
     /**
      * Create a new job instance.
+     *
+     * @param  array<string, mixed>|null  $metadata
      */
     public function __construct(
         public int $siteId,
@@ -60,14 +61,14 @@ class InsertEvent implements ShouldQueue
             $agent->setUserAgent($this->userAgent);
 
             $b = $agent->browser();
-            if ($b) {
+            if (is_string($b) && $b !== '') {
                 $browser = $b;
                 $bv = $agent->version($b);
                 $browserVersion = $bv !== false && $bv !== '' ? (string) $bv : null;
             }
 
             $platform = $agent->platform();
-            if ($platform) {
+            if (is_string($platform) && $platform !== '') {
                 $os = $platform;
                 $ov = $agent->version($platform);
                 $osVersion = $ov !== false && $ov !== '' ? (string) $ov : null;
@@ -76,19 +77,11 @@ class InsertEvent implements ShouldQueue
 
         $countryCode = $this->country;
 
-        if (! $countryCode && $this->ip && filter_var($this->ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            $countryCode = Cache::remember('geoip:'.$this->ip, 86400, function () {
-                try {
-                    $response = Http::timeout(2)->get("http://ip-api.com/json/{$this->ip}?fields=countryCode");
-                    if ($response->successful() && isset($response->json()['countryCode'])) {
-                        return $response->json()['countryCode'];
-                    }
-                } catch (\Throwable $e) {
-                    // Ignore lookup failure
-                }
-
-                return null;
-            });
+        // GeoIP resolution is pluggable (see lumina.geoip.driver) and only runs
+        // when no country override was provided. A disabled driver performs no
+        // network calls at all, keeping self-hosted deployments fully offline.
+        if (! $countryCode) {
+            $countryCode = app(CountryResolver::class)->resolve($this->ip);
         }
 
         $countryName = CountryHelper::getName($countryCode);
@@ -99,7 +92,7 @@ class InsertEvent implements ShouldQueue
         // choke point for both ingestion paths.
         $path = Str::limit($this->path, 255, '');
 
-        $cleanPath = parse_url($path, PHP_URL_PATH) ?? '/';
+        $cleanPath = parse_url($path, PHP_URL_PATH) ?: '/';
 
         $cleanPath = '/'.ltrim($cleanPath, '/');
 
@@ -113,11 +106,11 @@ class InsertEvent implements ShouldQueue
 
         if ($queryString) {
             parse_str($queryString, $queryParams);
-            $utmSource = isset($queryParams['utm_source']) ? substr((string) $queryParams['utm_source'], 0, 255) : null;
-            $utmMedium = isset($queryParams['utm_medium']) ? substr((string) $queryParams['utm_medium'], 0, 255) : null;
-            $utmCampaign = isset($queryParams['utm_campaign']) ? substr((string) $queryParams['utm_campaign'], 0, 255) : null;
-            $utmTerm = isset($queryParams['utm_term']) ? substr((string) $queryParams['utm_term'], 0, 255) : null;
-            $utmContent = isset($queryParams['utm_content']) ? substr((string) $queryParams['utm_content'], 0, 255) : null;
+            $utmSource = $this->utmValue($queryParams, 'utm_source');
+            $utmMedium = $this->utmValue($queryParams, 'utm_medium');
+            $utmCampaign = $this->utmValue($queryParams, 'utm_campaign');
+            $utmTerm = $this->utmValue($queryParams, 'utm_term');
+            $utmContent = $this->utmValue($queryParams, 'utm_content');
         }
 
         $attributes = [
@@ -167,18 +160,40 @@ class InsertEvent implements ShouldQueue
     }
 
     /**
+     * Extract a scalar UTM parameter value, bounded to the column width.
+     *
+     * parse_str() can produce nested arrays (e.g. `utm_source[]=x`); only
+     * scalar values are ever stored, so the JSON-ish array form is discarded.
+     *
+     * @param  array<int|string, array<mixed>|string>  $queryParams
+     */
+    protected function utmValue(array $queryParams, string $key): ?string
+    {
+        $value = $queryParams[$key] ?? null;
+
+        return is_scalar($value) ? substr((string) $value, 0, 255) : null;
+    }
+
+    /**
      * Maintain the daily_visitor_stats aggregate with a portable upsert that
      * works on both MySQL (ON DUPLICATE KEY UPDATE) and SQLite (ON CONFLICT).
+     *
+     * The aggregate is keyed by the *resolved* identity (visitor_id when a
+     * client-provided opaque ID exists, otherwise the fallback hash) — the
+     * same COALESCE(visitor_id, visitor_hash) the analytics queries use — so
+     * a mixed JS/non-JS population can never double-count the same visitor
+     * across the two tables.
      */
     protected function recordDailyVisitorStats(Event $event): void
     {
         $date = $event->created_at->toDateString();
+        $visitorKey = $this->visitorId ?? $this->visitorHash;
 
         DB::table('daily_visitor_stats')->upsert(
             [
                 'site_id' => $this->siteId,
                 'date' => $date,
-                'visitor_hash' => $this->visitorHash,
+                'visitor_hash' => $visitorKey,
                 'views' => 1,
                 'created_at' => $event->created_at,
                 'updated_at' => $event->created_at,
