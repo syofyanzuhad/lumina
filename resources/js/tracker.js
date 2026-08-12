@@ -4,8 +4,8 @@
   var scriptEl = document.currentScript || document.querySelector('script[data-domain]');
 
   if (!scriptEl) {
-return;
-}
+    return;
+  }
 
   var domain = scriptEl.getAttribute('data-domain');
   var apiEndpoint = scriptEl.getAttribute('data-api');
@@ -19,8 +19,8 @@ return;
   }
 
   if (!domain) {
-return;
-}
+    return;
+  }
 
   var excludePattern = scriptEl.getAttribute('data-exclude');
 
@@ -39,15 +39,15 @@ return;
         var p = patterns[i].trim();
 
         if (!p) {
-continue;
-}
+          continue;
+        }
 
         if (p.indexOf('*') !== -1) {
-          var regex = new RegExp('^' + p.replace(/[-[\]{}()+?.,\\^$|#\s]/g, '\\$&').replace(/\*/g, '.*') + '$');
+          var regex = new RegExp('^' + p.replace(/[-[\]{}()+\/.,\\^$|#\s]/g, '\\$&').replace(/\*/g, '.*') + '$');
 
           if (regex.test(currentPath)) {
-return true;
-}
+            return true;
+          }
         } else if (currentPath === p || currentPath.indexOf(p) === 0) {
           return true;
         }
@@ -57,12 +57,66 @@ return true;
     return false;
   }
 
+  // Privacy-first identity: opaque random IDs kept in localStorage /
+  // sessionStorage. No cookies are set, so no consent banner is required.
+  function generateId(prefix) {
+    if (window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+
+    return prefix + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  function getVisitorId() {
+    try {
+      var id = window.localStorage.getItem('lumina_visitor_id');
+
+      if (!id) {
+        id = generateId('v_');
+        window.localStorage.setItem('lumina_visitor_id', id);
+      }
+
+      return id;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getSessionId() {
+    try {
+      var now = Date.now();
+      var id = window.sessionStorage.getItem('lumina_session_id');
+      var lastSeen = parseInt(window.sessionStorage.getItem('lumina_session_ts') || '0', 10);
+
+      // New session after 30 minutes of inactivity or on a fresh tab.
+      if (!id || now - lastSeen > 30 * 60 * 1000) {
+        id = generateId('s_');
+      }
+
+      window.sessionStorage.setItem('lumina_session_id', id);
+      window.sessionStorage.setItem('lumina_session_ts', String(now));
+
+      return id;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function buildEndpoint() {
+    var visitorId = getVisitorId();
+    var sessionId = getSessionId();
+    var sep = apiEndpoint.indexOf('?') === -1 ? '?' : '&';
+    var qs = 'visitor=' + encodeURIComponent(visitorId || '') + '&session=' + encodeURIComponent(sessionId || '');
+
+    return apiEndpoint + sep + qs;
+  }
+
   var lastPath = '';
 
   function sendEvent(eventName, props) {
     if (isExcluded()) {
-return;
-}
+      return;
+    }
 
     try {
       var currentPath = window.location.pathname + window.location.search;
@@ -76,11 +130,12 @@ return;
       };
 
       var data = JSON.stringify(payload);
+      var url = buildEndpoint();
 
       if (navigator.sendBeacon) {
-        navigator.sendBeacon(apiEndpoint, new Blob([data], { type: 'application/json' }));
+        navigator.sendBeacon(url, new Blob([data], { type: 'application/json' }));
       } else if (window.fetch) {
-        fetch(apiEndpoint, {
+        fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: data,
@@ -94,8 +149,8 @@ return;
     var currentPath = window.location.pathname + window.location.search;
 
     if (currentPath === lastPath) {
-return;
-}
+      return;
+    }
 
     lastPath = currentPath;
     sendEvent(null, null);
