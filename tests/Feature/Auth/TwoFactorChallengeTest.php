@@ -33,3 +33,44 @@ test('two factor challenge can be rendered', function () {
             ->component('auth/TwoFactorChallenge'),
         );
 });
+
+test('two factor challenge can be completed with a valid recovery code', function () {
+    Features::twoFactorAuthentication([
+        'confirm' => true,
+        'confirmPassword' => true,
+    ]);
+
+    $user = User::factory()->withTwoFactor()->create();
+
+    $this->post(route('login'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $response = $this->post(route('two-factor.login'), [
+        'recovery_code' => 'recovery-code-1',
+    ]);
+
+    $response->assertRedirect(route('dashboard', absolute: false));
+    $this->assertAuthenticatedAs($user);
+});
+
+test('two factor challenge rejects an invalid recovery code', function () {
+    Features::twoFactorAuthentication([
+        'confirm' => true,
+        'confirmPassword' => true,
+    ]);
+
+    $user = User::factory()->withTwoFactor()->create();
+
+    $this->post(route('login'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->post(route('two-factor.login'), [
+        'recovery_code' => 'invalid-code',
+    ])->assertSessionHasErrors();
+
+    $this->assertGuest();
+});

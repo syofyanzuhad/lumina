@@ -44,6 +44,50 @@ test('user can stream CSV pageviews export', function () {
         ->and($content)->toContain('/blog/test-page');
 });
 
+test('streamed CSV exports carry attachment and no-cache headers', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $response = $this->actingAs($user)
+        ->get(route('sites.export', ['site' => $site, 'type' => 'pageviews', 'format' => 'csv']));
+
+    $response->assertOk();
+
+    expect($response->headers->get('content-disposition'))
+        ->toBe('attachment; filename="'.$site->domain.'-pageviews-export.csv"')
+        ->and($response->headers->get('pragma'))->toBe('no-cache')
+        ->and($response->headers->get('cache-control'))->toContain('must-revalidate')
+        ->and($response->headers->get('expires'))->toBe('0');
+});
+
+test('streamed JSON exports carry attachment and no-cache headers', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $response = $this->actingAs($user)
+        ->get(route('sites.export', ['site' => $site, 'type' => 'events', 'format' => 'json']));
+
+    $response->assertOk();
+
+    expect($response->headers->get('content-disposition'))
+        ->toBe('attachment; filename="'.$site->domain.'-events-export.json"')
+        ->and($response->headers->get('pragma'))->toBe('no-cache')
+        ->and($response->headers->get('expires'))->toBe('0');
+});
+
+test('summary exports include a content-disposition filename', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $response = $this->actingAs($user)
+        ->get(route('sites.export', ['site' => $site, 'type' => 'summary', 'format' => 'json']));
+
+    $response->assertOk();
+
+    expect($response->headers->get('content-disposition'))
+        ->toBe('attachment; filename="'.$site->domain.'-summary-export.json"');
+});
+
 test('user can stream JSON pageviews export', function () {
     $user = User::factory()->create();
     $site = Site::factory()->create(['owner_id' => $user->id]);

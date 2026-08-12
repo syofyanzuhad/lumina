@@ -85,6 +85,43 @@ describe('tracker.js', () => {
         expect(document.cookie).toBe('');
     });
 
+    it('rotates the session id after 30 minutes of inactivity', async () => {
+        await loadTracker();
+
+        const firstId = window.sessionStorage.getItem('lumina_session_id');
+        expect(firstId).toBeTruthy();
+
+        // Rewind the last-seen timestamp beyond the 30-minute inactivity
+        // window, then reload the tracker as a returning visitor would.
+        const now = Date.now();
+        window.sessionStorage.setItem(
+            'lumina_session_ts',
+            String(now - 31 * 60 * 1000),
+        );
+
+        await loadTracker();
+
+        const rotatedId = window.sessionStorage.getItem('lumina_session_id');
+        expect(rotatedId).toBeTruthy();
+        expect(rotatedId).not.toBe(firstId);
+
+        // The visitor id must remain stable across the session rotation.
+        expect(window.localStorage.getItem('lumina_visitor_id')).toBeTruthy();
+    });
+
+    it('keeps the same session id during active browsing', async () => {
+        await loadTracker();
+
+        const firstId = window.sessionStorage.getItem('lumina_session_id');
+
+        // Reload well inside the 30-minute window.
+        await loadTracker();
+
+        expect(window.sessionStorage.getItem('lumina_session_id')).toBe(
+            firstId,
+        );
+    });
+
     it('does not track when the visitor opted out', async () => {
         window.localStorage.setItem('lumina_ignore', 'true');
 
