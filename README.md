@@ -14,9 +14,11 @@
 
 ## 🌟 Key Features
 
-- **Privacy-First & Cookie-Free**: 100% cookie-free operating mode. IP addresses are hashed using irreversible daily salts (`sha256(IP + UserAgent + dailySalt)`). No persistent cross-site tracking or fingerprinting.
+- **Privacy-First & Cookie-Free**: 100% cookie-free operating mode — no consent banner required. Visitors are identified by opaque random IDs kept in `localStorage`/`sessionStorage` (never cookies), and raw IPs are never stored. When client-side IDs are unavailable, an irreversible stable-salt hash (`sha256(IP + UserAgent + salt)`) preserves cross-day uniques without storing personal data.
 - **Flexible Tracking**: Supports both server-side middleware tracking (Path A) and lightweight client-side JS script tracking (< 2KB, Path B).
-- **Enhanced Data Detection**: Automatic User-Agent resolution (Browser & Operating System) and GeoIP country resolution.
+- **Session-Based Analytics**: Bounce rate and average visit duration are computed from real 30-minute sessions (client-generated `session_id`), not approximated from daily aggregates.
+- **Zero-Latency Tracking**: Server-side tracking runs in terminable middleware *after* the response is sent, with atomic per-IP/per-site rate limiting and cached site lookups — no impact on page speed.
+- **Enhanced Data Detection**: Automatic User-Agent resolution (Browser & Operating System) and GeoIP country resolution, with a trusted-proxy boundary for edge country headers.
 - **Custom Event & Goal Tracking**: Track custom JavaScript events and set up conversion goals based on paths or events with real-time conversion rates.
 - **Shareable & Public Dashboards**: Easily share dashboard access via share links with optional password protection.
 - **Streaming Data Exports**: Export raw pageviews, custom events, and summary data directly as CSV or JSON.
@@ -154,9 +156,10 @@ vendor/bin/pest packages/lumina-core/tests/
 
 ## 🛡️ Privacy & Compliance
 
-- **No Cookies**: Lumina operates 100% cookie-free.
-- **No Fingerprinting**: No persistent browser fingerprinting or cross-site tracking.
-- **Zero Raw IP Storage**: IP addresses are never saved directly to the database. Visitor uniqueness uses an irreversible daily salt hash (`hash('sha256', IP + UserAgent + dailySalt)`).
+- **No Cookies**: Lumina operates 100% cookie-free — no GDPR/CCPA/PECR consent banner needed.
+- **No Fingerprinting**: Opaque random visitor/session IDs (`localStorage`/`sessionStorage`) carry no personal or device-identifying data and are never shared cross-site.
+- **Zero Raw IP Storage**: IP addresses are never saved directly to the database. When client-side IDs are unavailable, an irreversible stable-salt hash (`hash('sha256', IP + UserAgent + salt)`) is used instead — the stable salt keeps cross-day unique visitors exact without ever storing raw IPs.
+- **Trusted-Proxy Boundary**: Edge-proxy country headers (`CF-IPCountry`, `X-Vercel-IP-Country`) are only honored from configured trusted proxies, so spoofable headers are never silently accepted.
 
 ---
 

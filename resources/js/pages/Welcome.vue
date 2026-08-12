@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Eye, Users, Shield, Zap, Package, ArrowRight, BarChart3, Globe, Sparkles, CheckCircle2, Copy, Check, Terminal, ShieldCheck, HelpCircle, XCircle, Sun, Moon, Target, Download, Share2, Smartphone } from '@lucide/vue';
+import { Eye, Users, Shield, Zap, Package, ArrowRight, BarChart3, Sparkles, CheckCircle2, Copy, Check, Terminal, ShieldCheck, HelpCircle, XCircle, Sun, Moon, Target, Download, Share2, Smartphone } from '@lucide/vue';
 import { ref } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { useAppearance } from '@/composables/useAppearance';
@@ -127,7 +127,7 @@ const copySnippet = () => {
             <!-- Badge -->
             <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-slate-900/90 border border-indigo-200 dark:border-slate-800 text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-8 backdrop-blur-md shadow-xs">
                 <Sparkles class="h-3.5 w-3.5 text-amber-500 dark:text-amber-400 animate-pulse" />
-                <span>Latest Update: Conversion Goals, CSV/JSON Data Exports & Public Share Password Protection</span>
+                <span>Latest Update: Privacy-First Identity, Session Analytics & Zero-Latency Tracking</span>
             </div>
 
             <!-- Main Heading -->
@@ -239,7 +239,7 @@ const copySnippet = () => {
                 <div class="text-center mb-12">
                     <span class="text-xs font-mono uppercase tracking-widest text-indigo-600 dark:text-indigo-400 font-bold">Latest Release</span>
                     <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">What's New in Lumina</h2>
-                    <p class="text-slate-600 dark:text-slate-400 text-sm mt-2">Major updates focused on conversion analytics, data export portability, enhanced sharing, and device detection.</p>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm mt-2">Major updates focused on privacy-first identity, real session metrics, zero-latency tracking, conversion analytics, and enhanced sharing.</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -286,6 +286,39 @@ const copySnippet = () => {
                             Granular detection for browser versions, operating system releases, and device breakdown down to exact builds.
                         </p>
                     </div>
+
+                    <!-- Feature Update 5 -->
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/40 p-6 backdrop-blur-md hover:border-indigo-500/50 transition-all shadow-sm">
+                        <div class="h-12 w-12 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-4">
+                            <ShieldCheck class="h-6 w-6" />
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Opaque Visitor Identity</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                            Visitor & session IDs are generated client-side and stored in localStorage / sessionStorage — never cookies. No raw IPs are stored, with a stable-salt hash fallback.
+                        </p>
+                    </div>
+
+                    <!-- Feature Update 6 -->
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/40 p-6 backdrop-blur-md hover:border-indigo-500/50 transition-all shadow-sm">
+                        <div class="h-12 w-12 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
+                            <Users class="h-6 w-6" />
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Real Session Metrics</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                            Bounce rate and average visit duration are computed from true 30-minute sessions — not approximated from daily aggregates.
+                        </p>
+                    </div>
+
+                    <!-- Feature Update 7 -->
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/40 p-6 backdrop-blur-md hover:border-indigo-500/50 transition-all shadow-sm">
+                        <div class="h-12 w-12 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center mb-4">
+                            <Zap class="h-6 w-6" />
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Zero-Latency Tracking</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                            Tracking runs in terminable middleware after the response is sent, with atomic rate limiting and cached site lookups — zero impact on page speed.
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -298,7 +331,7 @@ const copySnippet = () => {
                     </div>
                     <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Ultra-Fast & Asynchronous</h3>
                     <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                        Vanilla JS tracker bundled under 592 bytes gzipped. Zero dependencies, non-blocking asynchronous execution, and zero page latency impact.
+                        Vanilla JS tracker bundled under 2 KB gzipped (~1.1 KB today). Zero dependencies, non-blocking asynchronous execution, and zero page latency impact.
                     </p>
                 </div>
 
@@ -309,7 +342,7 @@ const copySnippet = () => {
                     </div>
                     <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">GDPR Privacy by Default</h3>
                     <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                        IP addresses are never saved directly. Visitor hash uses a rotating 24-hour daily salt (<code class="text-indigo-600 dark:text-indigo-300">sha256</code>) preventing cross-day user tracking.
+                        IP addresses are never saved directly. Visitors are identified by opaque client-side IDs (localStorage / sessionStorage, never cookies); without JS, a stable-salt <code class="text-indigo-600 dark:text-indigo-300">sha256</code> fallback preserves cross-day uniques without storing raw IPs.
                     </p>
                 </div>
 
@@ -422,7 +455,7 @@ const copySnippet = () => {
                     <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/40 p-6 backdrop-blur-md shadow-xs">
                         <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Does Lumina require a GDPR consent banner on my site?</h3>
                         <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                            No! Lumina does not store cookies or personal identifiers in local storage. IPs are hashed daily using a 24-hour rotating salt, making it 100% GDPR, CCPA, and PECR compliant out of the box without annoying cookie consent banners.
+                            No! Lumina sets no cookies and stores only opaque random IDs in localStorage / sessionStorage — never personal data. Raw IPs are never saved; when client-side IDs are unavailable, an irreversible stable-salt hash is used instead. That keeps Lumina 100% GDPR, CCPA, and PECR compliant without annoying cookie consent banners.
                         </p>
                     </div>
 
