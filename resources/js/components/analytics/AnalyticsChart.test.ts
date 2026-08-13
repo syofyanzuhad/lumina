@@ -96,4 +96,13 @@ describe('AnalyticsChart', () => {
 
         expect(wrapper.text()).toContain('Traffic Overview');
     });
+
+    it('emits selectDay event with the date when a bar is clicked', async () => {
+        const wrapper = mountChart();
+
+        const bars = wrapper.findAll('[class*="items-end gap-1"] > *');
+        await bars[1].trigger('click');
+
+        expect(wrapper.emitted('selectDay')?.[0]).toEqual(['2026-08-02']);
+    });
 });

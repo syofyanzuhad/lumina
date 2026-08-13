@@ -120,6 +120,12 @@ const { customStartDate, customEndDate, setPeriod, applyCustomDateRange } =
         currentTab: tabRef,
     });
 
+const handleSelectDay = (date: string) => {
+    customStartDate.value = date;
+    customEndDate.value = date;
+    applyCustomDateRange();
+};
+
 const dailyPageviewsRef = computed(() => props.daily_pageviews);
 const {
     hoveredDay,
@@ -309,6 +315,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 @update:hoveredDay="hoveredDay = $event"
                 @toggleViews="toggleViews"
                 @toggleVisitors="toggleVisitors"
+                @selectDay="handleSelectDay"
             />
 
             <!-- Breakdown Cards Row 1: deferred together for consistent render -->

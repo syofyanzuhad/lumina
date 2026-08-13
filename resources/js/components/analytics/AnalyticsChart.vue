@@ -17,6 +17,7 @@ const emit = defineEmits<{
     (e: 'update:hoveredDay', day: DailyChartItem | null): void;
     (e: 'toggleViews'): void;
     (e: 'toggleVisitors'): void;
+    (e: 'selectDay', date: string): void;
 }>();
 </script>
 
@@ -70,6 +71,7 @@ const emit = defineEmits<{
                 :key="day.date"
                 @mouseenter="emit('update:hoveredDay', day)"
                 @mouseleave="emit('update:hoveredDay', null)"
+                @click="emit('selectDay', day.date)"
                 class="group relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end"
             >
                 <!-- Tooltip Popup -->
