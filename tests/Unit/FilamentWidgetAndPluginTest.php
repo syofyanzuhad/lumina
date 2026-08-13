@@ -30,20 +30,20 @@ class FilamentWidgetAndPluginTest extends TestCase
     {
         $widget = new class extends LuminaOverviewWidget
         {
-            public function testGetStats(): array
+            public function test_get_stats(): array
             {
                 return $this->getStats();
             }
         };
 
         // Empty state when no site registered
-        $emptyStats = $widget->testGetStats();
+        $emptyStats = $widget->test_get_stats();
         $this->assertNotEmpty($emptyStats);
 
         // State with site
         $site = Site::factory()->create();
         $widget->site = $site;
-        $stats = $widget->testGetStats();
+        $stats = $widget->test_get_stats();
 
         $this->assertCount(4, $stats);
     }
