@@ -135,9 +135,9 @@ class DatabaseSeeder extends Seeder
             'webinar_registration_q3', 'community_giveaway',
         ];
 
-        // Insert 100,000 additional events in batch chunks of 5,000 for maximum seeding speed
+        // Insert 10,000 additional events in batch chunks of 5,000 for maximum seeding speed
         $records = [];
-        for ($i = 0; $i < 100_000; $i++) {
+        for ($i = 0; $i < 10_000; $i++) {
             $daysAgo = rand(0, 364);
             $createdAt = now()->subDays($daysAgo)->subHours(rand(0, 23))->subMinutes(rand(0, 59))->subSeconds(rand(0, 59));
             $country = $countries[array_rand($countries)];
