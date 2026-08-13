@@ -1,0 +1,28 @@
+name: Sync Subtree to lumina-core
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/lumina-core/**'
+
+jobs:
+  sync-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push subtree to lumina-core repository
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.LUMINA_CORE_DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+          git subtree push --prefix=packages/lumina-core git@github.com:syofyanzuhad/lumina-core.git main
