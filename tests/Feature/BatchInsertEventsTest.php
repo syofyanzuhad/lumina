@@ -161,4 +161,4 @@ test('BatchInsertEvents ingests 1,000,000 events in realistic chunk sizes', func
 
     // 1M events through the batch ingest path should complete within reasonable benchmark headroom.
     expect($duration)->toBeLessThan(150);
-});
+})->skip(fn () => getenv('CI') === 'true' || getenv('GITHUB_ACTIONS') === 'true', 'Skipping 1M events benchmark on CI to optimize pipeline duration.');

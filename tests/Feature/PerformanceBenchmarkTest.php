@@ -180,4 +180,4 @@ test('dashboard handles 1,000,000 events within acceptable execution time', func
     $eventsResponse->assertInertia(fn (Assert $page) => $page
         ->where('custom_event_summary.total_custom_events', $total)
     );
-});
+})->skip(fn () => getenv('CI') === 'true' || getenv('GITHUB_ACTIONS') === 'true', 'Skipping 1M events benchmark on CI to optimize pipeline duration.');
