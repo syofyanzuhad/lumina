@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { Lock, ShieldCheck, Globe, Copy, Check } from '@lucide/vue';
+import { Lock, ShieldCheck, Globe, Copy, Check, ExternalLink } from '@lucide/vue';
 import { ref } from 'vue';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard.vue';
 import { Button } from '@/components/ui/button';
@@ -193,6 +193,16 @@ const copyPublicShareUrl = async () => {
                     </div>
 
                     <div class="flex items-center gap-2 text-xs">
+                        <a
+                            :href="`https://${site.domain}`"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-sidebar-border/60 bg-muted/80 px-3 py-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title="Visit Site"
+                        >
+                            <ExternalLink class="h-3.5 w-3.5" />
+                            <span>Visit Site</span>
+                        </a>
                         <button
                             @click="copyPublicShareUrl"
                             class="inline-flex items-center gap-1.5 rounded-lg border border-sidebar-border/60 bg-muted/80 px-3 py-1.5 font-mono text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

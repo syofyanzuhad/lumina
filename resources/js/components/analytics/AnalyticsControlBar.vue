@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import {
     CalendarDays,
     Download,
+    ExternalLink,
     RefreshCw,
     Settings,
     Sparkles,
@@ -33,6 +34,7 @@ withDefaults(
         customStartDate?: string;
         customEndDate?: string;
         siteId?: number;
+        siteDomain?: string;
     }>(),
     {
         activeTab: 'overview',
@@ -300,6 +302,21 @@ const emit = defineEmits<{
                     ></span>
                 </span>
                 <span>{{ isLive ? 'Live On' : 'Live Off' }}</span>
+            </Button>
+
+            <!-- Visit Site Link Button -->
+            <Button
+                v-if="siteDomain"
+                variant="outline"
+                size="sm"
+                as-child
+                class="h-8 gap-1.5 p-2 text-xs font-medium sm:h-9 sm:px-3"
+                title="Visit Site"
+            >
+                <a :href="`https://${siteDomain}`" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink class="h-3.5 w-3.5" />
+                    <span class="hidden sm:inline">Visit Site</span>
+                </a>
             </Button>
 
             <!-- Settings Link Button -->

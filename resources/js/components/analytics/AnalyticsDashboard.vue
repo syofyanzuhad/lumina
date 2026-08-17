@@ -279,6 +279,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
             v-model:customStartDate="customStartDate"
             v-model:customEndDate="customEndDate"
             :siteId="site?.id"
+            :siteDomain="site?.domain"
             @setTab="setTab"
             @setPeriod="setPeriod"
             @applyCustomRange="applyCustomDateRange"
