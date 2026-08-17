@@ -53,7 +53,7 @@ const activeSiteId = computed({
 </script>
 
 <template>
-    <div v-if="sites && sites.length > 0" class="w-48">
+    <div v-if="sites && sites.length > 0" class="w-fit min-w-48 max-w-64">
         <Select v-model="activeSiteId">
             <SelectTrigger>
                 <SelectValue placeholder="Select a site" />
