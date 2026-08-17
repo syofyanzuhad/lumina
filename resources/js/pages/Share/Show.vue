@@ -249,6 +249,7 @@ const copyPublicShareUrl = async () => {
                     :showEventsTab="true"
                     :canFilter="true"
                     :canExpand="true"
+                    :showVisitSite="false"
                     :availablePeriods="['today', '7d', '30d', 'custom']"
                     :selectedEvent="selectedEvent"
                     :selectedPropertyKey="selectedPropertyKey"
@@ -269,8 +270,12 @@ const copyPublicShareUrl = async () => {
             >
                 <p>
                     Powered by
-                    <span class="font-bold text-foreground"
-                        >Lumina Analytics</span
+                    <a
+                        href="https://uselumina.laravel.cloud"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="font-bold text-foreground transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
+                        >Lumina Analytics</a
                     >
                 </p>
             </footer>

@@ -94,6 +94,51 @@ describe('SiteSwitcher', () => {
         expect(wrapper.find('select').attributes('value')).toBe('1');
     });
 
+    it('prefers the path site on a site detail page over a stale site_id param', () => {
+        usePageMock.mockReturnValue({
+            props: {
+                sites: [
+                    { id: 6, domain: 'six.example.com' },
+                    { id: 8, domain: 'eight.example.com' },
+                ],
+                active_site_id: null,
+            },
+            url: '/sites/6?site_id=8',
+        });
+
+        const wrapper = mountSwitcher();
+
+        expect(wrapper.find('select').attributes('value')).toBe('6');
+    });
+
+    it('navigates to the selected site page when switching on a site detail page', async () => {
+        usePageMock.mockReturnValue({
+            props: {
+                sites: [
+                    { id: 6, domain: 'six.example.com' },
+                    { id: 8, domain: 'eight.example.com' },
+                ],
+                active_site_id: null,
+            },
+            url: '/sites/6',
+        });
+
+        const wrapper = mountSwitcher();
+
+        const select = wrapper.findComponent({ name: 'Select' });
+        await select.vm.$emit('update:modelValue', '8');
+
+        expect(routerGet).toHaveBeenCalledTimes(1);
+        const [url, params, options] = routerGet.mock.calls[0];
+
+        expect(url).toBe('/sites/8');
+        expect(params).toEqual({});
+        expect(options).toEqual({
+            preserveState: true,
+            preserveScroll: true,
+        });
+    });
+
     it('falls back to the active_site_id prop when no URL param exists', () => {
         usePageMock.mockReturnValue({
             props: {

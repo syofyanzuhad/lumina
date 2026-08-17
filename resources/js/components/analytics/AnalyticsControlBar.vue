@@ -35,6 +35,7 @@ withDefaults(
         customEndDate?: string;
         siteId?: number;
         siteDomain?: string;
+        showVisitSite?: boolean;
     }>(),
     {
         activeTab: 'overview',
@@ -44,6 +45,7 @@ withDefaults(
         isLive: false,
         isRefreshing: false,
         availablePeriods: () => ['today', '7d', '30d', 'custom'],
+        showVisitSite: true,
     },
 );
 
@@ -306,7 +308,7 @@ const emit = defineEmits<{
 
             <!-- Visit Site Link Button -->
             <Button
-                v-if="siteDomain"
+                v-if="siteDomain && showVisitSite"
                 variant="outline"
                 size="sm"
                 as-child

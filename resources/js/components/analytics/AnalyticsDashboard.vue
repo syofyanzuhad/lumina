@@ -64,6 +64,7 @@ export interface AnalyticsDashboardProps {
     canFilter?: boolean;
     canExpand?: boolean;
     availablePeriods?: string[];
+    showVisitSite?: boolean;
 
     // Custom Events Tab Data (Passed through)
     selectedEvent?: string | null;
@@ -84,6 +85,7 @@ const props = withDefaults(defineProps<AnalyticsDashboardProps>(), {
     canFilter: true,
     canExpand: true,
     availablePeriods: () => ['today', '7d', '30d', 'custom'],
+    showVisitSite: true,
 });
 
 const baseUrlRef = toRef(props, 'baseUrl');
@@ -280,6 +282,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
             v-model:customEndDate="customEndDate"
             :siteId="site?.id"
             :siteDomain="site?.domain"
+            :showVisitSite="showVisitSite"
             @setTab="setTab"
             @setPeriod="setPeriod"
             @applyCustomRange="applyCustomDateRange"

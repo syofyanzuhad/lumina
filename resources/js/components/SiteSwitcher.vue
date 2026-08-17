@@ -19,6 +19,15 @@ const sites = computed(
 
 const activeSiteId = computed({
     get: () => {
+        // On site detail pages (/sites/{id}) the site is determined by the
+        // URL path, not the site_id query param, so prefer the path.
+        const currentPath = page.url.split('?')[0];
+        const siteDetailMatch = currentPath.match(/^\/sites\/(\d+)$/);
+
+        if (siteDetailMatch) {
+            return siteDetailMatch[1];
+        }
+
         // Parse site_id from Inertia's reactive page.url
         const search = page.url.includes('?') ? page.url.split('?')[1] : '';
         const urlParams = new URLSearchParams(search);
@@ -35,6 +44,25 @@ const activeSiteId = computed({
     set: (value: string) => {
         if (value) {
             const currentPath = page.url.split('?')[0];
+            const siteDetailMatch = currentPath.match(/^\/sites\/(\d+)$/);
+
+            // On a site detail page, switching sites must navigate to the
+            // selected site's page. Keeping the old path and only appending
+            // ?site_id= would show one site's content with another selected
+            // in the navbar (e.g. /sites/6?site_id=8).
+            if (siteDetailMatch) {
+                router.get(
+                    `/sites/${value}`,
+                    {},
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                    },
+                );
+
+                return;
+            }
+
             const search = page.url.includes('?') ? page.url.split('?')[1] : '';
             const urlParams = new URLSearchParams(search);
             urlParams.set('site_id', value);
