@@ -28,6 +28,10 @@ test('user can stream CSV pageviews export', function () {
         'site_id' => $site->id,
         'path' => '/blog/test-page',
         'metadata' => null,
+        // Pin to now so the event always falls inside the export's default
+        // 29-day window (the factory default is a random date up to 30 days
+        // back, which can land outside the window and make this flaky).
+        'created_at' => now(),
     ]);
 
     $response = $this->actingAs($user)
@@ -95,6 +99,7 @@ test('user can stream JSON pageviews export', function () {
         'site_id' => $site->id,
         'path' => '/json-test',
         'metadata' => null,
+        'created_at' => now(),
     ]);
 
     $response = $this->actingAs($user)
@@ -118,6 +123,7 @@ test('user can stream custom events export in CSV and JSON', function () {
         'site_id' => $site->id,
         'path' => '/pricing',
         'metadata' => ['name' => 'Button Clicked', 'plan' => 'pro'],
+        'created_at' => now(),
     ]);
 
     $responseCsv = $this->actingAs($user)
@@ -168,4 +174,51 @@ test('user can export summary metrics in JSON and CSV', function () {
     $csvContent = ob_get_clean();
 
     expect($csvContent)->toContain('Total Pageviews');
+});
+
+test('summary csv export includes breakdown sections when data exists', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'summary.com']);
+    Event::factory()->count(3)->create([
+        'site_id' => $site->id,
+        'path' => '/blog/post',
+        'created_at' => now(),
+    ]);
+
+    $response = $this->actingAs($user)
+        ->get(route('sites.export', ['site' => $site, 'type' => 'summary', 'format' => 'csv']));
+
+    $response->assertOk();
+
+    ob_start();
+    $response->sendContent();
+    $csvContent = ob_get_clean();
+
+    expect($csvContent)->toContain('Top Pages - Path')
+        ->and($csvContent)->toContain('/blog/post')
+        ->and($csvContent)->toContain('Top Referrers - Referrer')
+        ->and($csvContent)->toContain('Device Types - Device')
+        ->and($csvContent)->toContain('Top Browsers - Browser')
+        ->and($csvContent)->toContain('Top Operating Systems - OS')
+        ->and($csvContent)->toContain('Top Countries - Code / Name');
+});
+
+test('export supports 7d and custom date ranges', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->get(route('sites.export', ['site' => $site, 'type' => 'pageviews', 'format' => 'csv', 'period' => '7d']))
+        ->assertOk();
+
+    $this->actingAs($user)
+        ->get(route('sites.export', [
+            'site' => $site,
+            'type' => 'pageviews',
+            'format' => 'csv',
+            'period' => 'custom',
+            'start_date' => now()->subDays(5)->toDateString(),
+            'end_date' => now()->toDateString(),
+        ]))
+        ->assertOk();
 });

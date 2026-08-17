@@ -1,27 +1,19 @@
 <?php
 
-namespace Tests\Unit;
+test('tracker script exists and is under 2kb gzipped', function () {
+    $scriptPath = __DIR__.'/../../public/js/script.js';
 
-use PHPUnit\Framework\TestCase;
+    $this->assertFileExists($scriptPath, 'Compiled tracker script public/js/script.js does not exist.');
 
-class TrackerScriptSizeTest extends TestCase
-{
-    public function test_tracker_script_exists_and_is_under_2kb_gzipped(): void
-    {
-        $scriptPath = __DIR__.'/../../public/js/script.js';
+    $content = file_get_contents($scriptPath);
+    $this->assertNotEmpty($content, 'Compiled tracker script is empty.');
 
-        $this->assertFileExists($scriptPath, 'Compiled tracker script public/js/script.js does not exist.');
+    $gzipped = gzencode($content, 9);
+    $gzippedSize = strlen($gzipped);
 
-        $content = file_get_contents($scriptPath);
-        $this->assertNotEmpty($content, 'Compiled tracker script is empty.');
-
-        $gzipped = gzencode($content, 9);
-        $gzippedSize = strlen($gzipped);
-
-        $this->assertLessThan(
-            2048,
-            $gzippedSize,
-            "Tracker script gzipped size ({$gzippedSize} bytes) exceeds 2KB (2048 bytes) limit."
-        );
-    }
-}
+    $this->assertLessThan(
+        2048,
+        $gzippedSize,
+        "Tracker script gzipped size ({$gzippedSize} bytes) exceeds 2KB (2048 bytes) limit."
+    );
+});

@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build && npm run build:tracker
 
 # Stage 2: Application runtime environment
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache \
     nginx \

@@ -119,3 +119,46 @@ test('BatchInsertEvents is significantly faster than sequential InsertEvent exec
     expect($batchDuration)->toBeLessThan($singleDuration);
     expect(DB::table('events')->where('site_id', $site->id)->count())->toBe($eventCount);
 });
+
+test('BatchInsertEvents ingests 1,000,000 events in realistic chunk sizes', function () {
+    $site = Site::factory()->create();
+    $now = now()->toDateTimeString();
+
+    // 1,000 rows per chunk keeps a single multi-row INSERT below SQLite's
+    // variable limit while amortizing transaction overhead.
+    $chunkSize = 1000;
+    $total = 1_000_000;
+
+    $start = microtime(true);
+    $payload = [];
+    for ($i = 0; $i < $total; $i++) {
+        $payload[] = [
+            'site_id' => $site->id,
+            'path' => '/page-'.($i % 10),
+            'clean_path' => '/page-'.($i % 10),
+            'visitor_hash' => md5('vis_'.($i % 10000)),
+            'visitor_id' => 'vis_'.($i % 10000),
+            'session_id' => 'sess_'.($i % 15000),
+            'device_type' => 'desktop',
+            'created_at' => $now,
+        ];
+
+        if (count($payload) >= $chunkSize) {
+            (new BatchInsertEvents($payload))->handle();
+            $payload = [];
+        }
+    }
+
+    if (! empty($payload)) {
+        (new BatchInsertEvents($payload))->handle();
+    }
+    $duration = round(microtime(true) - $start, 2);
+
+    // All events landed and visitor stats were upserted along the way
+    // (10,000 distinct visitors, each counted across 100 events).
+    expect(DB::table('events')->where('site_id', $site->id)->count())->toBe($total);
+    expect(DB::table('daily_visitor_stats')->where('site_id', $site->id)->count())->toBe(10000);
+
+    // 1M events through the batch ingest path must complete well under a minute.
+    expect($duration)->toBeLessThan(60);
+});
