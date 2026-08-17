@@ -88,6 +88,9 @@
         "test:tracker-size": [
             "@php artisan test --filter=TrackerScriptSizeTest"
         ],
+        "test:coverage": [
+            "@php artisan test --coverage --min=80"
+        ],
         "types:check": [
             "phpstan analyse --memory-limit=2G"
         ],
