@@ -28,53 +28,30 @@
 
 ## 🚀 Quickstart & Deployment
 
-### Option A: Self-Hosted Docker Compose (VPS Deploy)
+### Recommended: Laravel Cloud
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/syofyanzuhad/lumina.git
-   cd lumina
-   ```
+Lumina is designed for [Laravel Cloud](https://cloud.laravel.com/) — zero-config queues, scheduling, and managed Postgres/MySQL out of the box.
 
-2. Configure environment variables:
-   ```bash
-   cp .env.docker.example .env
-   php artisan key:generate
-   ```
+> **Requirements:** Laravel Cloud requires Laravel 11+ and PHP 8.2+ (Lumina currently runs on Laravel 13 / PHP 8.4).
+>
+> **Pricing Estimate:** The minimum **Starter plan** is **$5/month**. This includes $5 in monthly usage credits and "scale-to-zero" hibernation. For most small, low-traffic, or hobby installations of Lumina, these included credits will cover your database and compute usage, keeping your effective cost at just the $5 base.
 
-3. Start services via Docker Compose:
-   ```bash
-   docker compose up -d --build
-   ```
+1. Fork this repository or push the code to your own GitHub account.
+2. Connect it on [cloud.laravel.com](https://cloud.laravel.com/) — Cloud auto-detects the Laravel app, queues, and scheduler.
+3. Point a custom domain or use the built-in `.laravel.cloud` URL.
+4. Open the dashboard — you're live.
 
-4. Access Lumina at `http://localhost:8080` (or your configured `$PORT`).
+> **Tip:** Set `QUEUE_CONNECTION=database`, `SESSION_DRIVER=database`, and `CACHE_STORE=database` in your Cloud environment if not already default.
 
-### Option B: Laravel Cloud / Traditional VPS
+### Alternative: Self-Hosted (Docker Compose)
 
-1. Configure `.env`:
-   ```env
-   QUEUE_CONNECTION=database
-   SESSION_DRIVER=database
-   CACHE_STORE=database
-   ```
+```bash
+git clone https://github.com/syofyanzuhad/lumina.git && cd lumina
+cp .env.docker.example .env && php artisan key:generate
+docker compose up -d --build
+```
 
-2. Run persistent queue worker under Supervisor:
-   ```ini
-   [program:lumina-worker]
-   command=php /var/www/html/artisan queue:work database --sleep=3 --tries=3 --max-time=3600
-   autostart=true
-   autorestart=true
-   stopwaitsecs=360
-   ```
-
-3. Register the Laravel scheduler (required — it drives data retention pruning and
-   `daily_visitor_stats` reconciliation):
-   ```cron
-   * * * * * cd /path/to/lumina && php artisan schedule:run >> /dev/null 2>&1
-   ```
-   Scheduled tasks: `lumina:prune-events` (hourly — deletes raw events older than each
-   site's retention period, keeping anonymous aggregates) and `lumina:backfill-visitor-stats`
-   (nightly — reconciles `daily_visitor_stats`).
+Access Lumina at `http://localhost:8080`. A Supervisor queue worker and cron scheduler are included in the Docker image — no extra setup needed.
 
 ---
 
