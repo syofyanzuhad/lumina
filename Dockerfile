@@ -42,7 +42,9 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 COPY deployment/docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY deployment/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY deployment/supervisor/lumina-worker.conf /etc/supervisor/conf.d/lumina-worker.conf
+COPY deployment/supervisor/lumina-scheduler.conf /etc/supervisor/conf.d/lumina-scheduler.conf
 
 COPY deployment/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
