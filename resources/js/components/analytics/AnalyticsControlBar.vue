@@ -315,7 +315,11 @@ const emit = defineEmits<{
                 class="h-8 gap-1.5 p-2 text-xs font-medium sm:h-9 sm:px-3"
                 title="Visit Site"
             >
-                <a :href="`https://${siteDomain}`" target="_blank" rel="noopener noreferrer">
+                <a
+                    :href="`https://${siteDomain}`"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
                     <ExternalLink class="h-3.5 w-3.5" />
                     <span class="hidden sm:inline">Visit Site</span>
                 </a>

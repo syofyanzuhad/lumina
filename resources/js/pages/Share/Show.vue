@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { Lock, ShieldCheck, Globe, Copy, Check, ExternalLink } from '@lucide/vue';
+import {
+    Lock,
+    ShieldCheck,
+    Globe,
+    Copy,
+    Check,
+    ExternalLink,
+} from '@lucide/vue';
 import { ref } from 'vue';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard.vue';
 import { Button } from '@/components/ui/button';
