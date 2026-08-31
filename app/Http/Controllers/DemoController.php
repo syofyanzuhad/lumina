@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Lumina\Core\Models\Site;
 use Lumina\Core\Services\AnalyticsService;
+use Lumina\Core\Support\DateRangeHelper;
 
 class DemoController extends Controller
 {
@@ -132,16 +133,6 @@ class DemoController extends Controller
      */
     protected function resolveDateRange(string $period): array
     {
-        if ($period === '7d') {
-            return [
-                now()->subDays(6)->startOfDay(),
-                now()->endOfDay(),
-            ];
-        }
-
-        return [
-            now()->subDays(29)->startOfDay(),
-            now()->endOfDay(),
-        ];
+        return DateRangeHelper::resolve($period);
     }
 }

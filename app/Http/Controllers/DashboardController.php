@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -11,6 +10,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Lumina\Core\Models\Site;
 use Lumina\Core\Services\AnalyticsService;
+use Lumina\Core\Support\DateRangeHelper;
 
 class DashboardController extends Controller
 {
@@ -146,30 +146,6 @@ class DashboardController extends Controller
      */
     protected function resolveDateRange(string $period, ?string $startDate, ?string $endDate): array
     {
-        if ($period === 'today') {
-            return [
-                now()->startOfDay(),
-                now()->endOfDay(),
-            ];
-        }
-
-        if ($period === '7d') {
-            return [
-                now()->subDays(6)->startOfDay(),
-                now()->endOfDay(),
-            ];
-        }
-
-        if ($period === 'custom' && $startDate && $endDate) {
-            return [
-                Carbon::parse($startDate)->startOfDay(),
-                Carbon::parse($endDate)->endOfDay(),
-            ];
-        }
-
-        return [
-            now()->subDays(29)->startOfDay(),
-            now()->endOfDay(),
-        ];
+        return DateRangeHelper::resolve($period, $startDate, $endDate);
     }
 }
