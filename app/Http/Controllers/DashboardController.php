@@ -24,7 +24,7 @@ class DashboardController extends Controller
         }
 
         if (! $request->has('site_id')) {
-            $defaultSite = $sites->first();
+            $defaultSite = ($user->last_active_site_id ? $sites->firstWhere('id', $user->last_active_site_id) : null) ?? $sites->first();
 
             return redirect()->route('dashboard', array_merge(
                 $request->query(),
@@ -36,6 +36,12 @@ class DashboardController extends Controller
 
         /** @var Site $activeSite */
         $activeSite = $sites->firstWhere('id', (int) $activeSiteId) ?? $sites->first();
+
+        if ($user->last_active_site_id !== $activeSite->id) {
+            $user->updateQuietly(['last_active_site_id' => $activeSite->id]);
+        }
+
+        session()->put('active_site_id', $activeSite->id);
 
         $period = $request->query('period', '30d');
         [$start, $end] = $this->resolveDateRange($period, $request->query('start_date'), $request->query('end_date'));

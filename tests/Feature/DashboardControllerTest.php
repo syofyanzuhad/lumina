@@ -30,7 +30,19 @@ test('authenticated user can view dashboard with sites and metrics', function ()
     $response->assertRedirect("/dashboard?site_id={$site->id}");
 });
 
-test('user can switch active site via query parameter', function () {
+test('dashboard redirects to last active site if remembered on user', function () {
+    $user = User::factory()->create();
+    $site1 = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'a-site.com']);
+    $site2 = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'z-site.com']);
+
+    $user->update(['last_active_site_id' => $site2->id]);
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertRedirect("/dashboard?site_id={$site2->id}");
+});
+
+test('user can switch active site via query parameter and updates remembered site', function () {
     $user = User::factory()->create();
     $site1 = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'site-one.com']);
     $site2 = Site::factory()->create(['owner_id' => $user->id, 'domain' => 'site-two.com']);
@@ -42,6 +54,8 @@ test('user can switch active site via query parameter', function () {
         ->component('Dashboard')
         ->where('activeSite.domain', 'site-two.com')
     );
+
+    expect($user->fresh()->last_active_site_id)->toBe($site2->id);
 });
 
 test('user can change date period filter', function () {

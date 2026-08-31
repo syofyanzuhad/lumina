@@ -14,6 +14,7 @@ test('user can update active site', function () {
 
     $response->assertRedirect();
     $this->assertEquals($site->id, session('active_site_id'));
+    expect($user->fresh()->last_active_site_id)->toBe($site->id);
 });
 
 test('user cannot set active site to another users site', function () {

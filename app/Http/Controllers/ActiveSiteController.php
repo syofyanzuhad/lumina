@@ -22,6 +22,7 @@ class ActiveSiteController extends Controller
         /** @var Site $site */
         $site = $request->user()->sites()->findOrFail($validated['site_id']);
 
+        $request->user()->updateQuietly(['last_active_site_id' => $site->id]);
         session()->put('active_site_id', $site->id);
 
         return back();
