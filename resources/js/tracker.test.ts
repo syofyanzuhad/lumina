@@ -2,15 +2,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 declare global {
     interface Window {
-        lumina: ((eventName?: string, props?: unknown) => void) & {
+        lumina?: ((eventName?: string, props?: unknown) => void) & {
             q?: unknown[];
+            _outboundHandler?: (event: MouseEvent) => void;
         };
     }
 }
 
-type BeaconCall = [string, Blob];
-
 describe('tracker.js', () => {
+    const fetchMock = vi.fn<typeof window.fetch>(() =>
+        Promise.resolve(new Response(null, { status: 204 })),
+    );
     const sendBeacon = vi.fn<typeof navigator.sendBeacon>(() => true);
 
     beforeEach(() => {
@@ -19,11 +21,28 @@ describe('tracker.js', () => {
         document.body.innerHTML = '';
         window.localStorage.clear();
         window.sessionStorage.clear();
+
+        if (window.lumina && window.lumina._outboundHandler) {
+            document.removeEventListener(
+                'click',
+                window.lumina._outboundHandler as EventListener,
+            );
+        }
+
+        delete window.lumina;
+        fetchMock.mockClear();
         sendBeacon.mockClear();
+
+        Object.defineProperty(window, 'fetch', {
+            value: fetchMock,
+            configurable: true,
+            writable: true,
+        });
 
         Object.defineProperty(navigator, 'sendBeacon', {
             value: sendBeacon,
             configurable: true,
+            writable: true,
         });
     });
 
@@ -39,17 +58,18 @@ describe('tracker.js', () => {
         await import('./tracker.js');
     }
 
-    it('sends identity params to the collect endpoint on pageview', async () => {
+    it('sends identity params to the collect endpoint on pageview via fetch with keepalive', async () => {
         await loadTracker();
 
-        expect(sendBeacon).toHaveBeenCalledTimes(1);
-        const [url, blob] = sendBeacon.mock.calls[0] as unknown as BeaconCall;
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const [url, init] = fetchMock.mock.calls[0];
 
         expect(url).toContain('/api/collect');
         expect(url).toContain('visitor=');
         expect(url).toContain('session=');
+        expect(init?.keepalive).toBe(true);
 
-        const payload = JSON.parse(await blob.text()) as Record<
+        const payload = JSON.parse(init?.body as string) as Record<
             string,
             unknown
         >;
@@ -57,20 +77,59 @@ describe('tracker.js', () => {
         expect(payload.path).toBe('/');
     });
 
+    it('falls back to sendBeacon if window.fetch is unavailable', async () => {
+        // @ts-expect-error intentionally removing fetch for fallback testing
+        delete window.fetch;
+
+        await loadTracker();
+
+        expect(sendBeacon).toHaveBeenCalledTimes(1);
+        const [url] = sendBeacon.mock.calls[0];
+        expect(url).toContain('/api/collect');
+    });
+
     it('exposes window.lumina for custom events and includes metadata', async () => {
         await loadTracker();
 
-        window.lumina('signup', { plan: 'pro' });
+        window.lumina!('signup', { plan: 'pro' });
 
-        expect(sendBeacon).toHaveBeenCalledTimes(2);
-        const [, blob] = sendBeacon.mock.calls[1] as unknown as BeaconCall;
-        const payload = JSON.parse(await blob.text()) as Record<
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        const [, init] = fetchMock.mock.calls[1];
+        const payload = JSON.parse(init?.body as string) as Record<
             string,
             unknown
         >;
 
         expect(payload.name).toBe('signup');
         expect(payload.metadata).toEqual({ plan: 'pro' });
+    });
+
+    it('automatically tracks outbound link clicks', async () => {
+        await loadTracker();
+
+        const link = document.createElement('a');
+        link.href = 'https://external-website.org/pricing';
+        link.textContent = 'External Link';
+        document.body.appendChild(link);
+
+        const event = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        });
+        link.addEventListener('click', (e) => e.preventDefault());
+        link.dispatchEvent(event);
+
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        const [, init] = fetchMock.mock.calls[1];
+        const payload = JSON.parse(init?.body as string) as Record<
+            string,
+            unknown
+        >;
+
+        expect(payload.name).toBe('Outbound Link: Click');
+        expect(payload.metadata).toEqual({
+            url: 'https://external-website.org/pricing',
+        });
     });
 
     it('persists the same opaque visitor id across reloads (no cookies)', async () => {
@@ -127,6 +186,7 @@ describe('tracker.js', () => {
 
         await loadTracker();
 
+        expect(fetchMock).not.toHaveBeenCalled();
         expect(sendBeacon).not.toHaveBeenCalled();
     });
 });

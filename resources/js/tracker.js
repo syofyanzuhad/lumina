@@ -153,18 +153,18 @@
             var data = JSON.stringify(payload);
             var url = buildEndpoint();
 
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon(
-                    url,
-                    new Blob([data], { type: 'application/json' }),
-                );
-            } else if (window.fetch) {
+            if (window.fetch) {
                 fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: data,
                     keepalive: true,
                 }).catch(function () {});
+            } else if (navigator.sendBeacon) {
+                navigator.sendBeacon(
+                    url,
+                    new Blob([data], { type: 'application/json' }),
+                );
             }
         } catch {}
     }
@@ -178,6 +178,33 @@
 
         lastPath = currentPath;
         sendEvent(null, null);
+    }
+
+    function handleLinkClick(event) {
+        try {
+            var target = event.target;
+
+            while (target && target.tagName !== 'A') {
+                target = target.parentElement;
+            }
+
+            if (!target || !target.href) {
+                return;
+            }
+
+            var href = target.href;
+
+            if (
+                href.indexOf('http://') === 0 ||
+                href.indexOf('https://') === 0
+            ) {
+                var url = new URL(href, window.location.href);
+
+                if (url.hostname !== window.location.hostname) {
+                    sendEvent('Outbound Link: Click', { url: href });
+                }
+            }
+        } catch {}
     }
 
     function wrapHistory(type) {
@@ -197,9 +224,17 @@
     document.addEventListener('inertia:navigate', trackPageview);
 
     var queue = (window.lumina && window.lumina.q) || [];
+
+    if (window.lumina && window.lumina._outboundHandler) {
+        document.removeEventListener('click', window.lumina._outboundHandler);
+    }
+
     window.lumina = function (eventName, props) {
         sendEvent(eventName, props);
     };
+
+    window.lumina._outboundHandler = handleLinkClick;
+    document.addEventListener('click', handleLinkClick, { passive: true });
 
     for (var i = 0; i < queue.length; i++) {
         window.lumina.apply(null, queue[i]);
