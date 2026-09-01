@@ -5,6 +5,38 @@ export function formatNumber(num: number): string {
     return new Intl.NumberFormat().format(num);
 }
 
+export function formatCompactNumber(num: number): string {
+    if (num <= 0) {
+        return '0';
+    }
+
+    return new Intl.NumberFormat(navigator.language || 'en-US', {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+    }).format(num);
+}
+
+export function isCurrentPeriod(dateStr: string): boolean {
+    if (!dateStr) {
+        return false;
+    }
+
+    const now = new Date();
+    const todayUtc = now.toISOString().slice(0, 10);
+    const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    if (dateStr.includes(' ')) {
+        const [datePart, timePart] = dateStr.split(' ');
+        const isToday = datePart === todayUtc || datePart === todayLocal;
+        const currentHour = String(now.getHours()).padStart(2, '0');
+        const currentUtcHour = String(now.getUTCHours()).padStart(2, '0');
+
+        return isToday && (timePart.startsWith(currentHour) || timePart.startsWith(currentUtcHour));
+    }
+
+    return dateStr === todayUtc || dateStr === todayLocal;
+}
+
 export function formatDateLabel(dateStr: string): string {
     if (!dateStr) {
         return '';
