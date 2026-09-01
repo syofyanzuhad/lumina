@@ -222,8 +222,8 @@ const regenerateToken = () => {
                     <div>
                         <h4 class="text-sm font-medium">Regenerate Token</h4>
                         <p class="mt-0.5 text-xs text-muted-foreground">
-                            Invalidates old links immediately and generates a new
-                            random token.
+                            Invalidates old links immediately and generates a
+                            new random token.
                         </p>
                     </div>
                     <Button

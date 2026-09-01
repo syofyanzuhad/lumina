@@ -35,9 +35,9 @@ const copyToClipboard = async () => {
         <div class="space-y-4 p-6">
             <h3 class="text-lg font-medium">Tracking Snippet</h3>
             <p class="text-sm text-muted-foreground">
-                Paste this snippet in the <code>&lt;head&gt;</code> of your website.
-                It is designed to be lightweight, privacy-friendly, and completely
-                cookie-free.
+                Paste this snippet in the <code>&lt;head&gt;</code> of your
+                website. It is designed to be lightweight, privacy-friendly, and
+                completely cookie-free.
             </p>
 
             <div class="relative mt-4">

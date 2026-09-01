@@ -32,9 +32,9 @@ describe('AnalyticsChart', () => {
         const wrapper = mountChart();
 
         expect(wrapper.text()).toContain('Traffic Overview');
-        expect(wrapper.findAll('[class*="items-end gap-1"] > *')).toHaveLength(
-            3,
-        );
+        expect(
+            wrapper.findAll('[class*="items-end gap-1"] > div.group'),
+        ).toHaveLength(3);
     });
 
     it('emits toggleViews and toggleVisitors from the legend buttons', async () => {
@@ -56,7 +56,7 @@ describe('AnalyticsChart', () => {
     it('emits the hovered day on mouseenter and clears on mouseleave', async () => {
         const wrapper = mountChart();
 
-        const bars = wrapper.findAll('[class*="items-end gap-1"] > *');
+        const bars = wrapper.findAll('[class*="items-end gap-1"] > div.group');
         await bars[1].trigger('mouseenter');
 
         expect(wrapper.emitted('update:hoveredDay')?.[0]).toEqual([days[1]]);
@@ -100,7 +100,7 @@ describe('AnalyticsChart', () => {
     it('emits selectDay event with the date when a bar is clicked', async () => {
         const wrapper = mountChart();
 
-        const bars = wrapper.findAll('[class*="items-end gap-1"] > *');
+        const bars = wrapper.findAll('[class*="items-end gap-1"] > div.group');
         await bars[1].trigger('click');
 
         expect(wrapper.emitted('selectDay')?.[0]).toEqual(['2026-08-02']);

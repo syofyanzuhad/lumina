@@ -92,7 +92,10 @@ const deleteSite = () => {
                 </DialogDescription>
             </DialogHeader>
             <div class="space-y-3 py-3">
-                <Label for="confirm-domain" class="text-xs text-muted-foreground">
+                <Label
+                    for="confirm-domain"
+                    class="text-xs text-muted-foreground"
+                >
                     Please type
                     <span
                         class="font-mono font-semibold text-foreground select-all"
@@ -109,9 +112,7 @@ const deleteSite = () => {
                 />
             </div>
             <DialogFooter>
-                <Button
-                    variant="outline"
-                    @click="isDeleteSiteModalOpen = false"
+                <Button variant="outline" @click="isDeleteSiteModalOpen = false"
                     >Cancel</Button
                 >
                 <Button

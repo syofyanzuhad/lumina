@@ -86,8 +86,8 @@ onMounted(() => {
             >
                 <h4 class="text-base font-medium">No goals created yet</h4>
                 <p class="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-                    Set up goals to track conversions for specific paths or custom
-                    events. Create your first goal.
+                    Set up goals to track conversions for specific paths or
+                    custom events. Create your first goal.
                 </p>
                 <Button variant="outline" class="mt-4" @click="openCreate">
                     Create Goal

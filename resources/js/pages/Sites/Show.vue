@@ -7,7 +7,7 @@ import SiteGoalsCard from '@/components/sites/SiteGoalsCard.vue';
 import SiteShareCard from '@/components/sites/SiteShareCard.vue';
 import SiteSnippetCard from '@/components/sites/SiteSnippetCard.vue';
 
-const props = defineProps<{
+defineProps<{
     site: {
         id: number;
         domain: string;

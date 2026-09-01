@@ -29,7 +29,9 @@ export function isCurrentPeriod(dateStr: string): boolean {
             const [datePart, timePart] = dateStr.split(' ');
             const [year, month, day] = datePart.split('-').map(Number);
             const [hour] = timePart.split(':').map(Number);
-            const itemUtc = new Date(Date.UTC(year, month - 1, day, hour, 0, 0));
+            const itemUtc = new Date(
+                Date.UTC(year, month - 1, day, hour, 0, 0),
+            );
 
             // True if now falls within this exact 1-hour window [itemUtc, itemUtc + 1h)
             const diffMs = now.getTime() - itemUtc.getTime();
@@ -39,10 +41,31 @@ export function isCurrentPeriod(dateStr: string): boolean {
             // Daily format: "YYYY-MM-DD"
             const [year, month, day] = dateStr.split('-').map(Number);
             const itemUtc = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
-            const nowUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
-            const nowLocal = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0));
+            const nowUtc = new Date(
+                Date.UTC(
+                    now.getUTCFullYear(),
+                    now.getUTCMonth(),
+                    now.getUTCDate(),
+                    0,
+                    0,
+                    0,
+                ),
+            );
+            const nowLocal = new Date(
+                Date.UTC(
+                    now.getFullYear(),
+                    now.getMonth(),
+                    now.getDate(),
+                    0,
+                    0,
+                    0,
+                ),
+            );
 
-            return itemUtc.getTime() === nowUtc.getTime() || itemUtc.getTime() === nowLocal.getTime();
+            return (
+                itemUtc.getTime() === nowUtc.getTime() ||
+                itemUtc.getTime() === nowLocal.getTime()
+            );
         }
     } catch {
         return false;
