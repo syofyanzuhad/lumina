@@ -206,7 +206,7 @@ const emit = defineEmits<{
                 <span
                     v-if="isCurrentPeriod(dailyPageviews[dailyPageviews.length - 1].date)"
                     class="font-sans text-[9px] text-emerald-600 dark:text-emerald-400"
-                >(Today)</span>
+                >{{ dailyPageviews[0].date.includes(' ') ? '(Now)' : '(Today)' }}</span>
             </span>
         </div>
     </div>

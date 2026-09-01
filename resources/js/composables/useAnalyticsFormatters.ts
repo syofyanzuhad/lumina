@@ -21,20 +21,32 @@ export function isCurrentPeriod(dateStr: string): boolean {
         return false;
     }
 
-    const now = new Date();
-    const todayUtc = now.toISOString().slice(0, 10);
-    const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    try {
+        const now = new Date();
 
-    if (dateStr.includes(' ')) {
-        const [datePart, timePart] = dateStr.split(' ');
-        const isToday = datePart === todayUtc || datePart === todayLocal;
-        const currentHour = String(now.getHours()).padStart(2, '0');
-        const currentUtcHour = String(now.getUTCHours()).padStart(2, '0');
+        if (dateStr.includes(' ')) {
+            // Hourly format: "YYYY-MM-DD HH:00" (UTC from backend)
+            const [datePart, timePart] = dateStr.split(' ');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hour] = timePart.split(':').map(Number);
+            const itemUtc = new Date(Date.UTC(year, month - 1, day, hour, 0, 0));
 
-        return isToday && (timePart.startsWith(currentHour) || timePart.startsWith(currentUtcHour));
+            // True if now falls within this exact 1-hour window [itemUtc, itemUtc + 1h)
+            const diffMs = now.getTime() - itemUtc.getTime();
+
+            return diffMs >= 0 && diffMs < 3600000;
+        } else {
+            // Daily format: "YYYY-MM-DD"
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const itemUtc = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+            const nowUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+            const nowLocal = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0));
+
+            return itemUtc.getTime() === nowUtc.getTime() || itemUtc.getTime() === nowLocal.getTime();
+        }
+    } catch {
+        return false;
     }
-
-    return dateStr === todayUtc || dateStr === todayLocal;
 }
 
 export function formatDateLabel(dateStr: string): string {
