@@ -31,3 +31,9 @@ yarn-error.log
 
 # AI review / spec documents (local only)
 /docs/ai-reviews
+
+**/caddy
+frankenphp
+frankenphp-worker.php
+rr
+.rr.yaml
