@@ -16,6 +16,7 @@
         "fortify-development",
         "laravel-best-practices",
         "configure-nightwatch",
+        "octane-development",
         "wayfinder-development",
         "livewire-development",
         "pest-testing",
