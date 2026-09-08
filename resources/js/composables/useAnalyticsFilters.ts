@@ -34,7 +34,11 @@ export function useAnalyticsFilters(options: UseAnalyticsFiltersOptions) {
         return params;
     };
 
-    const addFilter = (key: string, value: string) => {
+    const addFilter = (
+        key: string,
+        value: string,
+        operator: 'is' | 'is_not' = 'is',
+    ) => {
         const url = getBaseUrl();
 
         if (!url) {
@@ -42,7 +46,32 @@ export function useAnalyticsFilters(options: UseAnalyticsFiltersOptions) {
         }
 
         const current = { ...(unref(options.currentFilters) || {}) };
-        current[key] = value;
+        current[key] = operator === 'is_not' ? `!${value}` : value;
+
+        router.get(url, buildParams(current), {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const toggleFilterOperator = (key: string) => {
+        const url = getBaseUrl();
+
+        if (!url) {
+            return;
+        }
+
+        const current = { ...(unref(options.currentFilters) || {}) };
+        const val = current[key];
+        if (!val) {
+            return;
+        }
+
+        if (val.startsWith('!')) {
+            current[key] = val.slice(1);
+        } else {
+            current[key] = `!${val}`;
+        }
 
         router.get(url, buildParams(current), {
             preserveState: true,
@@ -81,6 +110,7 @@ export function useAnalyticsFilters(options: UseAnalyticsFiltersOptions) {
 
     return {
         addFilter,
+        toggleFilterOperator,
         removeFilter,
         clearFilters,
     };

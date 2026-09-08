@@ -86,4 +86,62 @@ describe('useAnalyticsFilters', () => {
 
         expect(routerGet).not.toHaveBeenCalled();
     });
+
+    it('adds an exclude filter with ! prefix when operator is is_not', () => {
+        const currentFilters = ref({ path: '/pricing' });
+
+        const { addFilter } = useAnalyticsFilters({
+            baseUrl: '/dashboard',
+            siteId: ref(7),
+            currentFilters,
+        });
+
+        addFilter('country', 'US', 'is_not');
+
+        expect(routerGet).toHaveBeenCalledWith(
+            '/dashboard',
+            {
+                path: '/pricing',
+                country: '!US',
+                site_id: 7,
+            },
+            { preserveState: true, preserveScroll: true },
+        );
+    });
+
+    it('toggles filter operator between is and is_not', () => {
+        const currentFilters = ref({ path: '/pricing', country: 'US' });
+
+        const { toggleFilterOperator } = useAnalyticsFilters({
+            baseUrl: '/dashboard',
+            siteId: ref(7),
+            currentFilters,
+        });
+
+        toggleFilterOperator('country');
+
+        expect(routerGet).toHaveBeenCalledWith(
+            '/dashboard',
+            {
+                path: '/pricing',
+                country: '!US',
+                site_id: 7,
+            },
+            { preserveState: true, preserveScroll: true },
+        );
+
+        // Toggle back
+        currentFilters.value = { path: '/pricing', country: '!US' };
+        toggleFilterOperator('country');
+
+        expect(routerGet).toHaveBeenCalledWith(
+            '/dashboard',
+            {
+                path: '/pricing',
+                country: 'US',
+                site_id: 7,
+            },
+            { preserveState: true, preserveScroll: true },
+        );
+    });
 });
