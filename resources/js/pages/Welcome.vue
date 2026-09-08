@@ -8,7 +8,6 @@ import {
     Package,
     ArrowRight,
     BarChart3,
-    Sparkles,
     CheckCircle2,
     Copy,
     Check,
@@ -53,7 +52,7 @@ const copySnippet = () => {
 </script>
 
 <template>
-    <Head title="Lumina — Lightweight Web Analytics for Laravel">
+    <Head title="Lumina: Lightweight Web Analytics for Laravel">
         <meta
             name="description"
             content="Self-hosted, cookie-free web analytics for Laravel applications under 2KB script payload. Track pageviews, custom events, and conversion goals with zero infrastructure hassle."
@@ -68,7 +67,7 @@ const copySnippet = () => {
         <meta property="og:type" content="website" />
         <meta
             property="og:title"
-            content="Lumina — Lightweight Web Analytics for Laravel"
+            content="Lumina: Lightweight Web Analytics for Laravel"
         />
         <meta
             property="og:description"
@@ -87,7 +86,7 @@ const copySnippet = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta
             name="twitter:title"
-            content="Lumina — Lightweight Web Analytics for Laravel"
+            content="Lumina: Lightweight Web Analytics for Laravel"
         />
         <meta
             name="twitter:description"
@@ -113,14 +112,6 @@ const copySnippet = () => {
     <div
         class="relative min-h-screen overflow-hidden bg-slate-50 font-['Outfit',sans-serif] text-slate-900 transition-colors duration-300 selection:bg-indigo-500 selection:text-white dark:bg-slate-950 dark:text-slate-100"
     >
-        <!-- Background Gradient Orbs -->
-        <div
-            class="pointer-events-none absolute top-0 left-1/2 h-[500px] w-[1000px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-indigo-500/20 via-violet-500/20 to-amber-500/10 blur-[120px] dark:from-indigo-600/20 dark:via-violet-600/20"
-        ></div>
-        <div
-            class="pointer-events-none absolute right-0 bottom-0 h-[600px] w-[600px] rounded-full bg-indigo-500/10 blur-[140px] dark:bg-indigo-900/10"
-        ></div>
-
         <!-- Navigation Header -->
         <header
             class="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6"
@@ -209,16 +200,17 @@ const copySnippet = () => {
         <main
             class="relative z-10 mx-auto max-w-7xl px-6 pt-12 pb-24 text-center"
         >
-            <!-- Badge -->
+            <!-- Release Badge -->
             <div
-                class="mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-xs backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 dark:text-indigo-300"
+                class="mb-8 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
             >
-                <Sparkles
-                    class="h-3.5 w-3.5 animate-pulse text-amber-500 dark:text-amber-400"
-                />
                 <span
-                    >Latest Update: Privacy-First Identity, Session Analytics &
-                    Zero-Latency Tracking</span
+                    class="rounded bg-indigo-50 px-1.5 py-0.5 font-mono text-[11px] font-bold text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400"
+                    >v1.1</span
+                >
+                <span
+                    >Privacy-first identity, session analytics & zero-latency
+                    tracking</span
                 >
             </div>
 
@@ -349,11 +341,8 @@ const copySnippet = () => {
 
             <!-- Live Mock Dashboard Preview -->
             <div
-                class="relative mx-auto mt-16 max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white/90 p-6 text-left shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/80"
+                class="relative mx-auto mt-16 max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-xl dark:border-slate-800 dark:bg-slate-900"
             >
-                <div
-                    class="pointer-events-none absolute top-0 right-0 h-80 w-80 rounded-full bg-indigo-500/10 blur-[90px]"
-                ></div>
 
                 <!-- Mock Header -->
                 <div
@@ -572,8 +561,8 @@ const copySnippet = () => {
                             class="text-xs leading-relaxed text-slate-600 dark:text-slate-400"
                         >
                             Visitor & session IDs are generated client-side and
-                            stored in localStorage / sessionStorage — never
-                            cookies. No raw IPs are stored, with a stable-salt
+                            stored in localStorage / sessionStorage (never
+                            cookies). No raw IPs are stored, with a stable-salt
                             hash fallback.
                         </p>
                     </div>
@@ -596,7 +585,7 @@ const copySnippet = () => {
                             class="text-xs leading-relaxed text-slate-600 dark:text-slate-400"
                         >
                             Bounce rate and average visit duration are computed
-                            from true 30-minute sessions — not approximated from
+                            from true 30-minute sessions, not approximated from
                             daily aggregates.
                         </p>
                     </div>
@@ -620,7 +609,7 @@ const copySnippet = () => {
                         >
                             Tracking runs in terminable middleware after the
                             response is sent, with atomic rate limiting and
-                            cached site lookups — zero impact on page speed.
+                            cached site lookups, ensuring zero impact on page speed.
                         </p>
                     </div>
                 </div>
@@ -712,11 +701,8 @@ const copySnippet = () => {
 
             <!-- Interactive Script Snippet Generator -->
             <div
-                class="relative mx-auto mt-28 max-w-4xl overflow-hidden rounded-3xl border border-indigo-500/30 bg-white/90 p-8 text-left shadow-2xl backdrop-blur-xl sm:p-12 dark:bg-slate-900/80"
+                class="relative mx-auto mt-28 max-w-4xl overflow-hidden rounded-3xl border border-indigo-500/30 bg-white p-8 text-left shadow-xl sm:p-12 dark:bg-slate-900"
             >
-                <div
-                    class="pointer-events-none absolute top-0 right-0 h-72 w-72 rounded-full bg-indigo-600/10 blur-[100px]"
-                ></div>
 
                 <div class="mb-2 flex items-center gap-3">
                     <Terminal
@@ -919,8 +905,8 @@ const copySnippet = () => {
                             class="text-sm leading-relaxed text-slate-600 dark:text-slate-400"
                         >
                             No! Lumina sets no cookies and stores only opaque
-                            random IDs in localStorage / sessionStorage — never
-                            personal data. Raw IPs are never saved; when
+                            random IDs in localStorage / sessionStorage (never
+                            personal data). Raw IPs are never saved; when
                             client-side IDs are unavailable, an irreversible
                             stable-salt hash is used instead. That keeps Lumina
                             100% GDPR, CCPA, and PECR compliant without annoying
@@ -974,7 +960,7 @@ const copySnippet = () => {
         <footer
             class="relative z-10 flex flex-col items-center justify-center gap-2 border-t border-slate-200 py-8 text-center text-xs text-slate-500 sm:flex-row dark:border-slate-900"
         >
-            <p>Built with ❤️ for the Laravel Community.</p>
+            <p>Built for the Laravel community.</p>
             <span class="hidden sm:inline">•</span>
             <a
                 href="https://github.com/syofyanzuhad/lumina"
