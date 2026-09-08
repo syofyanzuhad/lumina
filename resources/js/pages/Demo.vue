@@ -22,7 +22,7 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="Live Public Demo — Lumina Analytics" />
+    <Head title="Live Public Demo: Lumina Analytics" />
 
     <div
         class="relative flex min-h-screen flex-col overflow-hidden bg-slate-950 font-sans text-slate-100 antialiased"

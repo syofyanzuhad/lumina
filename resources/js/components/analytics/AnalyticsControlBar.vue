@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import {
+    Activity,
     CalendarDays,
     Download,
     ExternalLink,
     RefreshCw,
     Settings,
-    Sparkles,
 } from '@lucide/vue';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import { Button } from '@/components/ui/button';
@@ -90,7 +90,7 @@ const emit = defineEmits<{
                             : 'text-muted-foreground hover:text-foreground',
                     ]"
                 >
-                    <Sparkles class="h-3 w-3 text-amber-500" />
+                    <Activity class="h-3 w-3 text-indigo-500" />
                     Custom Events
                 </button>
             </div>

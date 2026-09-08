@@ -36,7 +36,7 @@ withDefaults(
         colorScheme: 'indigo',
         canFilter: true,
         canExpand: true,
-        emptyText: 'No data recorded yet.',
+        emptyText: 'No data recorded for this period.',
     },
 );
 

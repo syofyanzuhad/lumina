@@ -81,7 +81,7 @@ const emit = defineEmits<{
         <div class="relative flex h-48 w-full gap-2 pt-6 pb-2 sm:h-56">
             <!-- Y-Axis Value Labels -->
             <div
-                class="pointer-events-none flex h-full w-8 flex-col justify-between text-right font-mono text-[10px] text-muted-foreground/70 select-none sm:w-10 sm:text-[11px]"
+                class="pointer-events-none flex h-full w-8 flex-col justify-between text-right font-mono text-[10px] text-muted-foreground select-none sm:w-10 sm:text-[11px]"
             >
                 <span>{{ formatCompactNumber(maxDaily) }}</span>
                 <span>{{ formatCompactNumber(Math.round(maxDaily / 2)) }}</span>

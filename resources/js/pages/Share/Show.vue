@@ -101,8 +101,8 @@ const copyPublicShareUrl = async () => {
     <Head
         :title="
             requiresPassword
-                ? `Protected Analytics — ${site.domain}`
-                : `${site.domain} — Public Analytics`
+                ? `Protected Analytics: ${site.domain}`
+                : `${site.domain}: Public Analytics`
         "
     />
 
