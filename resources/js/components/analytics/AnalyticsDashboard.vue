@@ -106,13 +106,14 @@ const overviewRef = computed(() => ({
 }));
 
 // Composables setup
-const { addFilter, removeFilter, clearFilters } = useAnalyticsFilters({
-    baseUrl: baseUrlRef,
-    siteId: siteIdRef,
-    currentFilters: filtersRef,
-    currentPeriod: periodRef,
-    currentTab: tabRef,
-});
+const { addFilter, toggleFilterOperator, removeFilter, clearFilters } =
+    useAnalyticsFilters({
+        baseUrl: baseUrlRef,
+        siteId: siteIdRef,
+        currentFilters: filtersRef,
+        currentPeriod: periodRef,
+        currentTab: tabRef,
+    });
 
 const { customStartDate, customEndDate, setPeriod, applyCustomDateRange } =
     useAnalyticsPeriod({
@@ -295,6 +296,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
             v-if="canFilter"
             :filters="filters"
             @removeFilter="removeFilter"
+            @toggleOperator="toggleFilterOperator"
             @clearFilters="clearFilters"
         />
 

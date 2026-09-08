@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Maximize2, Filter, ExternalLink, Globe, Laptop } from '@lucide/vue';
+import { Maximize2, Filter, FilterX, ExternalLink, Globe, Laptop } from '@lucide/vue';
 import type { Component } from 'vue';
 import {
     formatNumber,
@@ -41,7 +41,7 @@ withDefaults(
 );
 
 const emit = defineEmits<{
-    (e: 'filter', key: string, value: string): void;
+    (e: 'filter', key: string, value: string, operator?: 'is' | 'is_not'): void;
     (e: 'expand', type: string, title: string): void;
 }>();
 
@@ -197,7 +197,6 @@ const colorClasses: Record<
                         class="h-3 w-3 shrink-0 text-muted-foreground/60"
                     />
 
-                    <!-- Item Label -->
                     <span class="truncate">{{ item.label }}</span>
 
                     <!-- Path External Link Icon -->
@@ -213,11 +212,28 @@ const colorClasses: Record<
                         <ExternalLink class="h-3 w-3" />
                     </a>
 
-                    <!-- Filter Icon on Hover -->
-                    <Filter
+                    <!-- Filter Actions on Hover -->
+                    <span
                         v-if="canFilter"
-                        class="ml-0.5 h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60"
-                    />
+                        class="ml-1 inline-flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                        <button
+                            type="button"
+                            @click.stop="emit('filter', filterKey, item.label, 'is')"
+                            :title="`Include only ${item.label}`"
+                            class="rounded p-0.5 text-muted-foreground/70 transition-colors hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-950/50 dark:hover:text-indigo-400"
+                        >
+                            <Filter class="h-3 w-3" />
+                        </button>
+                        <button
+                            type="button"
+                            @click.stop="emit('filter', filterKey, item.label, 'is_not')"
+                            :title="`Exclude ${item.label}`"
+                            class="rounded p-0.5 text-muted-foreground/70 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-950/50 dark:hover:text-rose-400"
+                        >
+                            <FilterX class="h-3 w-3" />
+                        </button>
+                    </span>
                 </span>
 
                 <span

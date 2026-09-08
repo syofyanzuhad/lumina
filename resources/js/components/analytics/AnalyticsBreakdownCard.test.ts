@@ -86,7 +86,7 @@ describe('AnalyticsBreakdownCard', () => {
     it('renders the empty state text when there are no items', () => {
         const wrapper = mountCard({ items: [] });
 
-        expect(wrapper.text()).toContain('No data recorded yet.');
+        expect(wrapper.text()).toContain('No data recorded for this period.');
     });
 
     it('uses a custom empty text when provided', () => {
@@ -121,5 +121,19 @@ describe('AnalyticsBreakdownCard', () => {
         const wrapper = mountCard({ totalItems: 2 });
 
         expect(wrapper.text()).toContain('2 entries');
+    });
+
+    it('emits filter with "is" and "is_not" from the action buttons', async () => {
+        const wrapper = mountCard();
+
+        const includeBtn = wrapper.find('button[title="Include only /home"]');
+        expect(includeBtn.exists()).toBe(true);
+        await includeBtn.trigger('click');
+        expect(wrapper.emitted('filter')?.[0]).toEqual(['path', '/home', 'is']);
+
+        const excludeBtn = wrapper.find('button[title="Exclude /home"]');
+        expect(excludeBtn.exists()).toBe(true);
+        await excludeBtn.trigger('click');
+        expect(wrapper.emitted('filter')?.[1]).toEqual(['path', '/home', 'is_not']);
     });
 });
