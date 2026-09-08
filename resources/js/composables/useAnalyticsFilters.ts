@@ -63,6 +63,7 @@ export function useAnalyticsFilters(options: UseAnalyticsFiltersOptions) {
 
         const current = { ...(unref(options.currentFilters) || {}) };
         const val = current[key];
+
         if (!val) {
             return;
         }

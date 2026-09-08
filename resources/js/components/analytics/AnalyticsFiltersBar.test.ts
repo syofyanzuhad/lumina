@@ -65,7 +65,9 @@ describe('AnalyticsFiltersBar', () => {
         expect(wrapper.text()).toContain('is');
         expect(wrapper.text()).toContain('US');
 
-        const toggleBtn = wrapper.find('button[title*="switch to is (include)"]');
+        const toggleBtn = wrapper.find(
+            'button[title*="switch to is (include)"]',
+        );
         expect(toggleBtn.exists()).toBe(true);
 
         await toggleBtn.trigger('click');

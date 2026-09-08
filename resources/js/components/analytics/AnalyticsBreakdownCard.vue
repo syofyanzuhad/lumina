@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { Maximize2, Filter, FilterX, ExternalLink, Globe, Laptop } from '@lucide/vue';
+import {
+    Maximize2,
+    Filter,
+    FilterX,
+    ExternalLink,
+    Globe,
+    Laptop,
+} from '@lucide/vue';
 import type { Component } from 'vue';
 import {
     formatNumber,
@@ -219,7 +226,9 @@ const colorClasses: Record<
                     >
                         <button
                             type="button"
-                            @click.stop="emit('filter', filterKey, item.label, 'is')"
+                            @click.stop="
+                                emit('filter', filterKey, item.label, 'is')
+                            "
                             :title="`Include only ${item.label}`"
                             class="rounded p-0.5 text-muted-foreground/70 transition-colors hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-950/50 dark:hover:text-indigo-400"
                         >
@@ -227,7 +236,9 @@ const colorClasses: Record<
                         </button>
                         <button
                             type="button"
-                            @click.stop="emit('filter', filterKey, item.label, 'is_not')"
+                            @click.stop="
+                                emit('filter', filterKey, item.label, 'is_not')
+                            "
                             :title="`Exclude ${item.label}`"
                             class="rounded p-0.5 text-muted-foreground/70 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-950/50 dark:hover:text-rose-400"
                         >

@@ -12,7 +12,8 @@ const emit = defineEmits<{
 }>();
 
 const isNegated = (val: string) => val.startsWith('!');
-const displayValue = (val: string) => (val.startsWith('!') ? val.slice(1) : val);
+const displayValue = (val: string) =>
+    val.startsWith('!') ? val.slice(1) : val;
 </script>
 
 <template>
@@ -32,7 +33,7 @@ const displayValue = (val: string) => (val.startsWith('!') ? val.slice(1) : val)
             class="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-1 font-mono text-xs shadow-2xs transition-colors"
             :class="
                 isNegated(String(val))
-                    ? 'border-rose-200/80 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20'
+                    ? 'border-rose-200/80 bg-rose-50/40 dark:border-rose-900/60 dark:bg-rose-950/20'
                     : 'border-sidebar-border text-foreground'
             "
         >
@@ -43,7 +44,7 @@ const displayValue = (val: string) => (val.startsWith('!') ? val.slice(1) : val)
                 type="button"
                 @click="emit('toggleOperator', String(key))"
                 :title="`Click to switch to ${isNegated(String(val)) ? 'is (include)' : 'is not (exclude)'}`"
-                class="rounded px-1 text-[10px] font-sans font-semibold transition-colors cursor-pointer"
+                class="cursor-pointer rounded px-1 font-sans text-[10px] font-semibold transition-colors"
                 :class="
                     isNegated(String(val))
                         ? 'bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-300'
@@ -56,7 +57,7 @@ const displayValue = (val: string) => (val.startsWith('!') ? val.slice(1) : val)
                 class="font-bold"
                 :class="
                     isNegated(String(val))
-                        ? 'text-rose-600 dark:text-rose-400 line-through decoration-rose-400/50'
+                        ? 'text-rose-600 line-through decoration-rose-400/50 dark:text-rose-400'
                         : 'text-indigo-600 dark:text-indigo-400'
                 "
             >

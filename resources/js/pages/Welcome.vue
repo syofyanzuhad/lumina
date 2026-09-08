@@ -343,7 +343,6 @@ const copySnippet = () => {
             <div
                 class="relative mx-auto mt-16 max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-xl dark:border-slate-800 dark:bg-slate-900"
             >
-
                 <!-- Mock Header -->
                 <div
                     class="flex items-center justify-between border-b border-slate-200 pb-4 dark:border-slate-800/80"
@@ -609,7 +608,8 @@ const copySnippet = () => {
                         >
                             Tracking runs in terminable middleware after the
                             response is sent, with atomic rate limiting and
-                            cached site lookups, ensuring zero impact on page speed.
+                            cached site lookups, ensuring zero impact on page
+                            speed.
                         </p>
                     </div>
                 </div>
@@ -703,7 +703,6 @@ const copySnippet = () => {
             <div
                 class="relative mx-auto mt-28 max-w-4xl overflow-hidden rounded-3xl border border-indigo-500/30 bg-white p-8 text-left shadow-xl sm:p-12 dark:bg-slate-900"
             >
-
                 <div class="mb-2 flex items-center gap-3">
                     <Terminal
                         class="h-5 w-5 text-indigo-600 dark:text-indigo-400"

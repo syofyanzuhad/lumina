@@ -134,6 +134,10 @@ describe('AnalyticsBreakdownCard', () => {
         const excludeBtn = wrapper.find('button[title="Exclude /home"]');
         expect(excludeBtn.exists()).toBe(true);
         await excludeBtn.trigger('click');
-        expect(wrapper.emitted('filter')?.[1]).toEqual(['path', '/home', 'is_not']);
+        expect(wrapper.emitted('filter')?.[1]).toEqual([
+            'path',
+            '/home',
+            'is_not',
+        ]);
     });
 });
