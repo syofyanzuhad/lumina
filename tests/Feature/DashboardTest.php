@@ -25,3 +25,40 @@ test('authenticated users without sites are redirected to sites create page', fu
     $response = $this->get(route('dashboard'));
     $response->assertRedirect(route('sites.create'));
 });
+
+test('dashboard accepts inclusion and exclusion filters and passes them to the view', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('dashboard', [
+        'site_id' => $site->id,
+        'country' => '!US',
+        'device' => 'desktop',
+    ]));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('Dashboard')
+        ->where('filters.country', '!US')
+        ->where('filters.device', 'desktop')
+    );
+});
+
+test('breakdown endpoint responds with filtered data for inclusion and exclusion', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+    $this->actingAs($user);
+
+    $response = $this->getJson(route('dashboard.breakdown', [
+        'site_id' => $site->id,
+        'type' => 'devices',
+        'country' => '!US',
+    ]));
+
+    $response->assertOk();
+    $response->assertJsonStructure([
+        'type',
+        'data',
+    ]);
+});
