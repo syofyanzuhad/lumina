@@ -55,4 +55,20 @@ describe('AnalyticsFiltersBar', () => {
 
         expect(wrapper.emitted('clearFilters')).toHaveLength(1);
     });
+
+    it('displays "is not" badge and emits toggleOperator when operator is clicked', async () => {
+        const wrapper = mountFiltersBar({
+            filters: { country: '!US', device: 'desktop' },
+        });
+
+        expect(wrapper.text()).toContain('is not');
+        expect(wrapper.text()).toContain('is');
+        expect(wrapper.text()).toContain('US');
+
+        const toggleBtn = wrapper.find('button[title*="switch to is (include)"]');
+        expect(toggleBtn.exists()).toBe(true);
+
+        await toggleBtn.trigger('click');
+        expect(wrapper.emitted('toggleOperator')?.[0]).toEqual(['country']);
+    });
 });

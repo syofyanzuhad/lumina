@@ -7,8 +7,12 @@ defineProps<{
 
 const emit = defineEmits<{
     (e: 'removeFilter', key: string): void;
+    (e: 'toggleOperator', key: string): void;
     (e: 'clearFilters'): void;
 }>();
+
+const isNegated = (val: string) => val.startsWith('!');
+const displayValue = (val: string) => (val.startsWith('!') ? val.slice(1) : val);
 </script>
 
 <template>
@@ -25,14 +29,39 @@ const emit = defineEmits<{
         <span
             v-for="(val, key) in filters"
             :key="key"
-            class="inline-flex items-center gap-1 rounded-md border border-sidebar-border bg-background px-2.5 py-1 font-mono text-xs text-foreground shadow-2xs"
+            class="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-1 font-mono text-xs shadow-2xs transition-colors"
+            :class="
+                isNegated(String(val))
+                    ? 'border-rose-200/80 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20'
+                    : 'border-sidebar-border text-foreground'
+            "
         >
             <span class="font-sans text-muted-foreground capitalize"
                 >{{ key }}:</span
             >
-            <span class="font-bold text-indigo-600 dark:text-indigo-400">{{
-                val
-            }}</span>
+            <button
+                type="button"
+                @click="emit('toggleOperator', String(key))"
+                :title="`Click to switch to ${isNegated(String(val)) ? 'is (include)' : 'is not (exclude)'}`"
+                class="rounded px-1 text-[10px] font-sans font-semibold transition-colors cursor-pointer"
+                :class="
+                    isNegated(String(val))
+                        ? 'bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-300'
+                        : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300'
+                "
+            >
+                {{ isNegated(String(val)) ? 'is not' : 'is' }}
+            </button>
+            <span
+                class="font-bold"
+                :class="
+                    isNegated(String(val))
+                        ? 'text-rose-600 dark:text-rose-400 line-through decoration-rose-400/50'
+                        : 'text-indigo-600 dark:text-indigo-400'
+                "
+            >
+                {{ displayValue(String(val)) }}
+            </span>
             <button
                 @click="emit('removeFilter', String(key))"
                 class="ml-0.5 rounded-sm p-0.5 text-muted-foreground/70 transition-colors hover:text-destructive"
