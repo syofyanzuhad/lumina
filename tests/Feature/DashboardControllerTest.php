@@ -175,3 +175,74 @@ test('breakdown endpoint supports all breakdown types and filters', function () 
             ->assertJson(['type' => $type]);
     }
 });
+
+test('dashboard passes path filter to inertia props for inclusion and exclusion', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $this->actingAs($user)->get("/dashboard?site_id={$site->id}&path=/pricing")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('filters.path', '/pricing'));
+
+    $this->actingAs($user)->get("/dashboard?site_id={$site->id}&path=!/pricing")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('filters.path', '!/pricing'));
+});
+
+test('dashboard passes referrer, browser, os, and utm filters to inertia props', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $this->actingAs($user)->get("/dashboard?site_id={$site->id}&referrer=google.com&browser=Chrome&os=macOS&utm_source=twitter&utm_medium=cpc&utm_campaign=launch")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.referrer', 'google.com')
+            ->where('filters.browser', 'Chrome')
+            ->where('filters.os', 'macOS')
+            ->where('filters.utm_source', 'twitter')
+            ->where('filters.utm_medium', 'cpc')
+            ->where('filters.utm_campaign', 'launch')
+        );
+});
+
+test('dashboard strips empty string filter values from filters prop', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $this->actingAs($user)->get("/dashboard?site_id={$site->id}&browser=&device=desktop")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.device', 'desktop')
+            ->missing('filters.browser')
+        );
+});
+
+test('dashboard ignores unknown filter query parameters', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $this->actingAs($user)->get("/dashboard?site_id={$site->id}&unknown_key=test&device=mobile")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.device', 'mobile')
+            ->missing('filters.unknown_key')
+        );
+});
+
+test('dashboard handles custom period when end date is omitted', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $this->actingAs($user)->get("/dashboard?site_id={$site->id}&period=custom&start_date=2026-01-01")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('period', 'custom'));
+});
+
+test('dashboard accepts arbitrary or unknown period value gracefully', function () {
+    $user = User::factory()->create();
+    $site = Site::factory()->create(['owner_id' => $user->id]);
+
+    $this->actingAs($user)->get("/dashboard?site_id={$site->id}&period=999d")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('period', '999d'));
+});

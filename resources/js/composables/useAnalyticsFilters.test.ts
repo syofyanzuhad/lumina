@@ -144,4 +144,29 @@ describe('useAnalyticsFilters', () => {
             { preserveState: true, preserveScroll: true },
         );
     });
+
+    it('adds and excludes UTM filters (utm_source, utm_medium, utm_campaign)', () => {
+        const currentFilters = ref({});
+
+        const { addFilter } = useAnalyticsFilters({
+            baseUrl: '/dashboard',
+            siteId: ref(1),
+            currentFilters,
+        });
+
+        addFilter('utm_source', 'newsletter');
+        expect(routerGet).toHaveBeenCalledWith(
+            '/dashboard',
+            { utm_source: 'newsletter', site_id: 1 },
+            { preserveState: true, preserveScroll: true },
+        );
+
+        addFilter('utm_medium', 'email', 'is_not');
+        expect(routerGet).toHaveBeenCalledWith(
+            '/dashboard',
+            { utm_medium: '!email', site_id: 1 },
+            { preserveState: true, preserveScroll: true },
+        );
+    });
 });
+
