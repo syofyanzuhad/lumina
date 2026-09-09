@@ -14,6 +14,14 @@ const emit = defineEmits<{
 const isNegated = (val: string) => val.startsWith('!');
 const displayValue = (val: string) =>
     val.startsWith('!') ? val.slice(1) : val;
+
+const formatKeyLabel = (key: string | number) => {
+    const s = String(key);
+    if (s.startsWith('utm_')) {
+        return `UTM ${s.slice(4).charAt(0).toUpperCase() + s.slice(5)}`;
+    }
+    return s.replace(/_/g, ' ');
+};
 </script>
 
 <template>
@@ -38,7 +46,7 @@ const displayValue = (val: string) =>
             "
         >
             <span class="font-sans text-muted-foreground capitalize"
-                >{{ key }}:</span
+                >{{ formatKeyLabel(key) }}:</span
             >
             <button
                 type="button"

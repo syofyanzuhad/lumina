@@ -69,7 +69,7 @@ const getItemLabel = (item: any, type: string) => {
         case 'locations':
             return item.name || item.code;
         case 'utm':
-            return item.utm_campaign;
+            return item.campaign || item.utm_campaign;
         default:
             return item.name || item.label || '';
     }
