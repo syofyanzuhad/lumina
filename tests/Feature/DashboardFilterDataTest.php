@@ -184,6 +184,34 @@ test('referrer inclusion filter scopes metrics to matching referrer', function (
     );
 });
 
+test('referrer filter matches platform name Google across multiple google domains', function () {
+    Event::factory()->create([
+        'site_id' => $this->site->id,
+        'referrer' => 'https://www.google.com/search?q=laravel',
+        'created_at' => now()->subDay(),
+    ]);
+    Event::factory()->create([
+        'site_id' => $this->site->id,
+        'referrer' => 'https://google.co.id/',
+        'created_at' => now()->subDay(),
+    ]);
+    Event::factory()->create([
+        'site_id' => $this->site->id,
+        'referrer' => 'https://t.co/xyz',
+        'created_at' => now()->subDay(),
+    ]);
+
+    // Inclusion by platform name "Google" matches both google referrers
+    $this->get("/dashboard?site_id={$this->site->id}&referrer=Google")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('total_pageviews', 2));
+
+    // Exclusion by platform name "!Google" leaves only the twitter referrer
+    $this->get("/dashboard?site_id={$this->site->id}&referrer=!Google")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('total_pageviews', 1));
+});
+
 test('utm_campaign inclusion filter scopes metrics to matching campaign', function () {
     Event::factory()->count(2)->create([
         'site_id' => $this->site->id,
