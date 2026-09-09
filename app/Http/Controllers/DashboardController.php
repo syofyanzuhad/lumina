@@ -49,7 +49,7 @@ class DashboardController extends Controller
         $activeTab = $request->query('tab', 'overview');
 
         $filters = $request->only([
-            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_campaign',
+            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_source', 'utm_medium', 'utm_campaign',
         ]);
         $filters = array_filter($filters, fn ($val) => ! is_null($val) && $val !== '');
 
@@ -117,10 +117,11 @@ class DashboardController extends Controller
         [$start, $end] = $this->resolveDateRange($period, $request->query('start_date'), $request->query('end_date'));
 
         $type = $request->query('type');
-        $limit = (int) $request->query('limit', 50);
+        $rawLimit = $request->query('limit');
+        $limit = is_numeric($rawLimit) ? max(1, min(100, (int) $rawLimit)) : 50;
 
         $filters = $request->only([
-            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_campaign',
+            'path', 'referrer', 'country', 'browser', 'os', 'device', 'utm_source', 'utm_medium', 'utm_campaign',
         ]);
         $filters = array_filter($filters, fn ($val) => ! is_null($val) && $val !== '');
 
