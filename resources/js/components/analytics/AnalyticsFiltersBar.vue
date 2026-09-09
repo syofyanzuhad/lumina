@@ -17,9 +17,11 @@ const displayValue = (val: string) =>
 
 const formatKeyLabel = (key: string | number) => {
     const s = String(key);
+
     if (s.startsWith('utm_')) {
         return `UTM ${s.slice(4).charAt(0).toUpperCase() + s.slice(5)}`;
     }
+
     return s.replace(/_/g, ' ');
 };
 </script>
