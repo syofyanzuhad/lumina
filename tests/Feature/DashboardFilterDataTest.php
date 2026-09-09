@@ -119,6 +119,16 @@ test('country inclusion filter scopes metrics to matching country_code', functio
         ->component('Dashboard')
         ->where('total_pageviews', 2)
     );
+
+    // Filter using full English name
+    $this->get("/dashboard?site_id={$this->site->id}&country=United States")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('total_pageviews', 2));
+
+    // Exclude using full English name
+    $this->get("/dashboard?site_id={$this->site->id}&country=!United States")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('total_pageviews', 1));
 });
 
 test('browser inclusion filter scopes metrics to matching browser', function () {
