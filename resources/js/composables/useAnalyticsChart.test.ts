@@ -9,11 +9,11 @@ const sampleData = [
 ];
 
 describe('useAnalyticsChart', () => {
-    it('starts with views visible and visitors hidden', () => {
+    it('starts with both views and visitors visible', () => {
         const { showViews, showVisitors } = useAnalyticsChart(ref(sampleData));
 
         expect(showViews.value).toBe(true);
-        expect(showVisitors.value).toBe(false);
+        expect(showVisitors.value).toBe(true);
     });
 
     it('toggles the visibility of each series', () => {
@@ -24,7 +24,7 @@ describe('useAnalyticsChart', () => {
         expect(showViews.value).toBe(false);
 
         toggleVisitors();
-        expect(showVisitors.value).toBe(true);
+        expect(showVisitors.value).toBe(false);
     });
 
     it('computes the per-series maximums from the data', () => {
@@ -37,20 +37,18 @@ describe('useAnalyticsChart', () => {
     it('maxDaily follows the largest visible series', () => {
         const { maxDaily, toggleVisitors } = useAnalyticsChart(ref(sampleData));
 
-        // Only views visible -> 250.
+        // Both visible -> max(250, 120) = 250.
         expect(maxDaily.value).toBe(250);
 
-        toggleVisitors();
-        // Both visible -> max(250, 120) = 250.
+        toggleVisitors(); // visitors off
+        // Only views visible -> 250.
         expect(maxDaily.value).toBe(250);
     });
 
     it('maxDaily tracks the visitors series once it exceeds views', () => {
         const data = ref([{ date: '2026-08-01', pageviews: 10, visitors: 60 }]);
 
-        const { maxDaily, toggleVisitors } = useAnalyticsChart(data);
-
-        toggleVisitors();
+        const { maxDaily } = useAnalyticsChart(data);
 
         expect(maxDaily.value).toBe(60);
     });
@@ -74,7 +72,6 @@ describe('useAnalyticsChart', () => {
         );
 
         toggleViews(); // views off
-        toggleVisitors(); // visitors on
         toggleVisitors(); // visitors off
 
         expect(maxDaily.value).toBe(1);

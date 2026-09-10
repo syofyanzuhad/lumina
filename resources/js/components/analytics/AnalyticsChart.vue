@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import type { DailyChartItem } from '@/composables/useAnalyticsChart';
 import {
     formatCompactNumber,
@@ -8,7 +7,7 @@ import {
     isCurrentPeriod,
 } from '@/composables/useAnalyticsFormatters';
 
-const props = defineProps<{
+defineProps<{
     dailyPageviews?: DailyChartItem[];
     showViews: boolean;
     showVisitors: boolean;
@@ -22,43 +21,6 @@ const emit = defineEmits<{
     (e: 'toggleVisitors'): void;
     (e: 'selectDay', date: string): void;
 }>();
-
-// SVG Trendline Coordinate Calculations
-const svgCoordinates = computed(() => {
-    const list = props.dailyPageviews;
-
-    if (!list || list.length < 2 || props.maxDaily <= 0) {
-        return { visitorsLine: '', viewsLine: '', visitorsArea: '' };
-    }
-
-    const n = list.length;
-    const step = 100 / (n - 1);
-
-    const vPoints = list.map((d, i) => {
-        const x = i * step;
-        const y = 100 - (d.visitors / props.maxDaily) * 92; // 8% bottom padding
-
-        return { x, y: Math.max(Math.min(y, 100), 4) };
-    });
-
-    const pPoints = list.map((d, i) => {
-        const x = i * step;
-        const y = 100 - (d.pageviews / props.maxDaily) * 92;
-
-        return { x, y: Math.max(Math.min(y, 100), 4) };
-    });
-
-    const visitorsLine = vPoints
-        .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-        .join(' ');
-    const viewsLine = pPoints
-        .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-        .join(' ');
-
-    const visitorsArea = `0,100 ${visitorsLine} 100,100`;
-
-    return { visitorsLine, viewsLine, visitorsArea };
-});
 </script>
 
 <template>
@@ -97,9 +59,9 @@ const svgCoordinates = computed(() => {
                     "
                 >
                     <span
-                        class="inline-block h-2.5 w-3 rounded-xs border border-indigo-400/50 bg-indigo-500/30 shadow-[0_0_8px_rgba(99,102,241,0.5)] dark:bg-indigo-400/25"
+                        class="inline-block h-2.5 w-3 rounded-xs border border-indigo-400/50 bg-indigo-500/40 shadow-[0_0_8px_rgba(99,102,241,0.5)] dark:bg-indigo-400/35"
                     ></span>
-                    <span class="text-muted-foreground">Pageviews (Bars)</span>
+                    <span class="text-muted-foreground">Pageviews</span>
                 </button>
                 <button
                     type="button"
@@ -112,11 +74,9 @@ const svgCoordinates = computed(() => {
                     "
                 >
                     <span
-                        class="inline-block h-1 w-3.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]"
+                        class="inline-block h-2.5 w-3 rounded-xs border border-cyan-400/60 bg-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.5)] dark:bg-cyan-400/40"
                     ></span>
-                    <span class="text-muted-foreground"
-                        >Unique Visitors (Trend)</span
-                    >
+                    <span class="text-muted-foreground">Unique Visitors</span>
                 </button>
             </div>
         </div>
@@ -164,50 +124,6 @@ const svgCoordinates = computed(() => {
                         class="w-full border-t border-sidebar-border/70 dark:border-sidebar-border/60"
                     ></div>
                 </div>
-
-                <!-- SVG Trend Overlay Line for Unique Visitors -->
-                <svg
-                    v-if="showVisitors && svgCoordinates.visitorsLine"
-                    class="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                >
-                    <defs>
-                        <linearGradient
-                            id="visitorsAreaGrad"
-                            x1="0%"
-                            y1="0%"
-                            x2="0%"
-                            y2="100%"
-                        >
-                            <stop
-                                offset="0%"
-                                stop-color="#06b6d4"
-                                stop-opacity="0.22"
-                            />
-                            <stop
-                                offset="100%"
-                                stop-color="#06b6d4"
-                                stop-opacity="0.0"
-                            />
-                        </linearGradient>
-                    </defs>
-                    <!-- Soft gradient area below visitors line -->
-                    <polygon
-                        :points="svgCoordinates.visitorsArea"
-                        fill="url(#visitorsAreaGrad)"
-                    />
-                    <!-- Cyan neon trendline -->
-                    <polyline
-                        :points="svgCoordinates.visitorsLine"
-                        fill="none"
-                        stroke="#06b6d4"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="drop-shadow-[0_0_6px_rgba(6,182,212,0.8)]"
-                    />
-                </svg>
 
                 <!-- Interactive Bar Columns -->
                 <div
@@ -274,27 +190,33 @@ const svgCoordinates = computed(() => {
                         ></span>
                     </div>
 
+                    <!-- Dual Bars (Pageviews & Unique Visitors) -->
                     <div
-                        class="relative flex h-full w-full items-end justify-center"
+                        class="relative flex h-full w-full items-end justify-center gap-0.5 sm:gap-1"
                     >
-                        <!-- Pageviews (Bar with subtle neon glow on hover) -->
+                        <!-- Pageviews Bar (Indigo) -->
                         <div
                             v-if="showViews"
-                            class="min-h-[3px] w-full rounded-t-sm transition-all duration-200"
+                            class="min-h-[3px] flex-1 rounded-t-xs transition-all duration-200"
                             :class="[
                                 isCurrentPeriod(day.date)
-                                    ? 'border-t border-emerald-400 bg-indigo-500/35 group-hover:bg-indigo-500/50 dark:bg-indigo-400/30 dark:group-hover:bg-indigo-400/50'
-                                    : 'bg-indigo-500/25 group-hover:bg-indigo-500/40 dark:bg-indigo-400/20 dark:group-hover:bg-indigo-400/35',
+                                    ? 'border-t border-emerald-400 bg-indigo-500/40 group-hover:bg-indigo-500/60 dark:bg-indigo-400/35 dark:group-hover:bg-indigo-400/55'
+                                    : 'bg-indigo-500/30 group-hover:bg-indigo-500/50 dark:bg-indigo-400/25 dark:group-hover:bg-indigo-400/45',
                             ]"
                             :style="{
                                 height: `${Math.max(Math.round((day.pageviews / maxDaily) * 100), 2)}%`,
                             }"
                         ></div>
 
-                        <!-- Fallback / Base indicator when views are hidden and visitors shown -->
+                        <!-- Unique Visitors Bar (Cyan) -->
                         <div
-                            v-else-if="showVisitors"
-                            class="min-h-[2px] w-1/2 rounded-t-xs bg-cyan-500/30 transition-all duration-200 group-hover:bg-cyan-500/50"
+                            v-if="showVisitors"
+                            class="min-h-[3px] flex-1 rounded-t-xs transition-all duration-200"
+                            :class="[
+                                isCurrentPeriod(day.date)
+                                    ? 'border-t border-emerald-400 bg-cyan-500/50 group-hover:bg-cyan-500/70 dark:bg-cyan-400/45 dark:group-hover:bg-cyan-400/65'
+                                    : 'bg-cyan-500/40 group-hover:bg-cyan-500/60 dark:bg-cyan-400/35 dark:group-hover:bg-cyan-400/55',
+                            ]"
                             :style="{
                                 height: `${Math.max(Math.round((day.visitors / maxDaily) * 100), 2)}%`,
                             }"

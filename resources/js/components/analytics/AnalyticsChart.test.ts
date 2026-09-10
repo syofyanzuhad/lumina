@@ -13,7 +13,7 @@ function mountChart(props = {}) {
         props: {
             dailyPageviews: days,
             showViews: true,
-            showVisitors: false,
+            showVisitors: true,
             hoveredDay: null,
             maxDaily: 250,
             ...props,
@@ -28,13 +28,18 @@ describe('AnalyticsChart', () => {
         expect(wrapper.text()).toBe('');
     });
 
-    it('renders a bar for every day', () => {
+    it('renders dual bars (pageviews & visitors) for every day', () => {
         const wrapper = mountChart();
 
         expect(wrapper.text()).toContain('Traffic Overview');
-        expect(
-            wrapper.findAll('[class*="items-end gap-1"] > div.group'),
-        ).toHaveLength(3);
+        const dayCols = wrapper.findAll(
+            '[class*="items-end gap-1"] > div.group',
+        );
+        expect(dayCols).toHaveLength(3);
+
+        // Each day column should render two bars when both series are enabled
+        const firstDayBars = dayCols[0].findAll('div.flex-1');
+        expect(firstDayBars).toHaveLength(2);
     });
 
     it('emits toggleViews and toggleVisitors from the legend buttons', async () => {

@@ -194,7 +194,7 @@ const emit = defineEmits<{
                     >
                         {{
                             showVisitors
-                                ? '● On chart (trend)'
+                                ? '● On chart (bars)'
                                 : '○ Click to plot'
                         }}
                     </span>

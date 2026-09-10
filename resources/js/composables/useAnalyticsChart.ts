@@ -12,7 +12,7 @@ export function useAnalyticsChart(
 ) {
     const hoveredDay = ref<DailyChartItem | null>(null);
     const showViews = ref(true);
-    const showVisitors = ref(false);
+    const showVisitors = ref(true);
 
     const toggleViews = () => {
         showViews.value = !showViews.value;
