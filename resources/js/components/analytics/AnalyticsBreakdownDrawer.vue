@@ -197,7 +197,7 @@ const getFallbackData = (type: string) => {
                                 "
                                 :src="getBrowserIcon(item.browser)!"
                                 :alt="item.browser"
-                                class="h-3.5 w-3.5 shrink-0 object-contain dark:brightness-200 dark:invert"
+                                class="h-3.5 w-3.5 shrink-0 object-contain"
                                 @error="
                                     (
                                         $event.target as HTMLImageElement
@@ -210,7 +210,7 @@ const getFallbackData = (type: string) => {
                                 v-else-if="type === 'os' && getOsIcon(item.os)"
                                 :src="getOsIcon(item.os)!"
                                 :alt="item.os"
-                                class="h-3.5 w-3.5 shrink-0 object-contain dark:brightness-200 dark:invert"
+                                class="h-3.5 w-3.5 shrink-0 object-contain"
                                 @error="
                                     (
                                         $event.target as HTMLImageElement

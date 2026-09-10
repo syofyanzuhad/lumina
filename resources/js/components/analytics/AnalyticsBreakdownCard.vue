@@ -185,7 +185,7 @@ const colorClasses: Record<
                         v-else-if="!item.isComponentIcon && item.icon"
                         :src="String(item.icon)"
                         :alt="item.label"
-                        class="h-3.5 w-3.5 shrink-0 rounded-sm object-contain dark:brightness-200 dark:invert"
+                        class="h-3.5 w-3.5 shrink-0 rounded-sm object-contain"
                         @error="
                             ($event.target as HTMLImageElement).style.display =
                                 'none'
