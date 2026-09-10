@@ -67,4 +67,28 @@ describe('AnalyticsKpiCards', () => {
 
         expect(wrapper.text()).toContain('0');
     });
+
+    it('emits toggleViews and toggleVisitors when the respective cards are clicked', async () => {
+        const wrapper = mountKpiCards({
+            totalPageviews: 100,
+            uniqueVisitors: 50,
+        });
+
+        const buttons = wrapper.findAll('button');
+        const viewsBtn = buttons.find((b) =>
+            b.text().includes('Total Pageviews'),
+        );
+        const visitorsBtn = buttons.find((b) =>
+            b.text().includes('Unique Visitors'),
+        );
+
+        expect(viewsBtn).toBeTruthy();
+        expect(visitorsBtn).toBeTruthy();
+
+        await viewsBtn!.trigger('click');
+        expect(wrapper.emitted('toggleViews')).toHaveLength(1);
+
+        await visitorsBtn!.trigger('click');
+        expect(wrapper.emitted('toggleVisitors')).toHaveLength(1);
+    });
 });
