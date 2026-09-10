@@ -56,7 +56,7 @@ const emit = defineEmits<{
                     "
                 >
                     <span
-                        class="inline-block h-3 w-3 rounded-xs bg-indigo-500"
+                        class="inline-block h-3 w-3 rounded-xs border border-indigo-400/40 bg-indigo-500/20 dark:bg-indigo-400/20"
                     ></span>
                     <span class="text-muted-foreground">Pageviews</span>
                 </button>
@@ -70,7 +70,7 @@ const emit = defineEmits<{
                     "
                 >
                     <span
-                        class="inline-block h-3 w-3 rounded-xs border border-indigo-400 bg-indigo-500/35 dark:bg-indigo-400/35"
+                        class="inline-block h-3 w-3 rounded-xs bg-indigo-500 dark:bg-indigo-400"
                     ></span>
                     <span class="text-muted-foreground">Unique Visitors</span>
                 </button>
@@ -179,29 +179,30 @@ const emit = defineEmits<{
                     </div>
 
                     <div
-                        class="flex h-full w-full items-end justify-center gap-[1px]"
+                        class="relative flex h-full w-full items-end justify-center"
                     >
-                        <!-- Pageviews Bar -->
+                        <!-- Pageviews (Outer / Background Bar) -->
                         <div
                             v-if="showViews"
-                            class="min-h-[3px] flex-1 rounded-t-xs transition-all duration-200"
+                            class="min-h-[3px] w-full rounded-t-xs transition-all duration-200"
                             :class="[
                                 isCurrentPeriod(day.date)
-                                    ? 'border-t border-emerald-400 bg-gradient-to-t from-indigo-500 to-indigo-400 group-hover:from-indigo-600 group-hover:to-indigo-500 dark:from-indigo-500 dark:to-indigo-400'
-                                    : 'bg-indigo-500 group-hover:bg-indigo-600 dark:bg-indigo-400 dark:group-hover:bg-indigo-300',
+                                    ? 'border-t border-emerald-400 bg-indigo-500/25 group-hover:bg-indigo-500/35 dark:bg-indigo-400/25 dark:group-hover:bg-indigo-400/35'
+                                    : 'bg-indigo-500/20 group-hover:bg-indigo-500/30 dark:bg-indigo-400/20 dark:group-hover:bg-indigo-400/30',
                             ]"
                             :style="{
                                 height: `${Math.max(Math.round((day.pageviews / maxDaily) * 100), 2)}%`,
                             }"
                         ></div>
-                        <!-- Unique Visitors Bar -->
+                        <!-- Unique Visitors (Inner / Foreground Bar) -->
                         <div
                             v-if="showVisitors"
-                            class="min-h-[2px] flex-1 rounded-t-xs transition-all duration-200"
+                            class="pointer-events-none absolute bottom-0 min-h-[2px] rounded-t-xs transition-all duration-200"
                             :class="[
+                                showViews ? 'w-3/5' : 'w-full',
                                 isCurrentPeriod(day.date)
-                                    ? 'border-t border-emerald-400/70 bg-indigo-500/45 group-hover:bg-indigo-500/65 dark:bg-indigo-400/45 dark:group-hover:bg-indigo-400/65'
-                                    : 'bg-indigo-500/35 group-hover:bg-indigo-500/55 dark:bg-indigo-400/35 dark:group-hover:bg-indigo-400/55',
+                                    ? 'border-t border-emerald-400 bg-gradient-to-t from-indigo-500 to-indigo-400 group-hover:from-indigo-600 group-hover:to-indigo-500 dark:from-indigo-500 dark:to-indigo-400'
+                                    : 'bg-indigo-500 group-hover:bg-indigo-600 dark:bg-indigo-400 dark:group-hover:bg-indigo-300',
                             ]"
                             :style="{
                                 height: `${Math.max(Math.round((day.visitors / maxDaily) * 100), 2)}%`,
