@@ -59,6 +59,7 @@
             <meta name="twitter:description" content="Self-hosted web analytics native to Laravel. < 2KB tracker payload, 100% cookie-free GDPR privacy, and conversion goal tracking.">
             <meta name="twitter:image" content="https://uselumina.laravel.cloud/og-image.jpg">
         </x-inertia::head>
+        <script defer data-domain="uselumina.laravel.cloud" src="https://uselumina.laravel.cloud/js/script.js"></script>
         <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e537a559cf56421bb26fbb510a8f9a37"}'></script><!-- End Cloudflare Web Analytics -->
     </head>
     <body class="font-sans antialiased">
