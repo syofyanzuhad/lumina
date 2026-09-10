@@ -11,13 +11,17 @@ function mountControlBar(props = {}) {
         global: {
             stubs: {
                 AppearanceTabs: true,
-                DropdownMenu: true,
-                DropdownMenuTrigger: true,
-                DropdownMenuContent: true,
-                DropdownMenuLabel: true,
+                DropdownMenu: { template: '<div><slot /></div>' },
+                DropdownMenuGroup: { template: '<div><slot /></div>' },
+                DropdownMenuTrigger: { template: '<div><slot /></div>' },
+                DropdownMenuContent: { template: '<div><slot /></div>' },
+                DropdownMenuLabel: { template: '<div><slot /></div>' },
                 DropdownMenuSeparator: true,
-                DropdownMenuItem: true,
-                Link: true,
+                DropdownMenuItem: { template: '<div><slot /></div>' },
+                Link: {
+                    props: ['href'],
+                    template: '<a :href="href"><slot /></a>',
+                },
                 Button: { template: '<button><slot /></button>' },
                 Input: true,
                 Label: true,
@@ -83,5 +87,30 @@ describe('AnalyticsControlBar', () => {
         const wrapper = mountControlBar({ showEventsTab: false });
 
         expect(wrapper.text()).not.toContain('Custom Events');
+    });
+
+    it('renders settings and export links in the dropdown menu', () => {
+        const wrapper = mountControlBar({ siteId: 42, showExport: true });
+
+        const settingsButton = wrapper
+            .findAll('button')
+            .find((b) => b.attributes('title') === 'Settings & Export');
+        expect(settingsButton).toBeTruthy();
+        expect(settingsButton!.text()).toContain('Settings');
+
+        const html = wrapper.html();
+        expect(html).toContain('/sites/42');
+        expect(html).toContain(
+            '/sites/42/export?type=pageviews&amp;format=csv',
+        );
+        expect(html).toContain('/sites/42/export?type=events&amp;format=json');
+    });
+
+    it('omits export items from the dropdown menu when showExport is false', () => {
+        const wrapper = mountControlBar({ siteId: 42, showExport: false });
+
+        const html = wrapper.html();
+        expect(html).toContain('/sites/42');
+        expect(html).not.toContain('/sites/42/export');
     });
 });

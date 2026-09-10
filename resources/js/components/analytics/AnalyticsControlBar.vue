@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import {
     Activity,
     CalendarDays,
+    ChevronDown,
     Download,
     ExternalLink,
     RefreshCw,
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -219,63 +221,6 @@ const emit = defineEmits<{
                 <AppearanceTabs />
             </div>
 
-            <!-- Export Menu Dropdown -->
-            <DropdownMenu v-if="showExport">
-                <DropdownMenuTrigger as-child>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        class="h-8 gap-1.5 text-xs font-medium sm:h-9"
-                    >
-                        <Download class="h-3.5 w-3.5" />
-                        <span class="hidden sm:inline">Export</span>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" class="w-48">
-                    <DropdownMenuLabel class="text-xs"
-                        >Export Analytics Data</DropdownMenuLabel
-                    >
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem as-child>
-                        <a
-                            :href="`/sites/${siteId}/export?type=pageviews&format=csv`"
-                            download
-                            class="cursor-pointer text-xs"
-                        >
-                            Pageviews (CSV)
-                        </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem as-child>
-                        <a
-                            :href="`/sites/${siteId}/export?type=pageviews&format=json`"
-                            download
-                            class="cursor-pointer text-xs"
-                        >
-                            Pageviews (JSON)
-                        </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem as-child>
-                        <a
-                            :href="`/sites/${siteId}/export?type=events&format=csv`"
-                            download
-                            class="cursor-pointer text-xs"
-                        >
-                            Events (CSV)
-                        </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem as-child>
-                        <a
-                            :href="`/sites/${siteId}/export?type=events&format=json`"
-                            download
-                            class="cursor-pointer text-xs"
-                        >
-                            Events (JSON)
-                        </a>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-
             <!-- Live Auto-Refresh Toggle -->
             <Button
                 v-if="showLive"
@@ -325,19 +270,88 @@ const emit = defineEmits<{
                 </a>
             </Button>
 
-            <!-- Settings Link Button -->
-            <Button
-                variant="outline"
-                size="sm"
-                as-child
-                class="h-8 gap-1.5 p-2 text-xs font-medium sm:h-9 sm:px-3"
-                title="Dashboard Settings"
-            >
-                <Link :href="siteId ? `/sites/${siteId}` : '/settings/profile'">
-                    <Settings class="h-3.5 w-3.5" />
-                    <span class="hidden sm:inline">Settings</span>
-                </Link>
-            </Button>
+            <!-- Settings & Export Menu Dropdown -->
+            <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-8 gap-1.5 p-2 text-xs font-medium sm:h-9 sm:px-3"
+                        title="Settings & Export"
+                    >
+                        <Settings class="h-3.5 w-3.5" />
+                        <span class="hidden sm:inline">Settings</span>
+                        <ChevronDown class="h-3 w-3 opacity-60" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" class="w-52">
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem as-child>
+                            <Link
+                                :href="
+                                    siteId
+                                        ? `/sites/${siteId}`
+                                        : '/settings/profile'
+                                "
+                                class="cursor-pointer text-xs"
+                            >
+                                <Settings class="mr-2 h-3.5 w-3.5" />
+                                <span>{{
+                                    siteId ? 'Site Settings' : 'Settings'
+                                }}</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <template v-if="showExport">
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel
+                            class="text-xs font-semibold text-muted-foreground"
+                        >
+                            Export Data
+                        </DropdownMenuLabel>
+                        <DropdownMenuItem as-child>
+                            <a
+                                :href="`/sites/${siteId}/export?type=pageviews&format=csv`"
+                                download
+                                class="cursor-pointer text-xs"
+                            >
+                                <Download class="mr-2 h-3.5 w-3.5" />
+                                <span>Pageviews (CSV)</span>
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <a
+                                :href="`/sites/${siteId}/export?type=pageviews&format=json`"
+                                download
+                                class="cursor-pointer text-xs"
+                            >
+                                <Download class="mr-2 h-3.5 w-3.5" />
+                                <span>Pageviews (JSON)</span>
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <a
+                                :href="`/sites/${siteId}/export?type=events&format=csv`"
+                                download
+                                class="cursor-pointer text-xs"
+                            >
+                                <Download class="mr-2 h-3.5 w-3.5" />
+                                <span>Events (CSV)</span>
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <a
+                                :href="`/sites/${siteId}/export?type=events&format=json`"
+                                download
+                                class="cursor-pointer text-xs"
+                            >
+                                <Download class="mr-2 h-3.5 w-3.5" />
+                                <span>Events (JSON)</span>
+                            </a>
+                        </DropdownMenuItem>
+                    </template>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
             <!-- Manual Refresh Button -->
             <Button
