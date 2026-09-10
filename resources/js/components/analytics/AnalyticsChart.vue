@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { DailyChartItem } from '@/composables/useAnalyticsChart';
 import {
     formatCompactNumber,
@@ -7,7 +8,7 @@ import {
     isCurrentPeriod,
 } from '@/composables/useAnalyticsFormatters';
 
-defineProps<{
+const props = defineProps<{
     dailyPageviews?: DailyChartItem[];
     showViews: boolean;
     showVisitors: boolean;
@@ -21,23 +22,60 @@ const emit = defineEmits<{
     (e: 'toggleVisitors'): void;
     (e: 'selectDay', date: string): void;
 }>();
+
+// SVG Trendline Coordinate Calculations
+const svgCoordinates = computed(() => {
+    const list = props.dailyPageviews;
+
+    if (!list || list.length < 2 || props.maxDaily <= 0) {
+        return { visitorsLine: '', viewsLine: '', visitorsArea: '' };
+    }
+
+    const n = list.length;
+    const step = 100 / (n - 1);
+
+    const vPoints = list.map((d, i) => {
+        const x = i * step;
+        const y = 100 - (d.visitors / props.maxDaily) * 92; // 8% bottom padding
+
+        return { x, y: Math.max(Math.min(y, 100), 4) };
+    });
+
+    const pPoints = list.map((d, i) => {
+        const x = i * step;
+        const y = 100 - (d.pageviews / props.maxDaily) * 92;
+
+        return { x, y: Math.max(Math.min(y, 100), 4) };
+    });
+
+    const visitorsLine = vPoints
+        .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+        .join(' ');
+    const viewsLine = pPoints
+        .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+        .join(' ');
+
+    const visitorsArea = `0,100 ${visitorsLine} 100,100`;
+
+    return { visitorsLine, viewsLine, visitorsArea };
+});
 </script>
 
 <template>
     <div
         v-if="dailyPageviews && dailyPageviews.length > 0"
-        class="space-y-4 rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
+        class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-sm sm:p-6 dark:border-sidebar-border"
     >
         <div
-            class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center"
+            class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"
         >
             <div class="flex items-center gap-2">
-                <h3 class="text-sm font-bold text-foreground">
+                <h3 class="text-sm font-bold tracking-tight text-foreground">
                     Traffic Overview
                 </h3>
                 <span
                     v-if="dailyPageviews.some((d) => isCurrentPeriod(d.date))"
-                    class="hidden items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 sm:inline-flex dark:text-emerald-400"
+                    class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
                 >
                     <span
                         class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"
@@ -45,70 +83,131 @@ const emit = defineEmits<{
                     Live
                 </span>
             </div>
+
+            <!-- Synchronized Legend Toggles -->
             <div class="flex items-center gap-4 text-xs">
                 <button
+                    type="button"
                     @click="emit('toggleViews')"
                     class="flex cursor-pointer items-center gap-1.5 font-medium transition-opacity"
                     :class="
                         showViews
                             ? 'opacity-100'
-                            : 'opacity-40 hover:opacity-70'
+                            : 'opacity-40 hover:opacity-75'
                     "
                 >
                     <span
-                        class="inline-block h-3 w-3 rounded-xs border border-indigo-400/40 bg-indigo-500/20 dark:bg-indigo-400/20"
+                        class="inline-block h-2.5 w-3 rounded-xs border border-indigo-400/50 bg-indigo-500/30 shadow-[0_0_8px_rgba(99,102,241,0.5)] dark:bg-indigo-400/25"
                     ></span>
-                    <span class="text-muted-foreground">Pageviews</span>
+                    <span class="text-muted-foreground">Pageviews (Bars)</span>
                 </button>
                 <button
+                    type="button"
                     @click="emit('toggleVisitors')"
                     class="flex cursor-pointer items-center gap-1.5 font-medium transition-opacity"
                     :class="
                         showVisitors
                             ? 'opacity-100'
-                            : 'opacity-40 hover:opacity-70'
+                            : 'opacity-40 hover:opacity-75'
                     "
                 >
                     <span
-                        class="inline-block h-3 w-3 rounded-xs bg-indigo-500 dark:bg-indigo-400"
+                        class="inline-block h-1 w-3.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]"
                     ></span>
-                    <span class="text-muted-foreground">Unique Visitors</span>
+                    <span class="text-muted-foreground"
+                        >Unique Visitors (Trend)</span
+                    >
                 </button>
             </div>
         </div>
 
-        <!-- Chart Container with Y-Axis Legend and Gridlines -->
-        <div class="relative flex h-48 w-full gap-2 pt-6 pb-2 sm:h-56">
+        <!-- Chart Container with Y-Axis and Gridlines -->
+        <div class="relative flex h-52 w-full gap-2 pt-6 pb-2 sm:h-60">
             <!-- Y-Axis Value Labels -->
             <div
                 class="pointer-events-none flex h-full w-8 flex-col justify-between text-right font-mono text-[10px] text-muted-foreground select-none sm:w-10 sm:text-[11px]"
             >
                 <span>{{ formatCompactNumber(maxDaily) }}</span>
-                <span>{{ formatCompactNumber(Math.round(maxDaily / 2)) }}</span>
+                <span>{{
+                    formatCompactNumber(Math.round(maxDaily * 0.75))
+                }}</span>
+                <span>{{
+                    formatCompactNumber(Math.round(maxDaily * 0.5))
+                }}</span>
+                <span>{{
+                    formatCompactNumber(Math.round(maxDaily * 0.25))
+                }}</span>
                 <span>0</span>
             </div>
 
             <!-- Chart Canvas & Bars -->
             <div
-                class="group/chart relative flex h-full flex-1 items-end gap-1"
+                class="group/chart relative flex h-full flex-1 items-end gap-1 overflow-hidden"
             >
                 <!-- Background Horizontal Gridlines -->
                 <div
                     class="pointer-events-none absolute inset-0 flex flex-col justify-between"
                 >
-                    <!-- Top Guideline (100%) -->
                     <div
-                        class="w-full border-t border-dashed border-sidebar-border/60 dark:border-sidebar-border/40"
+                        class="w-full border-t border-dashed border-sidebar-border/50 dark:border-sidebar-border/30"
                     ></div>
-                    <!-- Mid Guideline (50%) -->
                     <div
                         class="w-full border-t border-dashed border-sidebar-border/40 dark:border-sidebar-border/25"
                     ></div>
-                    <!-- Bottom Guideline (0%) -->
+                    <div
+                        class="w-full border-t border-dashed border-sidebar-border/30 dark:border-sidebar-border/20"
+                    ></div>
+                    <div
+                        class="w-full border-t border-dashed border-sidebar-border/30 dark:border-sidebar-border/20"
+                    ></div>
                     <div
                         class="w-full border-t border-sidebar-border/70 dark:border-sidebar-border/60"
                     ></div>
                 </div>
+
+                <!-- SVG Trend Overlay Line for Unique Visitors -->
+                <svg
+                    v-if="showVisitors && svgCoordinates.visitorsLine"
+                    class="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                >
+                    <defs>
+                        <linearGradient
+                            id="visitorsAreaGrad"
+                            x1="0%"
+                            y1="0%"
+                            x2="0%"
+                            y2="100%"
+                        >
+                            <stop
+                                offset="0%"
+                                stop-color="#06b6d4"
+                                stop-opacity="0.22"
+                            />
+                            <stop
+                                offset="100%"
+                                stop-color="#06b6d4"
+                                stop-opacity="0.0"
+                            />
+                        </linearGradient>
+                    </defs>
+                    <!-- Soft gradient area below visitors line -->
+                    <polygon
+                        :points="svgCoordinates.visitorsArea"
+                        fill="url(#visitorsAreaGrad)"
+                    />
+                    <!-- Cyan neon trendline -->
+                    <polyline
+                        :points="svgCoordinates.visitorsLine"
+                        fill="none"
+                        stroke="#06b6d4"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="drop-shadow-[0_0_6px_rgba(6,182,212,0.8)]"
+                    />
+                </svg>
 
                 <!-- Interactive Bar Columns -->
                 <div
@@ -125,7 +224,7 @@ const emit = defineEmits<{
                         class="pointer-events-none absolute bottom-full z-30 mb-2 flex -translate-y-1 transform flex-col items-center transition-all duration-150"
                     >
                         <div
-                            class="space-y-1 rounded-lg border border-sidebar-border/80 bg-popover px-3 py-2 text-xs whitespace-nowrap text-popover-foreground shadow-xl"
+                            class="space-y-1 rounded-lg border border-sidebar-border/80 bg-popover px-3 py-2 text-xs whitespace-nowrap text-popover-foreground shadow-2xl"
                         >
                             <div
                                 class="flex items-center gap-1.5 text-xs font-bold text-foreground"
@@ -142,24 +241,21 @@ const emit = defineEmits<{
                                 <span
                                     v-if="showViews"
                                     class="font-bold text-indigo-600 dark:text-indigo-400"
-                                    >{{
-                                        formatNumber(day.pageviews)
-                                    }}
-                                    views</span
                                 >
+                                    {{ formatNumber(day.pageviews) }} views
+                                </span>
                                 <span
                                     v-if="showViews && showVisitors"
                                     class="text-muted-foreground"
-                                    >•</span
                                 >
+                                    •
+                                </span>
                                 <span
                                     v-if="showVisitors"
-                                    class="font-bold text-indigo-400/80"
-                                    >{{
-                                        formatNumber(day.visitors)
-                                    }}
-                                    visitors</span
+                                    class="font-bold text-cyan-600 dark:text-cyan-400"
                                 >
+                                    {{ formatNumber(day.visitors) }} visitors
+                                </span>
                             </div>
                         </div>
                         <div
@@ -174,36 +270,31 @@ const emit = defineEmits<{
                         title="Current in-progress period"
                     >
                         <span
-                            class="h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-background"
+                            class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] ring-2 ring-background"
                         ></span>
                     </div>
 
                     <div
                         class="relative flex h-full w-full items-end justify-center"
                     >
-                        <!-- Pageviews (Outer / Background Bar) -->
+                        <!-- Pageviews (Bar with subtle neon glow on hover) -->
                         <div
                             v-if="showViews"
-                            class="min-h-[3px] w-full rounded-t-xs transition-all duration-200"
+                            class="min-h-[3px] w-full rounded-t-sm transition-all duration-200"
                             :class="[
                                 isCurrentPeriod(day.date)
-                                    ? 'border-t border-emerald-400 bg-indigo-500/25 group-hover:bg-indigo-500/35 dark:bg-indigo-400/25 dark:group-hover:bg-indigo-400/35'
-                                    : 'bg-indigo-500/20 group-hover:bg-indigo-500/30 dark:bg-indigo-400/20 dark:group-hover:bg-indigo-400/30',
+                                    ? 'border-t border-emerald-400 bg-indigo-500/35 group-hover:bg-indigo-500/50 dark:bg-indigo-400/30 dark:group-hover:bg-indigo-400/50'
+                                    : 'bg-indigo-500/25 group-hover:bg-indigo-500/40 dark:bg-indigo-400/20 dark:group-hover:bg-indigo-400/35',
                             ]"
                             :style="{
                                 height: `${Math.max(Math.round((day.pageviews / maxDaily) * 100), 2)}%`,
                             }"
                         ></div>
-                        <!-- Unique Visitors (Inner / Foreground Bar) -->
+
+                        <!-- Fallback / Base indicator when views are hidden and visitors shown -->
                         <div
-                            v-if="showVisitors"
-                            class="pointer-events-none absolute bottom-0 min-h-[2px] rounded-t-xs transition-all duration-200"
-                            :class="[
-                                showViews ? 'w-3/5' : 'w-full',
-                                isCurrentPeriod(day.date)
-                                    ? 'border-t border-emerald-400 bg-gradient-to-t from-indigo-500 to-indigo-400 group-hover:from-indigo-600 group-hover:to-indigo-500 dark:from-indigo-500 dark:to-indigo-400'
-                                    : 'bg-indigo-500 group-hover:bg-indigo-600 dark:bg-indigo-400 dark:group-hover:bg-indigo-300',
-                            ]"
+                            v-else-if="showVisitors"
+                            class="min-h-[2px] w-1/2 rounded-t-xs bg-cyan-500/30 transition-all duration-200 group-hover:bg-cyan-500/50"
                             :style="{
                                 height: `${Math.max(Math.round((day.visitors / maxDaily) * 100), 2)}%`,
                             }"
@@ -240,12 +331,13 @@ const emit = defineEmits<{
                         )
                     "
                     class="font-sans text-[9px] text-emerald-600 dark:text-emerald-400"
-                    >{{
+                >
+                    {{
                         dailyPageviews[0].date.includes(' ')
                             ? '(Now)'
                             : '(Today)'
-                    }}</span
-                >
+                    }}
+                </span>
             </span>
         </div>
     </div>
