@@ -8,6 +8,7 @@ import AnalyticsChart from '@/components/analytics/AnalyticsChart.vue';
 import AnalyticsControlBar from '@/components/analytics/AnalyticsControlBar.vue';
 import AnalyticsFiltersBar from '@/components/analytics/AnalyticsFiltersBar.vue';
 import AnalyticsKpiCards from '@/components/analytics/AnalyticsKpiCards.vue';
+import AnalyticsLiveFeed from '@/components/analytics/AnalyticsLiveFeed.vue';
 import CustomEventsTab from '@/components/CustomEventsTab.vue';
 
 import { useAnalyticsChart } from '@/composables/useAnalyticsChart';
@@ -302,27 +303,46 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
 
         <!-- Overview Dashboard Tab -->
         <div v-if="activeTab === 'overview'" class="space-y-6">
-            <!-- KPI Cards — render immediately, no defer needed -->
+            <!-- KPI Cards with series sync and toggleable indicators -->
             <AnalyticsKpiCards
                 :currentVisitors="current_visitors"
                 :totalPageviews="total_pageviews"
                 :uniqueVisitors="unique_visitors"
                 :bounceRate="bounce_rate"
                 :avgDuration="avg_duration"
-            />
-
-            <!-- Interactive Chart — render immediately -->
-            <AnalyticsChart
-                :dailyPageviews="daily_pageviews"
                 :showViews="showViews"
                 :showVisitors="showVisitors"
-                :hoveredDay="hoveredDay"
-                :maxDaily="maxDaily"
-                @update:hoveredDay="hoveredDay = $event"
                 @toggleViews="toggleViews"
                 @toggleVisitors="toggleVisitors"
-                @selectDay="handleSelectDay"
             />
+
+            <!-- Main Trend Chart & Live Activity Grid -->
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div class="lg:col-span-2">
+                    <AnalyticsChart
+                        :dailyPageviews="daily_pageviews"
+                        :showViews="showViews"
+                        :showVisitors="showVisitors"
+                        :hoveredDay="hoveredDay"
+                        :maxDaily="maxDaily"
+                        @update:hoveredDay="hoveredDay = $event"
+                        @toggleViews="toggleViews"
+                        @toggleVisitors="toggleVisitors"
+                        @selectDay="handleSelectDay"
+                    />
+                </div>
+                <div class="lg:col-span-1">
+                    <AnalyticsLiveFeed
+                        :currentVisitors="current_visitors || 0"
+                        :siteDomain="site?.domain"
+                        :topPages="topPagesItems"
+                        :topReferrers="topReferrersItems"
+                        :topCountries="topCountriesItems"
+                        :canFilter="canFilter"
+                        @filter="addFilter"
+                    />
+                </div>
+            </div>
 
             <!-- Breakdown Cards Row 1: deferred together for consistent render -->
             <Deferred
