@@ -64,7 +64,7 @@ const svgCoordinates = computed(() => {
 <template>
     <div
         v-if="dailyPageviews && dailyPageviews.length > 0"
-        class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-sm sm:p-6 dark:border-sidebar-border"
+        class="relative rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-sm sm:p-6 dark:border-sidebar-border"
     >
         <div
             class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"
@@ -142,7 +142,7 @@ const svgCoordinates = computed(() => {
 
             <!-- Chart Canvas & Bars -->
             <div
-                class="group/chart relative flex h-full flex-1 items-end gap-1 overflow-hidden"
+                class="group/chart relative flex h-full flex-1 items-end gap-1"
             >
                 <!-- Background Horizontal Gridlines -->
                 <div
