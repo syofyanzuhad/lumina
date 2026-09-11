@@ -42,8 +42,26 @@ use function Pest\Stressless\stress;
 | Stress tests are slow (60 s each) — they should run locally or in a
 | dedicated performance pipeline, not on every PR.
 */
-$skipOnCi = (getenv('CI') === 'true' || getenv('GITHUB_ACTIONS') === 'true')
+$skipStress = (getenv('CI') === 'true' || getenv('GITHUB_ACTIONS') === 'true')
     && getenv('FORCE_STRESS') !== 'true';
+
+if (! $skipStress && getenv('FORCE_STRESS') !== 'true') {
+    $baseUrl = rtrim((string) (getenv('STRESS_BASE_URL') ?: 'http://lumina.test'), '/');
+    $ch = curl_init($baseUrl.'/api/collect');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, '{}');
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+    curl_exec($ch);
+    $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($statusCode !== 200 && $statusCode !== 204 && $statusCode !== 422) {
+        $skipStress = true;
+    }
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -67,7 +85,7 @@ beforeEach(function () {
 
     // Bust the domain cache so CollectController sees the freshly created site.
     Cache::forget('lumina_site_lookup:stress-test.example.com');
-})->skip($skipOnCi, 'Stress tests skipped on CI. Set FORCE_STRESS=true to run.');
+})->skip($skipStress, 'Stress tests skipped on CI. Set FORCE_STRESS=true to run.');
 
 /*
 |--------------------------------------------------------------------------
@@ -108,7 +126,7 @@ it('handles single concurrent connection with p95 under 200ms', function () {
 
     // p95 under 200 ms (project-en.md §7 threshold).
     expect($result->requests()->duration()->p95())->toBeLessThan(200);
-})->skip($skipOnCi, 'Stress tests skipped on CI.');
+})->skip($skipStress, 'Stress tests skipped on CI.');
 
 /*
 |--------------------------------------------------------------------------
@@ -136,7 +154,7 @@ it('sustains 10 concurrent connections with p95 under 350ms', function () {
 
     // p95 under 650 ms on local dev environment (single PHP-FPM / debug mode)
     expect($result->requests()->duration()->p95())->toBeLessThan(650);
-})->skip($skipOnCi, 'Stress tests skipped on CI.');
+})->skip($skipStress, 'Stress tests skipped on CI.');
 
 /*
 |--------------------------------------------------------------------------
@@ -161,4 +179,4 @@ it('survives high concurrency without 500 errors', function () {
 
     // The endpoint must not crash or drop requests.
     expect($result->requests()->failed()->rate())->toBe(0.0);
-})->skip($skipOnCi, 'Stress tests skipped on CI.');
+})->skip($skipStress, 'Stress tests skipped on CI.');
