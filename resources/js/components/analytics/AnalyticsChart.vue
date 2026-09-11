@@ -26,7 +26,7 @@ const emit = defineEmits<{
 <template>
     <div
         v-if="dailyPageviews && dailyPageviews.length > 0"
-        class="relative flex h-full flex-col justify-between rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-sm sm:p-6 dark:border-sidebar-border"
+        class="relative flex h-full flex-col justify-between p-4 sm:p-5 lg:p-6"
     >
         <div
             class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"

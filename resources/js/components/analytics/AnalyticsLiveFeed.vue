@@ -122,7 +122,7 @@ const sessions = computed(() => {
 
 <template>
     <div
-        class="relative flex h-full flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-4.5 shadow-sm sm:p-5 dark:border-sidebar-border"
+        class="relative flex h-full flex-col justify-between overflow-hidden p-4 sm:p-5"
     >
         <!-- Top Ambient Glow -->
         <div

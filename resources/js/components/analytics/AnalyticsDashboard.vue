@@ -317,9 +317,13 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 @toggleVisitors="toggleVisitors"
             />
 
-            <!-- Main Trend Chart & Live Activity Grid -->
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <div class="lg:col-span-2">
+            <!-- Main Trend Chart & Live Activity with Separator Line -->
+            <div
+                class="grid grid-cols-1 overflow-hidden border-b border-sidebar-border/60 lg:grid-cols-3"
+            >
+                <div
+                    class="border-b border-sidebar-border/60 lg:col-span-2 lg:border-b-0 lg:border-r"
+                >
                     <AnalyticsChart
                         :dailyPageviews="daily_pageviews"
                         :showViews="showViews"
@@ -346,18 +350,18 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 </div>
             </div>
 
-            <!-- Breakdown Cards Row 1: deferred together for consistent render -->
+            <!-- Breakdown Cards Row 1: separated by vertical/horizontal lines -->
             <Deferred
                 :data="['top_pages', 'top_referrers', 'device_breakdown']"
             >
                 <template #fallback>
                     <div
-                        class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-y-0 md:divide-x lg:grid-cols-3"
                     >
                         <div
                             v-for="i in 3"
                             :key="i"
-                            class="space-y-3 rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
+                            class="space-y-3 p-4 sm:p-5 lg:p-6"
                         >
                             <div class="flex items-center justify-between">
                                 <div
@@ -378,7 +382,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 </template>
 
                 <div
-                    class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                    class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-y-0 md:divide-x lg:grid-cols-3"
                 >
                     <AnalyticsBreakdownCard
                         title="Top Pages"
@@ -420,16 +424,16 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 </div>
             </Deferred>
 
-            <!-- Breakdown Cards Row 2: deferred together -->
+            <!-- Breakdown Cards Row 2: separated by vertical/horizontal lines -->
             <Deferred :data="['top_browsers', 'top_os', 'top_countries']">
                 <template #fallback>
                     <div
-                        class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-y-0 md:divide-x lg:grid-cols-3"
                     >
                         <div
                             v-for="i in 3"
                             :key="i"
-                            class="space-y-3 rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
+                            class="space-y-3 p-4 sm:p-5 lg:p-6"
                         >
                             <div class="flex items-center justify-between">
                                 <div
@@ -450,7 +454,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 </template>
 
                 <div
-                    class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                    class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-y-0 md:divide-x lg:grid-cols-3"
                 >
                     <AnalyticsBreakdownCard
                         title="Top Browsers"
@@ -495,7 +499,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
             <Deferred data="utm_campaigns">
                 <template #fallback>
                     <div
-                        class="space-y-3 rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
+                        class="space-y-3 border-b border-sidebar-border/60 p-4 sm:p-5 lg:p-6"
                     >
                         <div
                             class="h-4 w-32 animate-pulse rounded-md bg-muted"
@@ -508,7 +512,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                     </div>
                 </template>
 
-                <div v-if="utm_campaigns && utm_campaigns.length > 0">
+                <div v-if="utm_campaigns && utm_campaigns.length > 0" class="border-b border-sidebar-border/60">
                     <AnalyticsBreakdownCard
                         title="UTM Campaigns"
                         filterKey="utm_campaign"
