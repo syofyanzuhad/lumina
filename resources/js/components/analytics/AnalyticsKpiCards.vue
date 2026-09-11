@@ -46,11 +46,7 @@ const emit = defineEmits<{
         >
             <span
                 class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full transition-all"
-                :class="
-                    showVisitors
-                        ? 'bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]'
-                        : 'bg-muted-foreground/30'
-                "
+                :class="showVisitors ? 'bg-cyan-500' : 'bg-muted-foreground/30'"
             ></span>
             <div>
                 <div class="flex items-baseline gap-1.5">
@@ -90,11 +86,7 @@ const emit = defineEmits<{
         >
             <span
                 class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full transition-all"
-                :class="
-                    showViews
-                        ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]'
-                        : 'bg-muted-foreground/30'
-                "
+                :class="showViews ? 'bg-indigo-500' : 'bg-muted-foreground/30'"
             ></span>
             <div>
                 <div class="flex items-baseline gap-1.5">
@@ -123,7 +115,7 @@ const emit = defineEmits<{
         <!-- Bounce Rate Stat -->
         <div v-if="bounceRate !== undefined" class="flex items-start gap-2.5">
             <span
-                class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-amber-500/80 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+                class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-amber-500"
             ></span>
             <div>
                 <div class="flex items-baseline gap-1">
@@ -142,7 +134,7 @@ const emit = defineEmits<{
         <!-- Average Session Duration Stat -->
         <div v-if="avgDuration !== undefined" class="flex items-start gap-2.5">
             <span
-                class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-purple-500/80 shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+                class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-purple-500"
             ></span>
             <div>
                 <div class="flex items-baseline gap-1">
@@ -164,7 +156,7 @@ const emit = defineEmits<{
             class="flex items-start gap-2.5 sm:ml-auto"
         >
             <span
-                class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+                class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-emerald-500"
             ></span>
             <div>
                 <div class="flex items-center gap-2">

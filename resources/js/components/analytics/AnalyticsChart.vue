@@ -59,7 +59,7 @@ const emit = defineEmits<{
                     "
                 >
                     <span
-                        class="inline-block h-2.5 w-3 rounded-xs border border-indigo-400/50 bg-indigo-500/40 shadow-[0_0_8px_rgba(99,102,241,0.5)] dark:bg-indigo-400/35"
+                        class="inline-block h-2.5 w-3 rounded-xs border border-indigo-400/50 bg-indigo-500/40 dark:bg-indigo-400/35"
                     ></span>
                     <span class="text-muted-foreground">Pageviews</span>
                 </button>
@@ -74,7 +74,7 @@ const emit = defineEmits<{
                     "
                 >
                     <span
-                        class="inline-block h-2.5 w-3 rounded-xs border border-cyan-400/60 bg-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.5)] dark:bg-cyan-400/40"
+                        class="inline-block h-2.5 w-3 rounded-xs border border-cyan-400/60 bg-cyan-500/50 dark:bg-cyan-400/40"
                     ></span>
                     <span class="text-muted-foreground">Unique Visitors</span>
                 </button>
@@ -186,7 +186,7 @@ const emit = defineEmits<{
                         title="Current in-progress period"
                     >
                         <span
-                            class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] ring-2 ring-background"
+                            class="h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-background"
                         ></span>
                     </div>
 
@@ -208,13 +208,13 @@ const emit = defineEmits<{
                             }"
                         ></div>
 
-                        <!-- Unique Visitors (Overlapping foreground bar with neon cyan accent) -->
+                        <!-- Unique Visitors (Overlapping foreground bar with clean cyan accent) -->
                         <div
                             v-if="showVisitors"
                             class="pointer-events-none absolute bottom-0 min-h-[3px] transition-all duration-200"
                             :class="[
                                 showViews
-                                    ? 'w-[75%] rounded-t-xs bg-cyan-400/75 shadow-[0_0_10px_rgba(6,182,212,0.4)] group-hover:bg-cyan-400/90 dark:bg-cyan-400/65 dark:group-hover:bg-cyan-400/85'
+                                    ? 'w-[75%] rounded-t-xs bg-cyan-400/80 group-hover:bg-cyan-400 dark:bg-cyan-400/70 dark:group-hover:bg-cyan-400/90'
                                     : 'w-full rounded-t-sm bg-cyan-500/40 group-hover:bg-cyan-500/60 dark:bg-cyan-400/35 dark:group-hover:bg-cyan-400/55',
                                 isCurrentPeriod(day.date) && !showViews
                                     ? 'border-t border-emerald-400'

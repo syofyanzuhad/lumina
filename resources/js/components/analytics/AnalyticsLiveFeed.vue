@@ -112,11 +112,6 @@ const sessions = computed(() => {
     <div
         class="relative flex h-full flex-col justify-between overflow-hidden p-4 sm:p-5"
     >
-        <!-- Top Ambient Glow -->
-        <div
-            class="pointer-events-none absolute -top-12 -right-12 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl"
-        ></div>
-
         <div class="flex min-h-0 flex-1 flex-col">
             <!-- Header with pulsing Live indicator -->
             <div
@@ -128,7 +123,7 @@ const sessions = computed(() => {
                             class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
                         ></span>
                         <span
-                            class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                            class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"
                         ></span>
                     </span>
                     <span

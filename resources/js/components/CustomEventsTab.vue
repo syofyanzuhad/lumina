@@ -189,7 +189,7 @@ const selectPropertyKey = (key: string) => {
                 <!-- Total Custom Events -->
                 <div class="flex items-start gap-2.5 text-left">
                     <span
-                        class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]"
+                        class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-indigo-500"
                     ></span>
                     <div>
                         <div class="flex items-baseline gap-1.5">
@@ -224,7 +224,7 @@ const selectPropertyKey = (key: string) => {
                 <!-- Unique Event Types -->
                 <div class="flex items-start gap-2.5 text-left">
                     <span
-                        class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                        class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-emerald-500"
                     ></span>
                     <div>
                         <div class="flex items-baseline gap-1.5">
@@ -257,7 +257,7 @@ const selectPropertyKey = (key: string) => {
                 <!-- Most Frequent Event -->
                 <div class="flex items-start gap-2.5 text-left">
                     <span
-                        class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]"
+                        class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-amber-500"
                     ></span>
                     <div>
                         <div class="flex items-baseline gap-1.5">
