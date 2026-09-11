@@ -319,7 +319,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
 
             <!-- Main Trend Chart & Live Activity with Separator Line -->
             <div
-                class="grid grid-cols-1 overflow-hidden border-b border-sidebar-border/60 lg:grid-cols-3"
+                class="grid grid-cols-1 overflow-hidden border-b border-sidebar-border/60 pb-6 lg:grid-cols-3"
             >
                 <div
                     class="border-b border-sidebar-border/60 lg:col-span-2 lg:border-r lg:border-b-0"
@@ -356,7 +356,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
             >
                 <template #fallback>
                     <div
-                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
+                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 pb-6 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
                     >
                         <div
                             v-for="i in 3"
@@ -382,7 +382,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 </template>
 
                 <div
-                    class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
+                    class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 pb-6 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
                 >
                     <AnalyticsBreakdownCard
                         title="Top Pages"
@@ -428,7 +428,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
             <Deferred :data="['top_browsers', 'top_os', 'top_countries']">
                 <template #fallback>
                     <div
-                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
+                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 pb-6 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
                     >
                         <div
                             v-for="i in 3"
