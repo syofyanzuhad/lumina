@@ -32,6 +32,7 @@ const props = defineProps<{
     total_pageviews?: number;
     unique_visitors?: number;
     current_visitors?: number;
+    live_visitors?: any[];
     bounce_rate?: number;
     avg_duration?: number;
     daily_pageviews?: any[];
@@ -239,6 +240,7 @@ const copyPublicShareUrl = async () => {
                     :total_pageviews="total_pageviews"
                     :unique_visitors="unique_visitors"
                     :current_visitors="current_visitors"
+                    :live_visitors="live_visitors"
                     :bounce_rate="bounce_rate"
                     :avg_duration="avg_duration"
                     :daily_pageviews="daily_pageviews"

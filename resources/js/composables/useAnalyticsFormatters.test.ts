@@ -91,7 +91,9 @@ describe('formatRelativeTimeCompact', () => {
     it('returns just now for null, empty or recent timestamps', () => {
         expect(formatRelativeTimeCompact(null)).toBe('just now');
         expect(formatRelativeTimeCompact(undefined)).toBe('just now');
-        expect(formatRelativeTimeCompact(new Date().toISOString())).toBe('just now');
+        expect(formatRelativeTimeCompact(new Date().toISOString())).toBe(
+            'just now',
+        );
     });
 
     it('formats seconds, minutes and hours ago', () => {
@@ -107,4 +109,3 @@ describe('formatRelativeTimeCompact', () => {
         expect(formatRelativeTimeCompact(threeDaysAgo)).toBe('3d ago');
     });
 });
-

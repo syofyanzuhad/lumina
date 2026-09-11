@@ -254,7 +254,10 @@ export function formatRelativeTimeCompact(dateStr?: string | null): string {
         return 'just now';
     }
 
-    const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+    const diffSeconds = Math.max(
+        0,
+        Math.floor((Date.now() - timestamp) / 1000),
+    );
 
     if (diffSeconds < 10) {
         return 'just now';
@@ -277,4 +280,3 @@ export function formatRelativeTimeCompact(dateStr?: string | null): string {
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays}d ago`;
 }
-

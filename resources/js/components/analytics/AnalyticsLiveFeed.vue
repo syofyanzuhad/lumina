@@ -203,9 +203,15 @@ const sessions = computed(() => {
                             </span>
 
                             <!-- Compact Time & Active Dot -->
-                            <div class="flex shrink-0 items-center gap-1.5 text-[10px] text-muted-foreground/80">
-                                <Clock class="h-2.5 w-2.5 shrink-0 opacity-70" />
-                                <span class="whitespace-nowrap font-mono">{{ item.timeAgo }}</span>
+                            <div
+                                class="flex shrink-0 items-center gap-1.5 text-[10px] text-muted-foreground/80"
+                            >
+                                <Clock
+                                    class="h-2.5 w-2.5 shrink-0 opacity-70"
+                                />
+                                <span class="font-mono whitespace-nowrap">{{
+                                    item.timeAgo
+                                }}</span>
                                 <span
                                     class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500/80"
                                     title="Active session"
