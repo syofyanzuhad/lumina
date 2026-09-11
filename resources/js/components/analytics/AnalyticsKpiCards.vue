@@ -46,7 +46,9 @@ const emit = defineEmits<{
         >
             <span
                 class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full transition-all"
-                :class="showVisitors ? 'bg-cyan-500' : 'bg-muted-foreground/30'"
+                :class="
+                    showVisitors ? 'bg-purple-600' : 'bg-muted-foreground/30'
+                "
             ></span>
             <div>
                 <div class="flex items-baseline gap-1.5">
