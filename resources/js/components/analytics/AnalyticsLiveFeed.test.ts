@@ -35,13 +35,10 @@ describe('AnalyticsLiveFeed', () => {
         const wrapper = mount(AnalyticsLiveFeed, {
             props: {
                 currentVisitors: 5,
-                topPages: [
+                liveVisitors: [
                     {
-                        idKey: '/docs',
-                        label: '/docs',
+                        session_id: 'sess_docs',
                         path: '/docs',
-                        count: 10,
-                        percentage: 100,
                     },
                 ],
             },
@@ -55,11 +52,11 @@ describe('AnalyticsLiveFeed', () => {
         expect(wrapper.emitted('filter')?.[0]).toEqual(['path', '/docs']);
     });
 
-    it('shows empty state when there are no active paths', () => {
+    it('shows empty state when there are no active sessions', () => {
         const wrapper = mount(AnalyticsLiveFeed, {
             props: {
                 currentVisitors: 0,
-                topPages: [],
+                liveVisitors: [],
             },
         });
 

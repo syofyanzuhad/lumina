@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { Clock, ExternalLink, Radio, Monitor } from '@lucide/vue';
+import { Clock, ExternalLink, Radio } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import type { BreakdownCardItem } from '@/components/analytics/AnalyticsBreakdownCard.vue';
 import {
     formatNumber,
     formatRelativeTimeCompact,
@@ -28,9 +27,6 @@ const props = withDefaults(
         currentVisitors?: number;
         siteDomain?: string;
         liveVisitors?: LiveSessionItem[];
-        topPages?: BreakdownCardItem[];
-        topReferrers?: BreakdownCardItem[];
-        topCountries?: BreakdownCardItem[];
         canFilter?: boolean;
         loading?: boolean;
     }>(),
@@ -47,7 +43,6 @@ const emit = defineEmits<{
 
 // Ticker to recompute relative timestamps every 5 seconds
 const now = ref(Date.now());
-const mountTime = Date.now();
 let tickerInterval: ReturnType<typeof setInterval> | null = null;
 
 onMounted(() => {
@@ -89,60 +84,27 @@ function formatSource(ref?: string): string {
     return ref;
 }
 
-// Synthesize or normalize the active live sessions
+// Normalize the active live sessions — strictly from liveVisitors data
 const sessions = computed(() => {
-    if (props.liveVisitors && props.liveVisitors.length > 0) {
-        return props.liveVisitors.map((v, idx) => ({
-            id: v.session_id || `live-${idx}`,
-            path: v.path || '/',
-            referrer: formatSource(v.referrer),
-            referrerFavicon: getReferrerFavicon(v.referrer || ''),
-            countryCode: v.country_code,
-            countryName: v.country_name || 'Unknown',
-            countryFlag: getCountryFlag(v.country_code),
-            browser: v.browser || 'Unknown',
-            browserIcon: getBrowserIcon(v.browser || ''),
-            device: v.device || 'desktop',
-            deviceIcon: getDeviceIcon(v.device || 'desktop'),
-            avatar: getAvatarUrl(v.session_id || `visitor-${idx}`),
-            timeAgo: formatRelativeTimeCompact(v.created_at, now.value),
-        }));
-    }
-
-    // Fallback: construct from top breakdown cards when liveVisitors is empty but top breakdown exists
-    const pages = (props.topPages || []).slice(0, 4);
-    const referrers = props.topReferrers || [];
-    const countries = props.topCountries || [];
-
-    if (!pages.length) {
+    if (!props.liveVisitors || props.liveVisitors.length === 0) {
         return [];
     }
 
-    return pages.map((p, idx) => {
-        const refItem = referrers[idx % (referrers.length || 1)];
-        const countryItem = countries[idx % (countries.length || 1)];
-        const seed = `session-${p.path}-${idx}`;
-        const fallbackCreatedAt = new Date(
-            mountTime - idx * 45000,
-        ).toISOString();
-
-        return {
-            id: seed,
-            path: p.path || p.label || '/',
-            referrer: formatSource(refItem?.label),
-            referrerFavicon:
-                refItem?.icon || getReferrerFavicon(refItem?.label || ''),
-            countryCode: countryItem?.code,
-            countryName: countryItem?.label || 'Unknown',
-            countryFlag: getCountryFlag(countryItem?.code),
-            browser: 'Chrome',
-            browserIcon: getBrowserIcon('Chrome'),
-            device: 'desktop',
-            deviceIcon: Monitor,
-            avatar: getAvatarUrl(seed),
-            timeAgo: formatRelativeTimeCompact(fallbackCreatedAt, now.value),
-        };
-    });
+    return props.liveVisitors.map((v, idx) => ({
+        id: v.session_id || `live-${idx}`,
+        path: v.path || '/',
+        referrer: formatSource(v.referrer),
+        referrerFavicon: getReferrerFavicon(v.referrer || ''),
+        countryCode: v.country_code,
+        countryName: v.country_name || 'Unknown',
+        countryFlag: getCountryFlag(v.country_code),
+        browser: v.browser || 'Unknown',
+        browserIcon: getBrowserIcon(v.browser || ''),
+        device: v.device || 'desktop',
+        deviceIcon: getDeviceIcon(v.device || 'desktop'),
+        avatar: getAvatarUrl(v.session_id || `visitor-${idx}`),
+        timeAgo: formatRelativeTimeCompact(v.created_at, now.value),
+    }));
 });
 </script>
 

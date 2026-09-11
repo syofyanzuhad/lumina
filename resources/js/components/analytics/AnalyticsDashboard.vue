@@ -341,9 +341,6 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                         :currentVisitors="current_visitors || 0"
                         :siteDomain="site?.domain"
                         :liveVisitors="live_visitors"
-                        :topPages="topPagesItems"
-                        :topReferrers="topReferrersItems"
-                        :topCountries="topCountriesItems"
                         :canFilter="canFilter"
                         @filter="addFilter"
                     />
