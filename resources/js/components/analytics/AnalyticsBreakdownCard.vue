@@ -93,9 +93,7 @@ const colorClasses: Record<
 </script>
 
 <template>
-    <div
-        class="group/card rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
-    >
+    <div class="group/card p-4 sm:p-5 lg:p-6">
         <div class="mb-4 flex items-center justify-between">
             <h3 class="text-sm font-bold text-foreground">{{ title }}</h3>
             <div class="flex items-center gap-2">

@@ -28,7 +28,7 @@ const emit = defineEmits<{
 
 <template>
     <div
-        class="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-sidebar-border/40 bg-card/40 px-4 py-3 sm:gap-x-12 sm:px-6 sm:py-4 dark:border-sidebar-border/30 dark:bg-card/25"
+        class="flex flex-wrap items-center gap-x-8 gap-y-4 border-b border-sidebar-border/60 pb-6 sm:gap-x-12"
     >
         <!-- Unique Visitors Stat -->
         <button
