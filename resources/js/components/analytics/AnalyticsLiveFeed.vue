@@ -122,17 +122,17 @@ const sessions = computed(() => {
 
 <template>
     <div
-        class="relative flex flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-4.5 shadow-sm sm:p-5 dark:border-sidebar-border"
+        class="relative flex h-full flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-4.5 shadow-sm sm:p-5 dark:border-sidebar-border"
     >
         <!-- Top Ambient Glow -->
         <div
             class="pointer-events-none absolute -top-12 -right-12 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl"
         ></div>
 
-        <div>
+        <div class="flex min-h-0 flex-1 flex-col">
             <!-- Header with pulsing Live indicator -->
             <div
-                class="flex items-center justify-between border-b border-sidebar-border/40 pb-3"
+                class="flex shrink-0 items-center justify-between border-b border-sidebar-border/40 pb-3"
             >
                 <div class="flex items-center gap-2">
                     <span class="relative flex h-2 w-2">
@@ -158,8 +158,10 @@ const sessions = computed(() => {
                 </div>
             </div>
 
-            <!-- Active User Sessions List -->
-            <div class="mt-3.5 space-y-3">
+            <!-- Active User Sessions List (Scrollable to stay exactly in sync with chart) -->
+            <div
+                class="mt-3.5 max-h-[300px] flex-1 space-y-3 overflow-y-auto pr-0.5 sm:max-h-[340px]"
+            >
                 <div
                     v-for="item in sessions"
                     :key="item.id"
