@@ -92,4 +92,48 @@ describe('AnalyticsKpiCards', () => {
         await visitorsBtn!.trigger('click');
         expect(wrapper.emitted('toggleVisitors')).toHaveLength(1);
     });
+
+    it('shows percent-change badges when previous period values are provided', () => {
+        const wrapper = mountKpiCards({
+            uniqueVisitors: 1100,
+            totalPageviews: 2200,
+            bounceRate: 45,
+            avgDuration: 120,
+            prevUniqueVisitors: 1000,
+            prevTotalPageviews: 2000,
+            prevBounceRate: 50,
+            prevAvgDuration: 100,
+        });
+
+        // +10% visitors
+        expect(wrapper.text()).toContain('+10%');
+        // +10% pageviews
+        expect(wrapper.text()).toContain('+10%');
+        // -10% bounce rate
+        expect(wrapper.text()).toContain('-10%');
+        // +20% avg duration
+        expect(wrapper.text()).toContain('+20%');
+    });
+
+    it('hides percent-change badges when no previous period values are provided', () => {
+        const wrapper = mountKpiCards({
+            uniqueVisitors: 1000,
+            totalPageviews: 2000,
+            bounceRate: 50,
+            avgDuration: 90,
+        });
+
+        expect(wrapper.text()).not.toMatch(/[+-]\d+%/);
+    });
+
+    it('hides percent-change badge when previous value is zero', () => {
+        const wrapper = mountKpiCards({
+            uniqueVisitors: 500,
+            totalPageviews: 1000,
+            prevUniqueVisitors: 0,
+            prevTotalPageviews: 0,
+        });
+
+        expect(wrapper.text()).not.toMatch(/[+-]\d+%/);
+    });
 });

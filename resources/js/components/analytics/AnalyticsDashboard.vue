@@ -48,6 +48,12 @@ export interface AnalyticsDashboardProps {
     avg_duration?: number;
     daily_pageviews?: any[];
 
+    // Previous-period KPIs for percent-change indicators
+    prev_total_pageviews?: number;
+    prev_unique_visitors?: number;
+    prev_bounce_rate?: number;
+    prev_avg_duration?: number;
+
     // Deferred breakdown props (arrive after initial render)
     top_pages?: any[];
     top_referrers?: any[];
@@ -311,6 +317,10 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 :uniqueVisitors="unique_visitors"
                 :bounceRate="bounce_rate"
                 :avgDuration="avg_duration"
+                :prevTotalPageviews="prev_total_pageviews"
+                :prevUniqueVisitors="prev_unique_visitors"
+                :prevBounceRate="prev_bounce_rate"
+                :prevAvgDuration="prev_avg_duration"
                 :showViews="showViews"
                 :showVisitors="showVisitors"
                 @toggleViews="toggleViews"
