@@ -22,10 +22,10 @@ function mountChart(props = {}) {
 }
 
 describe('AnalyticsChart', () => {
-    it('renders nothing when there is no data', () => {
+    it('renders animated skeleton when there is no data', () => {
         const wrapper = mountChart({ dailyPageviews: [] });
 
-        expect(wrapper.text()).toBe('');
+        expect(wrapper.findAll('.animate-pulse').length).toBeGreaterThan(0);
     });
 
     it('renders overlapping merged bars (pageviews & visitors) for every day', () => {

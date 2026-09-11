@@ -32,10 +32,12 @@ const props = withDefaults(
         topReferrers?: BreakdownCardItem[];
         topCountries?: BreakdownCardItem[];
         canFilter?: boolean;
+        loading?: boolean;
     }>(),
     {
         currentVisitors: 0,
         canFilter: true,
+        loading: false,
     },
 );
 
@@ -161,8 +163,54 @@ const sessions = computed(() => {
                 </div>
             </div>
 
+            <!-- Loading Skeleton State -->
+            <div
+                v-if="loading"
+                class="mt-3.5 max-h-[300px] flex-1 space-y-3 overflow-hidden pr-0.5 sm:max-h-[340px]"
+            >
+                <div
+                    v-for="i in 3"
+                    :key="i"
+                    class="flex items-start gap-3 rounded-lg border border-sidebar-border/30 bg-muted/20 p-2.5"
+                >
+                    <!-- Avatar Skeleton -->
+                    <div
+                        class="h-9 w-9 shrink-0 animate-pulse rounded-full bg-muted/70"
+                    ></div>
+
+                    <!-- Metadata Skeleton -->
+                    <div class="min-w-0 flex-1 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div
+                                class="h-3.5 w-24 animate-pulse rounded-xs bg-muted/70"
+                            ></div>
+                            <div
+                                class="h-2.5 w-10 animate-pulse rounded-xs bg-muted/50"
+                            ></div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="h-2.5 w-16 animate-pulse rounded-xs bg-muted/50"
+                            ></div>
+                            <div
+                                class="h-2.5 w-12 animate-pulse rounded-xs bg-muted/50"
+                            ></div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="h-2.5 w-14 animate-pulse rounded-xs bg-muted/50"
+                            ></div>
+                            <div
+                                class="h-2.5 w-12 animate-pulse rounded-xs bg-muted/50"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Active User Sessions List (Scrollable to stay exactly in sync with chart) -->
             <div
+                v-else
                 class="mt-3.5 max-h-[300px] flex-1 space-y-3 overflow-y-auto pr-0.5 sm:max-h-[340px]"
             >
                 <div

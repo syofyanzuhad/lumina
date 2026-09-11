@@ -65,4 +65,16 @@ describe('AnalyticsLiveFeed', () => {
 
         expect(wrapper.text()).toContain('No active sessions right now');
     });
+
+    it('renders animated skeleton placeholders when loading is true', () => {
+        const wrapper = mount(AnalyticsLiveFeed, {
+            props: {
+                loading: true,
+                currentVisitors: 0,
+            },
+        });
+
+        expect(wrapper.findAll('.animate-pulse').length).toBeGreaterThan(0);
+        expect(wrapper.text()).not.toContain('No active sessions right now');
+    });
 });

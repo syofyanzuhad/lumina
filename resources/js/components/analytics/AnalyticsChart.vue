@@ -266,4 +266,65 @@ const emit = defineEmits<{
             </span>
         </div>
     </div>
+
+    <!-- Skeleton Loading State when dailyPageviews is null/undefined/loading -->
+    <div
+        v-else
+        class="relative flex h-full flex-col justify-between p-4 sm:p-5 lg:p-6"
+    >
+        <!-- Header skeleton -->
+        <div
+            class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"
+        >
+            <div class="h-4 w-32 animate-pulse rounded-md bg-muted"></div>
+            <div class="flex items-center gap-4">
+                <div
+                    class="h-3 w-20 animate-pulse rounded-md bg-muted/70"
+                ></div>
+                <div
+                    class="h-3 w-24 animate-pulse rounded-md bg-muted/70"
+                ></div>
+            </div>
+        </div>
+
+        <!-- Chart Grid & Bars Skeleton -->
+        <div class="my-6 flex h-48 w-full items-end gap-1.5 sm:h-56">
+            <!-- Y-axis ticks skeleton -->
+            <div class="flex h-full w-8 flex-col justify-between pb-6 sm:w-10">
+                <div class="h-2 w-5 animate-pulse rounded-xs bg-muted/50"></div>
+                <div class="h-2 w-6 animate-pulse rounded-xs bg-muted/50"></div>
+                <div class="h-2 w-4 animate-pulse rounded-xs bg-muted/50"></div>
+            </div>
+
+            <!-- Staggered bars skeleton -->
+            <div
+                class="flex h-full flex-1 items-end gap-1.5 border-b border-sidebar-border/30 pb-1"
+            >
+                <div
+                    v-for="(h, i) in [
+                        45, 65, 30, 80, 50, 90, 70, 40, 60, 85, 35, 75,
+                    ]"
+                    :key="i"
+                    class="flex h-full flex-1 items-end"
+                >
+                    <div
+                        class="w-full animate-pulse rounded-t-xs bg-muted/60 transition-all"
+                        :style="{
+                            height: `${h}%`,
+                            animationDelay: `${i * 60}ms`,
+                        }"
+                    ></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Axis labels skeleton -->
+        <div
+            class="flex items-center justify-between border-t border-sidebar-border/40 pt-2 pl-8 sm:pl-10"
+        >
+            <div class="h-2.5 w-12 animate-pulse rounded-xs bg-muted/50"></div>
+            <div class="h-2.5 w-14 animate-pulse rounded-xs bg-muted/50"></div>
+            <div class="h-2.5 w-12 animate-pulse rounded-xs bg-muted/50"></div>
+        </div>
+    </div>
 </template>
