@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { Calendar, Filter, Activity, BarChart2, ListTodo } from '@lucide/vue';
+import { Activity, Calendar, Filter } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import {
+    formatCompactNumber,
+    formatDateLabel,
+} from '@/composables/useAnalyticsFormatters';
 
 interface CustomEventSummary {
     total_custom_events: number;
@@ -124,10 +128,10 @@ const selectPropertyKey = (key: string) => {
 </script>
 
 <template>
-    <div class="flex flex-col gap-6">
-        <!-- Header Controls -->
+    <div class="flex flex-col">
+        <!-- Header Controls: Borderless with hairline divider -->
         <div
-            class="flex flex-col justify-between gap-4 rounded-xl border border-sidebar-border/70 bg-card p-4 shadow-sm sm:flex-row sm:items-center dark:border-sidebar-border"
+            class="flex flex-col justify-between gap-4 border-b border-sidebar-border/60 pb-5 sm:flex-row sm:items-center"
         >
             <div class="flex items-center gap-2">
                 <Filter class="h-4 w-4 text-muted-foreground" />
@@ -142,7 +146,7 @@ const selectPropertyKey = (key: string) => {
                     id="event-filter"
                     :value="selectedEvent || 'all'"
                     @change="handleEventChange"
-                    class="min-w-[200px] rounded-md border-0 bg-card py-1.5 pr-8 pl-3 text-xs font-semibold text-foreground ring-1 ring-sidebar-border ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-slate-900 dark:text-slate-100"
+                    class="min-w-[200px] rounded-lg border border-sidebar-border/80 bg-background py-1.5 pr-8 pl-3 font-mono text-xs font-semibold text-foreground shadow-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-sidebar-border dark:bg-card"
                 >
                     <option value="all">All Custom Events</option>
                     <option
@@ -158,7 +162,7 @@ const selectPropertyKey = (key: string) => {
 
         <div
             v-if="!summary || summary.total_custom_events === 0"
-            class="rounded-xl border border-dashed border-sidebar-border/80 bg-card p-12 text-center shadow-sm dark:border-sidebar-border"
+            class="p-12 text-center"
         >
             <div
                 class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
@@ -171,95 +175,125 @@ const selectPropertyKey = (key: string) => {
                 custom actions.
             </p>
             <div
-                class="mx-auto mt-6 max-w-2xl overflow-x-auto rounded-lg border border-sidebar-border/50 bg-muted/60 p-4 text-left font-mono text-xs dark:bg-slate-950"
+                class="mx-auto mt-6 max-w-2xl overflow-x-auto rounded-lg border border-sidebar-border/50 bg-muted/40 p-4 text-left font-mono text-xs dark:bg-slate-950"
             >
                 window.lumina('purchase', { plan: 'pro', amount: 29.99 });
             </div>
         </div>
 
         <template v-else>
-            <!-- KPI Summary Cards -->
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div
-                    class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm transition-all hover:shadow-md dark:border-sidebar-border"
-                >
-                    <div class="flex items-center justify-between">
-                        <span
-                            class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                            >Total Custom Events</span
-                        >
-                        <div
-                            class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-                        >
-                            <Activity class="h-4 w-4" />
+            <!-- KPI Summary Stat Row: Borderless with colored accent bars -->
+            <div
+                class="flex flex-wrap items-center gap-x-8 gap-y-4 border-b border-sidebar-border/60 py-6 sm:gap-x-12"
+            >
+                <!-- Total Custom Events -->
+                <div class="flex items-start gap-2.5 text-left">
+                    <span
+                        class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]"
+                    ></span>
+                    <div>
+                        <div class="flex items-baseline gap-1.5">
+                            <span
+                                class="font-mono text-xl font-bold tracking-tight text-foreground sm:text-2xl"
+                            >
+                                {{
+                                    formatCompactNumber(
+                                        summary.total_custom_events,
+                                    )
+                                }}
+                            </span>
+                            <span
+                                v-if="summary.total_custom_events > 999"
+                                class="font-mono text-[11px] text-muted-foreground"
+                            >
+                                ({{
+                                    formatNumber(summary.total_custom_events)
+                                }})
+                            </span>
                         </div>
-                    </div>
-                    <div
-                        class="mt-3 text-3xl font-black tracking-tight text-foreground"
-                    >
-                        {{ formatNumber(summary.total_custom_events) }}
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                Total Custom Events
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div
-                    class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm transition-all hover:shadow-md dark:border-sidebar-border"
-                >
-                    <div class="flex items-center justify-between">
-                        <span
-                            class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                            >Unique Event Types</span
-                        >
-                        <div
-                            class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                        >
-                            <ListTodo class="h-4 w-4" />
+                <!-- Unique Event Types -->
+                <div class="flex items-start gap-2.5 text-left">
+                    <span
+                        class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                    ></span>
+                    <div>
+                        <div class="flex items-baseline gap-1.5">
+                            <span
+                                class="font-mono text-xl font-bold tracking-tight text-foreground sm:text-2xl"
+                            >
+                                {{
+                                    formatCompactNumber(
+                                        summary.unique_event_names,
+                                    )
+                                }}
+                            </span>
+                            <span
+                                v-if="summary.unique_event_names > 999"
+                                class="font-mono text-[11px] text-muted-foreground"
+                            >
+                                ({{ formatNumber(summary.unique_event_names) }})
+                            </span>
                         </div>
-                    </div>
-                    <div
-                        class="mt-3 text-3xl font-black tracking-tight text-foreground"
-                    >
-                        {{ formatNumber(summary.unique_event_names) }}
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                Unique Event Types
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div
-                    class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm transition-all hover:shadow-md dark:border-sidebar-border"
-                >
-                    <div class="flex items-center justify-between">
-                        <span
-                            class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                            >Most Frequent Event</span
-                        >
-                        <div
-                            class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400"
-                        >
-                            <BarChart2 class="h-4 w-4" />
+                <!-- Most Frequent Event -->
+                <div class="flex items-start gap-2.5 text-left">
+                    <span
+                        class="mt-1 inline-block h-6 w-1 shrink-0 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]"
+                    ></span>
+                    <div>
+                        <div class="flex items-baseline gap-1.5">
+                            <span
+                                class="truncate font-mono text-xl font-bold tracking-tight text-foreground sm:text-2xl"
+                            >
+                                {{ summary.top_event_name || '—' }}
+                            </span>
                         </div>
-                    </div>
-                    <div
-                        class="mt-3 h-9 truncate font-mono text-2xl leading-9 font-black tracking-tight text-foreground"
-                    >
-                        {{ summary.top_event_name || '-' }}
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                Most Frequent Event
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Custom Event Timeline -->
-            <div
-                class="rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
-            >
+            <!-- Custom Event Timeline Chart: Cardless with hairline bottom border -->
+            <div class="border-b border-sidebar-border/60 py-6">
                 <div class="mb-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <Calendar class="h-4 w-4 text-indigo-500" />
-                        <h3 class="text-sm font-bold text-foreground">
+                        <h3
+                            class="text-sm font-bold tracking-tight text-foreground"
+                        >
                             Event Frequency Over Time
                         </h3>
                     </div>
                     <span
                         v-if="hoveredDay"
-                        class="font-mono text-xs text-indigo-600 dark:text-indigo-400"
+                        class="font-mono text-xs font-medium text-indigo-600 dark:text-indigo-400"
                     >
-                        {{ hoveredDay.date }}:
+                        {{ formatDateLabel(hoveredDay.date) }}:
                         {{ formatNumber(hoveredDay.count) }} occurrences
                     </span>
                     <span v-else class="text-xs text-muted-foreground"
@@ -267,93 +301,187 @@ const selectPropertyKey = (key: string) => {
                     >
                 </div>
 
-                <div class="flex h-44 items-end gap-1.5 pt-6 pb-2">
+                <!-- Chart Container with Y-Axis and Gridlines -->
+                <div class="relative flex h-48 w-full gap-2 pt-6 pb-2 sm:h-56">
+                    <!-- Y-Axis Value Labels -->
                     <div
-                        v-if="timeline && timeline.length === 0"
-                        class="flex h-full w-full items-center justify-center border-b border-muted"
+                        class="pointer-events-none flex h-full w-8 flex-col justify-between text-right font-mono text-[10px] text-muted-foreground select-none sm:w-10 sm:text-[11px]"
                     >
-                        <span class="text-xs text-muted-foreground"
-                            >No events in this period</span
-                        >
+                        <span>{{ formatCompactNumber(maxDaily) }}</span>
+                        <span>{{
+                            formatCompactNumber(Math.round(maxDaily * 0.75))
+                        }}</span>
+                        <span>{{
+                            formatCompactNumber(Math.round(maxDaily * 0.5))
+                        }}</span>
+                        <span>{{
+                            formatCompactNumber(Math.round(maxDaily * 0.25))
+                        }}</span>
+                        <span>0</span>
                     </div>
+
+                    <!-- Chart Canvas & Bars -->
                     <div
-                        v-else
-                        v-for="day in timeline"
-                        :key="day.date"
-                        @mouseenter="hoveredDay = day"
-                        @mouseleave="hoveredDay = null"
-                        class="group relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end"
+                        class="group/chart relative flex h-full flex-1 items-end gap-1"
                     >
+                        <!-- Horizontal Gridlines -->
                         <div
-                            class="min-h-[3px] w-full rounded-t-md bg-indigo-500 transition-all duration-200 group-hover:bg-indigo-600 dark:bg-indigo-400 dark:group-hover:bg-indigo-300"
-                            :style="{
-                                height: `${Math.max(Math.round((day.count / maxDaily) * 100), 2)}%`,
-                            }"
-                        ></div>
-                        <div
-                            class="absolute bottom-full z-10 mb-2 hidden rounded bg-slate-900 px-2.5 py-1 font-mono text-xs whitespace-nowrap text-white shadow-lg group-hover:block dark:bg-slate-100 dark:text-slate-900"
+                            class="pointer-events-none absolute inset-0 flex flex-col justify-between"
                         >
-                            {{ day.date }}: {{ day.count }}
+                            <div
+                                class="w-full border-t border-dashed border-sidebar-border/50 dark:border-sidebar-border/30"
+                            ></div>
+                            <div
+                                class="w-full border-t border-dashed border-sidebar-border/40 dark:border-sidebar-border/25"
+                            ></div>
+                            <div
+                                class="w-full border-t border-dashed border-sidebar-border/30 dark:border-sidebar-border/20"
+                            ></div>
+                            <div
+                                class="w-full border-t border-dashed border-sidebar-border/30 dark:border-sidebar-border/20"
+                            ></div>
+                            <div
+                                class="w-full border-t border-sidebar-border/70 dark:border-sidebar-border/60"
+                            ></div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div
+                            v-if="timeline && timeline.length === 0"
+                            class="relative z-10 flex h-full w-full items-center justify-center"
+                        >
+                            <span class="text-xs text-muted-foreground"
+                                >No events in this period</span
+                            >
+                        </div>
+
+                        <!-- Bars -->
+                        <div
+                            v-else
+                            v-for="day in timeline"
+                            :key="day.date"
+                            @mouseenter="hoveredDay = day"
+                            @mouseleave="hoveredDay = null"
+                            class="group relative z-10 flex h-full flex-1 cursor-pointer flex-col items-center justify-end"
+                        >
+                            <!-- Tooltip -->
+                            <div
+                                v-if="hoveredDay?.date === day.date"
+                                class="pointer-events-none absolute bottom-full z-30 mb-2 flex -translate-y-1 transform flex-col items-center transition-all duration-150"
+                            >
+                                <div
+                                    class="space-y-1 rounded-lg border border-sidebar-border/80 bg-popover px-3 py-2 text-xs whitespace-nowrap text-popover-foreground shadow-2xl"
+                                >
+                                    <div
+                                        class="flex items-center gap-1.5 text-xs font-bold text-foreground"
+                                    >
+                                        <span>{{
+                                            formatDateLabel(day.date)
+                                        }}</span>
+                                    </div>
+                                    <div class="text-[10px]">
+                                        <span
+                                            class="font-bold text-indigo-600 dark:text-indigo-400"
+                                        >
+                                            {{ formatNumber(day.count) }}
+                                            occurrences
+                                        </span>
+                                    </div>
+                                </div>
+                                <div
+                                    class="-mt-1 h-2 w-2 rotate-45 border-r border-b border-sidebar-border/80 bg-popover"
+                                ></div>
+                            </div>
+
+                            <div
+                                class="min-h-[3px] w-full rounded-t-sm bg-indigo-500/80 transition-all duration-200 group-hover:bg-indigo-600 dark:bg-indigo-400 dark:group-hover:bg-indigo-300"
+                                :style="{
+                                    height: `${Math.max(Math.round((day.count / maxDaily) * 100), 2)}%`,
+                                }"
+                            ></div>
                         </div>
                     </div>
                 </div>
+
+                <!-- X-Axis Date Range Labels -->
+                <div
+                    v-if="timeline && timeline.length > 0"
+                    class="flex items-center justify-between border-t border-sidebar-border/40 pt-2 pl-8 font-mono text-[9px] text-muted-foreground sm:pl-10 sm:text-[10px]"
+                >
+                    <span>{{ formatDateLabel(timeline[0].date) }}</span>
+                    <span v-if="timeline.length > 2">
+                        {{
+                            formatDateLabel(
+                                timeline[Math.floor(timeline.length / 2)].date,
+                            )
+                        }}
+                    </span>
+                    <span>{{
+                        formatDateLabel(timeline[timeline.length - 1].date)
+                    }}</span>
+                </div>
             </div>
 
-            <!-- Two-Column Breakdown -->
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <!-- Two-Column Breakdown: Separated by vertical line divider -->
+            <div
+                class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 lg:grid-cols-2 lg:divide-x lg:divide-y-0"
+            >
                 <!-- Top Events List -->
-                <div
-                    class="rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
-                >
+                <div class="p-4 sm:p-5 lg:p-6">
                     <div class="mb-4 flex items-center justify-between">
                         <h3 class="text-sm font-bold text-foreground">
                             Top Custom Events
                         </h3>
-                        <span class="text-xs text-muted-foreground"
-                            >{{ eventsList?.length || 0 }} events</span
+                        <span class="font-mono text-xs text-muted-foreground"
+                            >{{ eventsList?.length || 0 }}
+                            {{
+                                (eventsList?.length || 0) === 1
+                                    ? 'event'
+                                    : 'events'
+                            }}</span
                         >
                     </div>
-                    <div class="max-h-[400px] space-y-3 overflow-y-auto pr-2">
+                    <div class="max-h-[400px] space-y-2 overflow-y-auto pr-1">
                         <div
                             v-for="evt in eventsList"
                             :key="evt.name"
                             @click="selectEvent(evt.name)"
                             :class="[
-                                'cursor-pointer space-y-1.5 rounded-lg border p-2 transition-all',
+                                'group relative flex cursor-pointer items-center justify-between space-y-1.5 overflow-hidden rounded-lg p-2 text-xs font-medium transition-all',
                                 selectedEvent === evt.name
-                                    ? 'border-indigo-500 bg-indigo-500/5'
-                                    : 'border-transparent hover:bg-muted/50',
+                                    ? 'border border-indigo-500 bg-indigo-500/10'
+                                    : 'border border-transparent hover:opacity-90',
                             ]"
                         >
+                            <!-- Percentage Fill Background Bar -->
                             <div
-                                class="flex items-center justify-between text-xs"
+                                class="absolute inset-y-0 left-0 rounded-lg bg-indigo-100/70 transition-all duration-500 group-hover:bg-indigo-200/80 dark:bg-indigo-500/15 dark:group-hover:bg-indigo-500/25"
+                                :style="{ width: `${evt.percentage}%` }"
+                            ></div>
+
+                            <div
+                                class="relative z-10 flex min-w-0 items-center gap-2 font-mono font-medium text-foreground transition-colors group-hover:text-indigo-700 dark:group-hover:text-indigo-300"
                             >
                                 <span
                                     class="font-mono font-semibold text-indigo-600 dark:text-indigo-400"
-                                    >{{ evt.name }}</span
                                 >
-                                <span class="font-mono text-muted-foreground"
-                                    >{{ formatNumber(evt.count) }} ({{
-                                        evt.percentage
-                                    }}%)</span
-                                >
+                                    {{ evt.name }}
+                                </span>
                             </div>
-                            <div
-                                class="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+
+                            <span
+                                class="relative z-10 shrink-0 font-mono text-xs text-muted-foreground"
                             >
-                                <div
-                                    class="h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-500"
-                                    :style="{ width: `${evt.percentage}%` }"
-                                ></div>
-                            </div>
+                                {{ formatNumber(evt.count) }} ({{
+                                    evt.percentage
+                                }}%)
+                            </span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Property Breakdown -->
-                <div
-                    class="rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm dark:border-sidebar-border"
-                >
+                <div class="p-4 sm:p-5 lg:p-6">
                     <div class="mb-4 flex items-center justify-between">
                         <h3 class="text-sm font-bold text-foreground">
                             Property Value Breakdown
@@ -399,104 +527,103 @@ const selectPropertyKey = (key: string) => {
                             </div>
                         </div>
 
-                        <!-- Value Distribution bars -->
+                        <!-- Value Distribution bars with fill background -->
                         <div
                             v-if="
                                 selectedPropertyKey &&
                                 propertyBreakdown &&
                                 propertyBreakdown.length > 0
                             "
-                            class="space-y-3"
+                            class="space-y-2"
                         >
                             <div
                                 v-for="prop in propertyBreakdown"
                                 :key="prop.value"
-                                class="space-y-1.5"
+                                class="group relative flex items-center justify-between overflow-hidden rounded-lg p-2 text-xs font-medium transition-all"
                             >
+                                <!-- Percentage Background Bar -->
                                 <div
-                                    class="flex items-center justify-between text-xs"
+                                    class="absolute inset-y-0 left-0 rounded-lg bg-sky-100/70 transition-all duration-500 group-hover:bg-sky-200/80 dark:bg-sky-500/15 dark:group-hover:bg-sky-500/25"
+                                    :style="{ width: `${prop.percentage}%` }"
+                                ></div>
+
+                                <span
+                                    class="relative z-10 max-w-[200px] truncate font-mono text-foreground group-hover:text-sky-700 dark:group-hover:text-sky-300"
                                 >
-                                    <span
-                                        class="max-w-[200px] truncate pr-4 font-mono text-foreground"
-                                        >{{ prop.value }}</span
-                                    >
-                                    <span
-                                        class="shrink-0 font-mono text-muted-foreground"
-                                        >{{ formatNumber(prop.count) }} ({{
-                                            prop.percentage
-                                        }}%)</span
-                                    >
-                                </div>
-                                <div
-                                    class="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                                    {{ prop.value }}
+                                </span>
+
+                                <span
+                                    class="relative z-10 shrink-0 font-mono text-xs text-muted-foreground"
                                 >
-                                    <div
-                                        class="h-1.5 rounded-full bg-sky-600 dark:bg-sky-500"
-                                        :style="{
-                                            width: `${prop.percentage}%`,
-                                        }"
-                                    ></div>
-                                </div>
+                                    {{ formatNumber(prop.count) }} ({{
+                                        prop.percentage
+                                    }}%)
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Recent Event Logs -->
-            <div
-                class="flex flex-col overflow-hidden rounded-xl border border-sidebar-border/70 bg-card shadow-sm dark:border-sidebar-border"
-            >
-                <div class="border-b border-sidebar-border/50 p-6 pb-4">
+            <!-- Recent Event Logs: Cardless border-b with clean table -->
+            <div class="py-6">
+                <div class="mb-4">
                     <h3 class="text-sm font-bold text-foreground">
                         Recent Custom Event Logs
                     </h3>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto border-t border-sidebar-border/60">
                     <table class="w-full text-left text-sm whitespace-nowrap">
                         <thead
                             class="bg-muted/30 text-xs text-muted-foreground uppercase"
                         >
                             <tr>
-                                <th class="px-6 py-3 font-semibold">
+                                <th class="px-4 py-3 font-semibold sm:px-6">
                                     Timestamp
                                 </th>
-                                <th class="px-6 py-3 font-semibold">
+                                <th class="px-4 py-3 font-semibold sm:px-6">
                                     Event Name
                                 </th>
-                                <th class="px-6 py-3 font-semibold">Path</th>
-                                <th class="px-6 py-3 font-semibold">Visitor</th>
-                                <th class="px-6 py-3 font-semibold">Action</th>
+                                <th class="px-4 py-3 font-semibold sm:px-6">
+                                    Path
+                                </th>
+                                <th class="px-4 py-3 font-semibold sm:px-6">
+                                    Visitor
+                                </th>
+                                <th class="px-4 py-3 font-semibold sm:px-6">
+                                    Action
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-sidebar-border/50">
                             <template v-for="log in logs" :key="log.id">
                                 <tr class="transition-colors hover:bg-muted/30">
                                     <td
-                                        class="px-6 py-3 font-mono text-[11px] text-muted-foreground"
+                                        class="px-4 py-3 font-mono text-[11px] text-muted-foreground sm:px-6"
                                     >
                                         {{ log.created_at }}
                                     </td>
-                                    <td class="px-6 py-3">
+                                    <td class="px-4 py-3 sm:px-6">
                                         <span
                                             class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400"
                                             >{{ log.event_name }}</span
                                         >
                                     </td>
                                     <td
-                                        class="max-w-[150px] truncate px-6 py-3 text-xs"
+                                        class="max-w-[150px] truncate px-4 py-3 text-xs sm:px-6"
                                     >
                                         {{ log.path || '—' }}
                                     </td>
                                     <td
-                                        class="px-6 py-3 font-mono text-xs text-muted-foreground"
+                                        class="px-4 py-3 font-mono text-xs text-muted-foreground sm:px-6"
                                     >
                                         {{
                                             log.visitor_hash?.substring(0, 8) ||
                                             '—'
                                         }}
                                     </td>
-                                    <td class="px-6 py-3">
+                                    <td class="px-4 py-3 sm:px-6">
                                         <button
                                             @click="toggleLog(log.id)"
                                             class="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
@@ -509,7 +636,7 @@ const selectPropertyKey = (key: string) => {
                                     v-if="expandedLogs.has(log.id)"
                                     class="bg-muted/10"
                                 >
-                                    <td colspan="5" class="px-6 py-4">
+                                    <td colspan="5" class="px-4 py-4 sm:px-6">
                                         <div
                                             class="overflow-x-auto rounded-lg border border-sidebar-border/50 bg-muted/60 p-4 font-mono text-xs text-foreground dark:bg-slate-950"
                                         >
@@ -527,7 +654,7 @@ const selectPropertyKey = (key: string) => {
                             <tr v-if="!logs || logs.length === 0">
                                 <td
                                     colspan="5"
-                                    class="px-6 py-8 text-center text-xs text-muted-foreground"
+                                    class="px-4 py-8 text-center text-xs text-muted-foreground sm:px-6"
                                 >
                                     No recent events
                                 </td>

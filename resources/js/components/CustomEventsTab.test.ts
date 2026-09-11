@@ -118,7 +118,7 @@ describe('CustomEventsTab', () => {
         const wrapper = mountTab();
 
         const eventCard = wrapper
-            .findAll('[class*="cursor-pointer space-y-1.5"]')
+            .findAll('[class*="cursor-pointer"]')
             .find((el) => el.text().includes('purchase'));
 
         await eventCard!.trigger('click');
