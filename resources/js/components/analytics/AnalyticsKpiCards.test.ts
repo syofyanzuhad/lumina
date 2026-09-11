@@ -19,7 +19,7 @@ describe('AnalyticsKpiCards', () => {
         expect(wrapper.text()).toContain('Unique Visitors');
     });
 
-    it('hides the currently online card when no value is provided', () => {
+    it('hides the currently online stat when no value is provided', () => {
         const wrapper = mountKpiCards({
             totalPageviews: 10,
             uniqueVisitors: 5,
@@ -28,7 +28,7 @@ describe('AnalyticsKpiCards', () => {
         expect(wrapper.text()).not.toContain('Currently Online');
     });
 
-    it('shows the currently online card when a value is provided', () => {
+    it('shows the currently online stat when a value is provided', () => {
         const wrapper = mountKpiCards({
             currentVisitors: 42,
             totalPageviews: 10,
@@ -37,16 +37,16 @@ describe('AnalyticsKpiCards', () => {
 
         expect(wrapper.text()).toContain('Currently Online');
         expect(wrapper.text()).toContain('42');
-        expect(wrapper.text()).toContain('Active in last 5 min');
     });
 
-    it('hides the bounce & duration card when both values are absent', () => {
+    it('hides the bounce rate and duration stats when both values are absent', () => {
         const wrapper = mountKpiCards({
             totalPageviews: 10,
             uniqueVisitors: 5,
         });
 
-        expect(wrapper.text()).not.toContain('Bounce & Duration');
+        expect(wrapper.text()).not.toContain('Bounce Rate');
+        expect(wrapper.text()).not.toContain('Avg Duration');
     });
 
     it('renders bounce rate and average duration when provided', () => {
@@ -57,7 +57,8 @@ describe('AnalyticsKpiCards', () => {
             avgDuration: 90,
         });
 
-        expect(wrapper.text()).toContain('Bounce & Duration');
+        expect(wrapper.text()).toContain('Bounce Rate');
+        expect(wrapper.text()).toContain('Avg Duration');
         expect(wrapper.text()).toContain('33.3%');
         expect(wrapper.text()).toContain('90s');
     });
