@@ -74,7 +74,7 @@ const emit = defineEmits<{
                     "
                 >
                     <span
-                        class="inline-block h-2.5 w-3 rounded-xs border border-purple-500/60 bg-purple-600/60 dark:bg-purple-500/50"
+                        class="inline-block h-2.5 w-3 rounded-xs border border-indigo-500/60 bg-indigo-600/60 dark:bg-indigo-500/50"
                     ></span>
                     <span class="text-muted-foreground">Unique Visitors</span>
                 </button>
@@ -168,7 +168,7 @@ const emit = defineEmits<{
                                 </span>
                                 <span
                                     v-if="showVisitors"
-                                    class="font-bold text-purple-600 dark:text-purple-400"
+                                    class="font-bold text-indigo-600 dark:text-indigo-400"
                                 >
                                     {{ formatNumber(day.visitors) }} visitors
                                 </span>
@@ -208,14 +208,14 @@ const emit = defineEmits<{
                             }"
                         ></div>
 
-                        <!-- Unique Visitors (Full-width bar with bolder purple accent) -->
+                        <!-- Unique Visitors (Full-width bar with bolder indigo accent) -->
                         <div
                             v-if="showVisitors"
                             class="pointer-events-none absolute bottom-0 min-h-[3px] w-full rounded-t-sm transition-all duration-200"
                             :class="[
                                 showViews
-                                    ? 'bg-purple-600/75 group-hover:bg-purple-600/90 dark:bg-purple-500/65 dark:group-hover:bg-purple-500/85'
-                                    : 'bg-purple-600/60 group-hover:bg-purple-600/80 dark:bg-purple-500/50 dark:group-hover:bg-purple-500/70',
+                                    ? 'bg-indigo-600/75 group-hover:bg-indigo-600/90 dark:bg-indigo-500/65 dark:group-hover:bg-indigo-500/85'
+                                    : 'bg-indigo-600/60 group-hover:bg-indigo-600/80 dark:bg-indigo-500/50 dark:group-hover:bg-indigo-500/70',
                                 isCurrentPeriod(day.date) && !showViews
                                     ? 'border-t border-emerald-400'
                                     : '',
