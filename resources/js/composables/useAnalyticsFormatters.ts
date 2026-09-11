@@ -244,7 +244,10 @@ export function getOsIcon(os: string): string | null {
 /**
  * Format ISO or timestamp into compact relative time (e.g. "just now", "12s ago", "2m ago", "1h ago").
  */
-export function formatRelativeTimeCompact(dateStr?: string | null): string {
+export function formatRelativeTimeCompact(
+    dateStr?: string | null,
+    nowMs: number = Date.now(),
+): string {
     if (!dateStr) {
         return 'just now';
     }
@@ -255,10 +258,7 @@ export function formatRelativeTimeCompact(dateStr?: string | null): string {
         return 'just now';
     }
 
-    const diffSeconds = Math.max(
-        0,
-        Math.floor((Date.now() - timestamp) / 1000),
-    );
+    const diffSeconds = Math.max(0, Math.floor((nowMs - timestamp) / 1000));
 
     if (diffSeconds < 10) {
         return 'just now';

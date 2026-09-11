@@ -77,4 +77,44 @@ describe('AnalyticsLiveFeed', () => {
         expect(wrapper.findAll('.animate-pulse').length).toBeGreaterThan(0);
         expect(wrapper.text()).not.toContain('No active sessions right now');
     });
+
+    it('dynamically updates relative time as ticker elapses', async () => {
+        const { vi } = await import('vitest');
+        vi.useFakeTimers();
+
+        const now = Date.now();
+        vi.setSystemTime(now);
+
+        const wrapper = mount(AnalyticsLiveFeed, {
+            props: {
+                currentVisitors: 1,
+                liveVisitors: [
+                    {
+                        session_id: 'sess_live',
+                        path: '/features',
+                        created_at: new Date(now - 5000).toISOString(),
+                    },
+                ],
+            },
+        });
+
+        // Initially 5 seconds ago -> "just now" (< 10s)
+        expect(wrapper.text()).toContain('just now');
+
+        // Advance by 10s (total elapsed: 15s)
+        vi.advanceTimersByTime(10000);
+        await wrapper.vm.$nextTick();
+
+        // Should now reflect updated relative time
+        expect(wrapper.text()).toContain('15s ago');
+
+        // Advance to 65s
+        vi.advanceTimersByTime(50000);
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.text()).toContain('1m ago');
+
+        wrapper.unmount();
+        vi.useRealTimers();
+    });
 });

@@ -18,6 +18,7 @@ export function useLivePolling(options: UseLivePollingOptions = {}) {
         'total_pageviews',
         'unique_visitors',
         'current_visitors',
+        'live_visitors',
         'bounce_rate',
         'avg_duration',
         'daily_pageviews',

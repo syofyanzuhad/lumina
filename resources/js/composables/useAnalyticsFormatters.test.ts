@@ -108,4 +108,14 @@ describe('formatRelativeTimeCompact', () => {
         expect(formatRelativeTimeCompact(twoHoursAgo)).toBe('2h ago');
         expect(formatRelativeTimeCompact(threeDaysAgo)).toBe('3d ago');
     });
+
+    it('respects custom nowMs reference time', () => {
+        const baseTime = 1700000000000;
+        const eventTime = new Date(baseTime - 45 * 1000).toISOString();
+
+        expect(formatRelativeTimeCompact(eventTime, baseTime)).toBe('45s ago');
+        expect(formatRelativeTimeCompact(eventTime, baseTime + 60 * 1000)).toBe(
+            '1m ago',
+        );
+    });
 });

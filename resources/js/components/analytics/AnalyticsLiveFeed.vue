@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Clock, ExternalLink, Radio, Monitor } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { BreakdownCardItem } from '@/components/analytics/AnalyticsBreakdownCard.vue';
 import {
     formatNumber,
@@ -45,6 +45,24 @@ const emit = defineEmits<{
     (e: 'filter', key: string, value: string): void;
 }>();
 
+// Ticker to recompute relative timestamps every 5 seconds
+const now = ref(Date.now());
+const mountTime = Date.now();
+let tickerInterval: ReturnType<typeof setInterval> | null = null;
+
+onMounted(() => {
+    tickerInterval = setInterval(() => {
+        now.value = Date.now();
+    }, 5000);
+});
+
+onUnmounted(() => {
+    if (tickerInterval) {
+        clearInterval(tickerInterval);
+        tickerInterval = null;
+    }
+});
+
 // Deterministic playful avatar generation based on session/visitor hash
 function getAvatarUrl(seed: string): string {
     const cleanSeed = encodeURIComponent(seed || 'anonymous');
@@ -87,7 +105,7 @@ const sessions = computed(() => {
             device: v.device || 'desktop',
             deviceIcon: getDeviceIcon(v.device || 'desktop'),
             avatar: getAvatarUrl(v.session_id || `visitor-${idx}`),
-            timeAgo: formatRelativeTimeCompact(v.created_at),
+            timeAgo: formatRelativeTimeCompact(v.created_at, now.value),
         }));
     }
 
@@ -104,6 +122,9 @@ const sessions = computed(() => {
         const refItem = referrers[idx % (referrers.length || 1)];
         const countryItem = countries[idx % (countries.length || 1)];
         const seed = `session-${p.path}-${idx}`;
+        const fallbackCreatedAt = new Date(
+            mountTime - idx * 45000,
+        ).toISOString();
 
         return {
             id: seed,
@@ -119,7 +140,7 @@ const sessions = computed(() => {
             device: 'desktop',
             deviceIcon: Monitor,
             avatar: getAvatarUrl(seed),
-            timeAgo: idx === 0 ? 'just now' : `${idx * 45}s ago`,
+            timeAgo: formatRelativeTimeCompact(fallbackCreatedAt, now.value),
         };
     });
 });
