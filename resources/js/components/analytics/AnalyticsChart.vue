@@ -190,32 +190,35 @@ const emit = defineEmits<{
                         ></span>
                     </div>
 
-                    <!-- Dual Bars (Pageviews & Unique Visitors) -->
+                    <!-- Overlapping Merged Bars (Pageviews & Unique Visitors) -->
                     <div
-                        class="relative flex h-full w-full items-end justify-center gap-0.5 sm:gap-1"
+                        class="relative flex h-full w-full items-end justify-center"
                     >
-                        <!-- Pageviews Bar (Indigo) -->
+                        <!-- Pageviews (Full-width background/outer bar) -->
                         <div
                             v-if="showViews"
-                            class="min-h-[3px] flex-1 rounded-t-xs transition-all duration-200"
+                            class="min-h-[3px] w-full rounded-t-sm transition-all duration-200"
                             :class="[
                                 isCurrentPeriod(day.date)
-                                    ? 'border-t border-emerald-400 bg-indigo-500/40 group-hover:bg-indigo-500/60 dark:bg-indigo-400/35 dark:group-hover:bg-indigo-400/55'
-                                    : 'bg-indigo-500/30 group-hover:bg-indigo-500/50 dark:bg-indigo-400/25 dark:group-hover:bg-indigo-400/45',
+                                    ? 'border-t border-emerald-400 bg-indigo-500/35 group-hover:bg-indigo-500/50 dark:bg-indigo-400/30 dark:group-hover:bg-indigo-400/50'
+                                    : 'bg-indigo-500/25 group-hover:bg-indigo-500/40 dark:bg-indigo-400/20 dark:group-hover:bg-indigo-400/35',
                             ]"
                             :style="{
                                 height: `${Math.max(Math.round((day.pageviews / maxDaily) * 100), 2)}%`,
                             }"
                         ></div>
 
-                        <!-- Unique Visitors Bar (Cyan) -->
+                        <!-- Unique Visitors (Overlapping foreground bar with neon cyan accent) -->
                         <div
                             v-if="showVisitors"
-                            class="min-h-[3px] flex-1 rounded-t-xs transition-all duration-200"
+                            class="pointer-events-none absolute bottom-0 min-h-[3px] transition-all duration-200"
                             :class="[
-                                isCurrentPeriod(day.date)
-                                    ? 'border-t border-emerald-400 bg-cyan-500/50 group-hover:bg-cyan-500/70 dark:bg-cyan-400/45 dark:group-hover:bg-cyan-400/65'
-                                    : 'bg-cyan-500/40 group-hover:bg-cyan-500/60 dark:bg-cyan-400/35 dark:group-hover:bg-cyan-400/55',
+                                showViews
+                                    ? 'w-[75%] rounded-t-xs bg-cyan-400/75 shadow-[0_0_10px_rgba(6,182,212,0.4)] group-hover:bg-cyan-400/90 dark:bg-cyan-400/65 dark:group-hover:bg-cyan-400/85'
+                                    : 'w-full rounded-t-sm bg-cyan-500/40 group-hover:bg-cyan-500/60 dark:bg-cyan-400/35 dark:group-hover:bg-cyan-400/55',
+                                isCurrentPeriod(day.date) && !showViews
+                                    ? 'border-t border-emerald-400'
+                                    : '',
                             ]"
                             :style="{
                                 height: `${Math.max(Math.round((day.visitors / maxDaily) * 100), 2)}%`,

@@ -28,7 +28,7 @@ describe('AnalyticsChart', () => {
         expect(wrapper.text()).toBe('');
     });
 
-    it('renders dual bars (pageviews & visitors) for every day', () => {
+    it('renders overlapping merged bars (pageviews & visitors) for every day', () => {
         const wrapper = mountChart();
 
         expect(wrapper.text()).toContain('Traffic Overview');
@@ -37,8 +37,8 @@ describe('AnalyticsChart', () => {
         );
         expect(dayCols).toHaveLength(3);
 
-        // Each day column should render two bars when both series are enabled
-        const firstDayBars = dayCols[0].findAll('div.flex-1');
+        // Each day column should render both the pageviews bar and the overlapping visitors bar
+        const firstDayBars = dayCols[0].findAll('div.min-h-\\[3px\\]');
         expect(firstDayBars).toHaveLength(2);
     });
 
