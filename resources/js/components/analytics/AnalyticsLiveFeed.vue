@@ -1,16 +1,32 @@
 <script setup lang="ts">
-import { ExternalLink, Radio } from '@lucide/vue';
+import { ExternalLink, Radio, Monitor } from '@lucide/vue';
 import { computed } from 'vue';
 import type { BreakdownCardItem } from '@/components/analytics/AnalyticsBreakdownCard.vue';
 import {
     formatNumber,
+    getBrowserIcon,
     getCountryFlag,
+    getDeviceIcon,
+    getReferrerFavicon,
 } from '@/composables/useAnalyticsFormatters';
+
+export interface LiveSessionItem {
+    session_id: string;
+    path: string;
+    referrer?: string;
+    country_code?: string;
+    country_name?: string;
+    browser?: string;
+    os?: string;
+    device?: string;
+    created_at?: string;
+}
 
 const props = withDefaults(
     defineProps<{
         currentVisitors?: number;
         siteDomain?: string;
+        liveVisitors?: LiveSessionItem[];
         topPages?: BreakdownCardItem[];
         topReferrers?: BreakdownCardItem[];
         topCountries?: BreakdownCardItem[];
@@ -26,8 +42,52 @@ const emit = defineEmits<{
     (e: 'filter', key: string, value: string): void;
 }>();
 
-// Synthesize recent active real-time visitor streams from top real-time breakdown data
-const activeStream = computed(() => {
+// Deterministic playful avatar generation based on session/visitor hash
+function getAvatarUrl(seed: string): string {
+    const cleanSeed = encodeURIComponent(seed || 'anonymous');
+
+    return `https://api.dicebear.com/9.x/micah/svg?seed=${cleanSeed}&backgroundColor=ffdfbf,ffd5dc,d1d4f9,c0aede,b6e3f4`;
+}
+
+// Extract clean host or platform for referrer
+function formatSource(ref?: string): string {
+    if (!ref || ref === 'Direct' || ref === 'Direct / None') {
+        return 'Direct';
+    }
+
+    try {
+        if (ref.includes('://')) {
+            const host = new URL(ref).hostname;
+
+            return host.replace(/^www\./, '');
+        }
+    } catch {
+        // Fallback to raw string
+    }
+
+    return ref;
+}
+
+// Synthesize or normalize the active live sessions
+const sessions = computed(() => {
+    if (props.liveVisitors && props.liveVisitors.length > 0) {
+        return props.liveVisitors.map((v, idx) => ({
+            id: v.session_id || `live-${idx}`,
+            path: v.path || '/',
+            referrer: formatSource(v.referrer),
+            referrerFavicon: getReferrerFavicon(v.referrer || ''),
+            countryCode: v.country_code,
+            countryName: v.country_name || 'Unknown',
+            countryFlag: getCountryFlag(v.country_code),
+            browser: v.browser || 'Unknown',
+            browserIcon: getBrowserIcon(v.browser || ''),
+            device: v.device || 'desktop',
+            deviceIcon: getDeviceIcon(v.device || 'desktop'),
+            avatar: getAvatarUrl(v.session_id || `visitor-${idx}`),
+        }));
+    }
+
+    // Fallback: construct from top breakdown cards when liveVisitors is empty but top breakdown exists
     const pages = (props.topPages || []).slice(0, 4);
     const referrers = props.topReferrers || [];
     const countries = props.topCountries || [];
@@ -39,16 +99,22 @@ const activeStream = computed(() => {
     return pages.map((p, idx) => {
         const refItem = referrers[idx % (referrers.length || 1)];
         const countryItem = countries[idx % (countries.length || 1)];
+        const seed = `session-${p.path}-${idx}`;
 
         return {
-            id: `live-visitor-${idx}`,
+            id: seed,
             path: p.path || p.label || '/',
-            count: p.count,
-            referrer: refItem?.label || 'Direct',
-            referrerIcon: refItem?.icon,
+            referrer: formatSource(refItem?.label),
+            referrerFavicon:
+                refItem?.icon || getReferrerFavicon(refItem?.label || ''),
             countryCode: countryItem?.code,
             countryName: countryItem?.label || 'Unknown',
             countryFlag: getCountryFlag(countryItem?.code),
+            browser: 'Chrome',
+            browserIcon: getBrowserIcon('Chrome'),
+            device: 'desktop',
+            deviceIcon: Monitor,
+            avatar: getAvatarUrl(seed),
         };
     });
 });
@@ -56,142 +122,166 @@ const activeStream = computed(() => {
 
 <template>
     <div
-        class="relative flex flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-sm sm:p-6 dark:border-sidebar-border"
+        class="relative flex flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-4.5 shadow-sm sm:p-5 dark:border-sidebar-border"
     >
-        <!-- Top Glow Ambient Border -->
+        <!-- Top Ambient Glow -->
         <div
-            class="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl"
+            class="pointer-events-none absolute -top-12 -right-12 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl"
         ></div>
 
         <div>
             <!-- Header with pulsing Live indicator -->
-            <div class="flex items-center justify-between">
+            <div
+                class="flex items-center justify-between border-b border-sidebar-border/40 pb-3"
+            >
                 <div class="flex items-center gap-2">
-                    <span class="relative flex h-2.5 w-2.5">
+                    <span class="relative flex h-2 w-2">
                         <span
                             class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
                         ></span>
                         <span
-                            class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                            class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
                         ></span>
                     </span>
                     <span
-                        class="text-xs font-bold tracking-wider text-foreground uppercase"
+                        class="text-xs font-bold tracking-tight text-foreground"
                     >
-                        Live Activity
+                        {{ formatNumber(currentVisitors) }}
+                        {{ currentVisitors === 1 ? 'user' : 'users' }} online
                     </span>
                 </div>
+
                 <div
-                    class="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+                    class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
                 >
-                    <span class="font-mono font-bold">{{
-                        formatNumber(currentVisitors)
-                    }}</span>
-                    <span>online</span>
+                    Live Session Feed
                 </div>
             </div>
 
-            <p class="mt-2 text-xs text-muted-foreground">
-                Real-time sessions and active destination paths
-            </p>
-
-            <!-- Active Visitor Feed List -->
-            <div class="mt-4 space-y-2.5">
+            <!-- Active User Sessions List -->
+            <div class="mt-3.5 space-y-3">
                 <div
-                    v-for="item in activeStream"
+                    v-for="item in sessions"
                     :key="item.id"
-                    class="group flex items-center justify-between rounded-lg border border-sidebar-border/50 bg-muted/30 p-2.5 transition-all hover:border-sidebar-border hover:bg-muted/60"
+                    class="group flex items-start gap-3 rounded-lg border border-sidebar-border/30 bg-muted/20 p-2.5 transition-all hover:border-sidebar-border/70 hover:bg-muted/40"
                 >
-                    <div class="flex min-w-0 items-center gap-2.5">
-                        <!-- Visitor Badge / Flag -->
-                        <div
-                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-sidebar-border/60 bg-background text-xs shadow-xs"
-                            :title="item.countryName"
-                        >
-                            <span class="text-sm select-none">{{
-                                item.countryFlag
-                            }}</span>
-                        </div>
-
-                        <div class="min-w-0">
-                            <!-- Page Path -->
-                            <div class="flex items-center gap-1.5">
-                                <button
-                                    type="button"
-                                    v-if="canFilter"
-                                    @click="emit('filter', 'path', item.path)"
-                                    class="truncate text-xs font-semibold text-foreground transition-colors hover:text-indigo-600 hover:underline dark:hover:text-indigo-400"
-                                    :title="`Filter by ${item.path}`"
-                                >
-                                    {{ item.path }}
-                                </button>
-                                <span
-                                    v-else
-                                    class="truncate text-xs font-semibold text-foreground"
-                                >
-                                    {{ item.path }}
-                                </span>
-                            </div>
-
-                            <!-- Referrer & Location Details -->
-                            <div
-                                class="flex items-center gap-1.5 text-[10px] text-muted-foreground"
-                            >
-                                <img
-                                    v-if="
-                                        item.referrerIcon &&
-                                        typeof item.referrerIcon === 'string'
-                                    "
-                                    :src="item.referrerIcon"
-                                    class="h-3 w-3 shrink-0 rounded-xs"
-                                    alt=""
-                                />
-                                <span class="truncate">{{
-                                    item.referrer
-                                }}</span>
-                                <span>•</span>
-                                <span class="truncate">{{
-                                    item.countryName
-                                }}</span>
-                            </div>
-                        </div>
+                    <!-- User Placeholder Avatar -->
+                    <div
+                        class="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-sidebar-border/70 bg-muted shadow-xs"
+                    >
+                        <img
+                            :src="item.avatar"
+                            :alt="item.countryName"
+                            class="h-full w-full object-cover select-none"
+                            loading="lazy"
+                        />
                     </div>
 
-                    <!-- Active View Count Indicator -->
-                    <div
-                        class="flex items-center gap-1.5 pl-2 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400"
-                    >
-                        <span class="relative flex h-1.5 w-1.5">
+                    <!-- Session Metadata & Page -->
+                    <div class="min-w-0 flex-1">
+                        <!-- Visited Page Path -->
+                        <div class="flex items-center justify-between gap-1">
+                            <button
+                                type="button"
+                                v-if="canFilter"
+                                @click="emit('filter', 'path', item.path)"
+                                class="truncate text-xs font-bold text-foreground transition-colors hover:text-indigo-600 hover:underline dark:hover:text-indigo-400"
+                                :title="`Filter by ${item.path}`"
+                            >
+                                {{ item.path }}
+                            </button>
                             <span
-                                class="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                v-else
+                                class="truncate text-xs font-bold text-foreground"
+                            >
+                                {{ item.path }}
+                            </span>
+
+                            <!-- Active Pulse Dot -->
+                            <span
+                                class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500/80"
+                                title="Active session"
                             ></span>
-                        </span>
-                        <span>{{ formatNumber(item.count) }}</span>
+                        </div>
+
+                        <!-- Location & Source Row -->
+                        <div
+                            class="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground"
+                        >
+                            <span
+                                class="text-xs select-none"
+                                :title="item.countryName"
+                            >
+                                {{ item.countryFlag }}
+                            </span>
+                            <span
+                                class="truncate font-medium text-foreground/80"
+                            >
+                                {{ item.countryName }}
+                            </span>
+                            <span class="text-muted-foreground/60">•</span>
+                            <span class="truncate text-muted-foreground">
+                                {{ item.referrer }}
+                            </span>
+                        </div>
+
+                        <!-- Device & Browser Badges -->
+                        <div
+                            class="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground"
+                        >
+                            <!-- Browser -->
+                            <div class="flex items-center gap-1">
+                                <img
+                                    v-if="item.browserIcon"
+                                    :src="item.browserIcon"
+                                    class="h-3 w-3 shrink-0"
+                                    alt=""
+                                />
+                                <span class="capitalize">{{
+                                    item.browser
+                                }}</span>
+                            </div>
+
+                            <span class="text-muted-foreground/40">•</span>
+
+                            <!-- Device -->
+                            <div class="flex items-center gap-1">
+                                <component
+                                    :is="item.deviceIcon"
+                                    class="h-3 w-3 shrink-0 text-muted-foreground"
+                                />
+                                <span class="capitalize">{{
+                                    item.device
+                                }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Empty State -->
                 <div
-                    v-if="activeStream.length === 0"
-                    class="flex flex-col items-center justify-center py-6 text-center text-xs text-muted-foreground"
+                    v-if="sessions.length === 0"
+                    class="flex flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground"
                 >
                     <Radio
                         class="h-6 w-6 animate-pulse stroke-1 text-muted-foreground/50"
                     />
-                    <span class="mt-2">No active sessions right now</span>
+                    <span class="mt-2 font-medium"
+                        >No active sessions right now</span
+                    >
                     <span class="text-[11px] text-muted-foreground/70"
-                        >Visitors will appear here in real time</span
+                        >Live visitors will appear here automatically</span
                     >
                 </div>
             </div>
         </div>
 
-        <!-- Footer / External Visit site link -->
+        <!-- Footer / Site Domain Link -->
         <div
             v-if="siteDomain"
-            class="mt-4 flex items-center justify-between border-t border-sidebar-border/50 pt-3 text-[11px] text-muted-foreground"
+            class="mt-4 flex items-center justify-between border-t border-sidebar-border/40 pt-3 text-[11px] text-muted-foreground"
         >
-            <span class="truncate">{{ siteDomain }}</span>
+            <span class="truncate font-mono">{{ siteDomain }}</span>
             <a
                 :href="`https://${siteDomain}`"
                 target="_blank"

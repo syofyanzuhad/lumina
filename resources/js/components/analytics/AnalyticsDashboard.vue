@@ -43,6 +43,7 @@ export interface AnalyticsDashboardProps {
     total_pageviews?: number;
     unique_visitors?: number;
     current_visitors?: number;
+    live_visitors?: any[];
     bounce_rate?: number;
     avg_duration?: number;
     daily_pageviews?: any[];
@@ -335,6 +336,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                     <AnalyticsLiveFeed
                         :currentVisitors="current_visitors || 0"
                         :siteDomain="site?.domain"
+                        :liveVisitors="live_visitors"
                         :topPages="topPagesItems"
                         :topReferrers="topReferrersItems"
                         :topCountries="topCountriesItems"

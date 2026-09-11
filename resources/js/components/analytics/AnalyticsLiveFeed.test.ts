@@ -3,44 +3,31 @@ import { describe, expect, it } from 'vitest';
 import AnalyticsLiveFeed from './AnalyticsLiveFeed.vue';
 
 describe('AnalyticsLiveFeed', () => {
-    it('renders currently online visitor count', () => {
+    it('renders currently online visitor count and session details', () => {
         const wrapper = mount(AnalyticsLiveFeed, {
             props: {
                 currentVisitors: 12,
-                topPages: [
+                liveVisitors: [
                     {
-                        idKey: '/pricing',
-                        label: '/pricing',
+                        session_id: 'sess_1',
                         path: '/pricing',
-                        count: 45,
-                        percentage: 60,
-                    },
-                ],
-                topReferrers: [
-                    {
-                        idKey: 'Google',
-                        label: 'Google',
-                        count: 30,
-                        percentage: 50,
-                    },
-                ],
-                topCountries: [
-                    {
-                        idKey: 'US',
-                        label: 'United States',
-                        code: 'US',
-                        count: 40,
-                        percentage: 50,
+                        referrer: 'https://news.ycombinator.com',
+                        country_code: 'US',
+                        country_name: 'United States',
+                        browser: 'Chrome',
+                        device: 'desktop',
                     },
                 ],
             },
         });
 
-        expect(wrapper.text()).toContain('Live Activity');
-        expect(wrapper.text()).toContain('12');
+        expect(wrapper.text()).toContain('12 users online');
         expect(wrapper.text()).toContain('/pricing');
-        expect(wrapper.text()).toContain('Google');
+        expect(wrapper.text()).toContain('news.ycombinator.com');
         expect(wrapper.text()).toContain('United States');
+        expect(wrapper.text()).toContain('Chrome');
+        expect(wrapper.text()).toContain('desktop');
+        expect(wrapper.find('img[src*="dicebear"]').exists()).toBe(true);
     });
 
     it('emits filter event when path is clicked', async () => {
