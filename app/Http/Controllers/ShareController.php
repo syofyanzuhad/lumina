@@ -60,7 +60,8 @@ class ShareController extends Controller
         ];
 
         if ($activeTab === 'overview') {
-            $kpis = $analytics->getKpis($site, $start, $end, $filters);
+            [$prevStart, $prevEnd] = DateRangeHelper::previousPeriod($period, $request->query('start_date'), $request->query('end_date'));
+            $kpis = $analytics->getKpis($site, $start, $end, $filters, $prevStart, $prevEnd);
 
             // Merge KPI props at the top level so they're available immediately.
             $data = array_merge($data, $kpis);
