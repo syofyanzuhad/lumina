@@ -322,7 +322,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 class="grid grid-cols-1 overflow-hidden border-b border-sidebar-border/60 lg:grid-cols-3"
             >
                 <div
-                    class="border-b border-sidebar-border/60 lg:col-span-2 lg:border-b-0 lg:border-r"
+                    class="border-b border-sidebar-border/60 lg:col-span-2 lg:border-r lg:border-b-0"
                 >
                     <AnalyticsChart
                         :dailyPageviews="daily_pageviews"
@@ -356,7 +356,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
             >
                 <template #fallback>
                     <div
-                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-y-0 md:divide-x lg:grid-cols-3"
+                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
                     >
                         <div
                             v-for="i in 3"
@@ -382,7 +382,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 </template>
 
                 <div
-                    class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-y-0 md:divide-x lg:grid-cols-3"
+                    class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
                 >
                     <AnalyticsBreakdownCard
                         title="Top Pages"
@@ -428,7 +428,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
             <Deferred :data="['top_browsers', 'top_os', 'top_countries']">
                 <template #fallback>
                     <div
-                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-y-0 md:divide-x lg:grid-cols-3"
+                        class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
                     >
                         <div
                             v-for="i in 3"
@@ -454,7 +454,7 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                 </template>
 
                 <div
-                    class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-y-0 md:divide-x lg:grid-cols-3"
+                    class="grid grid-cols-1 divide-y divide-sidebar-border/60 border-b border-sidebar-border/60 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3"
                 >
                     <AnalyticsBreakdownCard
                         title="Top Browsers"
@@ -512,7 +512,10 @@ const topCountriesItems = computed<BreakdownCardItem[]>(() => {
                     </div>
                 </template>
 
-                <div v-if="utm_campaigns && utm_campaigns.length > 0" class="border-b border-sidebar-border/60">
+                <div
+                    v-if="utm_campaigns && utm_campaigns.length > 0"
+                    class="border-b border-sidebar-border/60"
+                >
                     <AnalyticsBreakdownCard
                         title="UTM Campaigns"
                         filterKey="utm_campaign"

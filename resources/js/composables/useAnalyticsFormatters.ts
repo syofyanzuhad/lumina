@@ -240,3 +240,41 @@ export function getOsIcon(os: string): string | null {
 
     return null;
 }
+
+/**
+ * Format ISO or timestamp into compact relative time (e.g. "just now", "12s ago", "2m ago", "1h ago").
+ */
+export function formatRelativeTimeCompact(dateStr?: string | null): string {
+    if (!dateStr) {
+        return 'just now';
+    }
+
+    const timestamp = new Date(dateStr).getTime();
+    if (Number.isNaN(timestamp)) {
+        return 'just now';
+    }
+
+    const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+
+    if (diffSeconds < 10) {
+        return 'just now';
+    }
+
+    if (diffSeconds < 60) {
+        return `${diffSeconds}s ago`;
+    }
+
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) {
+        return `${diffMinutes}m ago`;
+    }
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) {
+        return `${diffHours}h ago`;
+    }
+
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+}
+

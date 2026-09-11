@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ExternalLink, Radio, Monitor } from '@lucide/vue';
+import { Clock, ExternalLink, Radio, Monitor } from '@lucide/vue';
 import { computed } from 'vue';
 import type { BreakdownCardItem } from '@/components/analytics/AnalyticsBreakdownCard.vue';
 import {
     formatNumber,
+    formatRelativeTimeCompact,
     getBrowserIcon,
     getCountryFlag,
     getDeviceIcon,
@@ -84,6 +85,7 @@ const sessions = computed(() => {
             device: v.device || 'desktop',
             deviceIcon: getDeviceIcon(v.device || 'desktop'),
             avatar: getAvatarUrl(v.session_id || `visitor-${idx}`),
+            timeAgo: formatRelativeTimeCompact(v.created_at),
         }));
     }
 
@@ -115,6 +117,7 @@ const sessions = computed(() => {
             device: 'desktop',
             deviceIcon: Monitor,
             avatar: getAvatarUrl(seed),
+            timeAgo: idx === 0 ? 'just now' : `${idx * 45}s ago`,
         };
     });
 });
@@ -181,8 +184,8 @@ const sessions = computed(() => {
 
                     <!-- Session Metadata & Page -->
                     <div class="min-w-0 flex-1">
-                        <!-- Visited Page Path -->
-                        <div class="flex items-center justify-between gap-1">
+                        <!-- Visited Page Path & Time -->
+                        <div class="flex items-center justify-between gap-1.5">
                             <button
                                 type="button"
                                 v-if="canFilter"
@@ -199,11 +202,15 @@ const sessions = computed(() => {
                                 {{ item.path }}
                             </span>
 
-                            <!-- Active Pulse Dot -->
-                            <span
-                                class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500/80"
-                                title="Active session"
-                            ></span>
+                            <!-- Compact Time & Active Dot -->
+                            <div class="flex shrink-0 items-center gap-1.5 text-[10px] text-muted-foreground/80">
+                                <Clock class="h-2.5 w-2.5 shrink-0 opacity-70" />
+                                <span class="whitespace-nowrap font-mono">{{ item.timeAgo }}</span>
+                                <span
+                                    class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500/80"
+                                    title="Active session"
+                                ></span>
+                            </div>
                         </div>
 
                         <!-- Location & Source Row -->

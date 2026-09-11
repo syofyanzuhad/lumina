@@ -27,6 +27,7 @@ describe('AnalyticsLiveFeed', () => {
         expect(wrapper.text()).toContain('United States');
         expect(wrapper.text()).toContain('Chrome');
         expect(wrapper.text()).toContain('desktop');
+        expect(wrapper.text()).toContain('just now');
         expect(wrapper.find('img[src*="dicebear"]').exists()).toBe(true);
     });
 

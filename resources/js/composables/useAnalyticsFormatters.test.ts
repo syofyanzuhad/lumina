@@ -2,6 +2,7 @@ import { Laptop, Monitor, Smartphone } from '@lucide/vue';
 import { describe, expect, it } from 'vitest';
 import {
     formatNumber,
+    formatRelativeTimeCompact,
     getBrowserIcon,
     getCountryFlag,
     getDeviceIcon,
@@ -85,3 +86,25 @@ describe('getOsIcon', () => {
         expect(getOsIcon('iOS')).toContain('apple');
     });
 });
+
+describe('formatRelativeTimeCompact', () => {
+    it('returns just now for null, empty or recent timestamps', () => {
+        expect(formatRelativeTimeCompact(null)).toBe('just now');
+        expect(formatRelativeTimeCompact(undefined)).toBe('just now');
+        expect(formatRelativeTimeCompact(new Date().toISOString())).toBe('just now');
+    });
+
+    it('formats seconds, minutes and hours ago', () => {
+        const now = Date.now();
+        const thirtySecAgo = new Date(now - 30 * 1000).toISOString();
+        const fiveMinAgo = new Date(now - 5 * 60 * 1000).toISOString();
+        const twoHoursAgo = new Date(now - 2 * 3600 * 1000).toISOString();
+        const threeDaysAgo = new Date(now - 3 * 86400 * 1000).toISOString();
+
+        expect(formatRelativeTimeCompact(thirtySecAgo)).toBe('30s ago');
+        expect(formatRelativeTimeCompact(fiveMinAgo)).toBe('5m ago');
+        expect(formatRelativeTimeCompact(twoHoursAgo)).toBe('2h ago');
+        expect(formatRelativeTimeCompact(threeDaysAgo)).toBe('3d ago');
+    });
+});
+
