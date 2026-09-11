@@ -250,6 +250,7 @@ export function formatRelativeTimeCompact(dateStr?: string | null): string {
     }
 
     const timestamp = new Date(dateStr).getTime();
+
     if (Number.isNaN(timestamp)) {
         return 'just now';
     }
@@ -268,15 +269,18 @@ export function formatRelativeTimeCompact(dateStr?: string | null): string {
     }
 
     const diffMinutes = Math.floor(diffSeconds / 60);
+
     if (diffMinutes < 60) {
         return `${diffMinutes}m ago`;
     }
 
     const diffHours = Math.floor(diffMinutes / 60);
+
     if (diffHours < 24) {
         return `${diffHours}h ago`;
     }
 
     const diffDays = Math.floor(diffHours / 24);
+
     return `${diffDays}d ago`;
 }
