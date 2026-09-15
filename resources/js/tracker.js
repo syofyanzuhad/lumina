@@ -26,6 +26,15 @@
     var excludePattern = scriptEl.getAttribute('data-exclude');
 
     function isExcluded() {
+        if (
+            (window.navigator && window.navigator.webdriver) ||
+            window.__prerender__ ||
+            window.__nightmare ||
+            window.phantom
+        ) {
+            return true;
+        }
+
         try {
             if (
                 window.localStorage &&
