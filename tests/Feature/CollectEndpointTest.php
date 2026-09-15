@@ -152,3 +152,17 @@ test('collect endpoint is rate limited per ip', function () {
 
     Queue::assertPushed(InsertEvent::class, 1);
 });
+
+test('bot requests are silently ignored without dispatching jobs', function () {
+    Queue::fake();
+
+    $response = $this->withServerVariables([
+        'HTTP_USER_AGENT' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    ])->postJson('/api/collect', [
+        'domain' => 'example.com',
+        'path' => '/pricing',
+    ]);
+
+    $response->assertStatus(204);
+    Queue::assertNothingPushed();
+});
