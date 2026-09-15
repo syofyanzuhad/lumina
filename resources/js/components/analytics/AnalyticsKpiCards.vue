@@ -34,17 +34,34 @@ const emit = defineEmits<{
  * Compute a rounded percent change between current and previous values.
  * Returns null when the previous value is absent or zero.
  */
-function percentChange(current: number | undefined, previous: number | undefined): number | null {
-    if (previous === undefined || previous === null || previous === 0 || current === undefined) {
+function percentChange(
+    current: number | undefined,
+    previous: number | undefined,
+): number | null {
+    if (
+        previous === undefined ||
+        previous === null ||
+        previous === 0 ||
+        current === undefined
+    ) {
         return null;
     }
+
     return Math.round(((current - previous) / previous) * 100);
 }
 
-const visitorsChange = computed(() => percentChange(props.uniqueVisitors, props.prevUniqueVisitors));
-const pageviewsChange = computed(() => percentChange(props.totalPageviews, props.prevTotalPageviews));
-const bounceRateChange = computed(() => percentChange(props.bounceRate, props.prevBounceRate));
-const avgDurationChange = computed(() => percentChange(props.avgDuration, props.prevAvgDuration));
+const visitorsChange = computed(() =>
+    percentChange(props.uniqueVisitors, props.prevUniqueVisitors),
+);
+const pageviewsChange = computed(() =>
+    percentChange(props.totalPageviews, props.prevTotalPageviews),
+);
+const bounceRateChange = computed(() =>
+    percentChange(props.bounceRate, props.prevBounceRate),
+);
+const avgDurationChange = computed(() =>
+    percentChange(props.avgDuration, props.prevAvgDuration),
+);
 
 /**
  * Determine badge colour class.
@@ -55,19 +72,30 @@ function badgeClass(change: number | null, invert = false): string {
     if (change === null || change === 0) {
         return 'text-muted-foreground';
     }
+
     const isPositive = change > 0;
     const isGood = invert ? !isPositive : isPositive;
-    return isGood ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400';
+
+    return isGood
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-rose-500 dark:text-rose-400';
 }
 
 function badgeLabel(change: number | null): string {
-    if (change === null) return '';
+    if (change === null) {
+        return '';
+    }
+
     const sign = change > 0 ? '+' : '';
+
     return `${sign}${change}%`;
 }
 
 function badgeArrow(change: number | null): string {
-    if (change === null || change === 0) return '–';
+    if (change === null || change === 0) {
+        return '–';
+    }
+
     return change > 0 ? '↑' : '↓';
 }
 </script>
@@ -122,7 +150,8 @@ function badgeArrow(change: number | null): string {
                         :class="badgeClass(visitorsChange)"
                         title="vs previous period"
                     >
-                        {{ badgeArrow(visitorsChange) }} {{ badgeLabel(visitorsChange) }}
+                        {{ badgeArrow(visitorsChange) }}
+                        {{ badgeLabel(visitorsChange) }}
                     </span>
                 </div>
             </div>
@@ -170,7 +199,8 @@ function badgeArrow(change: number | null): string {
                         :class="badgeClass(pageviewsChange)"
                         title="vs previous period"
                     >
-                        {{ badgeArrow(pageviewsChange) }} {{ badgeLabel(pageviewsChange) }}
+                        {{ badgeArrow(pageviewsChange) }}
+                        {{ badgeLabel(pageviewsChange) }}
                     </span>
                 </div>
             </div>
@@ -199,7 +229,8 @@ function badgeArrow(change: number | null): string {
                         :class="badgeClass(bounceRateChange, true)"
                         title="vs previous period"
                     >
-                        {{ badgeArrow(bounceRateChange) }} {{ badgeLabel(bounceRateChange) }}
+                        {{ badgeArrow(bounceRateChange) }}
+                        {{ badgeLabel(bounceRateChange) }}
                     </span>
                 </div>
             </div>
@@ -228,7 +259,8 @@ function badgeArrow(change: number | null): string {
                         :class="badgeClass(avgDurationChange)"
                         title="vs previous period"
                     >
-                        {{ badgeArrow(avgDurationChange) }} {{ badgeLabel(avgDurationChange) }}
+                        {{ badgeArrow(avgDurationChange) }}
+                        {{ badgeLabel(avgDurationChange) }}
                     </span>
                 </div>
             </div>
